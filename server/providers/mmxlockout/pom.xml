@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.magnet.mmx</groupId>
+    <artifactId>mmx-server-providers</artifactId>
+    <version>1.2.3</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <groupId>com.magnet.mmx</groupId>
+  <artifactId>mmx-server-providers-lockout</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Magnet Messaging Server Providers -- Lockout Provider</name>
+  <description>${project.name}</description>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.magnet.mmx</groupId>
+      <artifactId>mmx-server-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.magnet.mmx.ext</groupId>
+      <artifactId>openfire</artifactId>
+      <version>1.2.3</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.3</version>
+        <executions>
+            <execution>
+                <phase>package</phase>
+                <goals>
+                    <goal>shade</goal>
+                </goals>
+                <configuration>
+                    <filters>
+                        <filter>
+                            <artifact>com.magnet.mmx:*</artifact>
+                            <includes>
+                                <include>com/magnet/mmx/lockout/**</include>
+                                <include>com/magnet/mmx/server/common/**</include>
+                            </includes>
+                        </filter>
+                    </filters>
+                </configuration>
+            </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>

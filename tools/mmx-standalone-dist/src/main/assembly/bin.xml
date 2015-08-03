@@ -1,0 +1,32 @@
+<assembly>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/sandbox/</directory>
+	        <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>**/**</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/src/main/resources</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+            <excludes>
+                <exclude>*.bat</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/src/main/resources</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <lineEnding>dos</lineEnding>
+        </fileSet>
+    </fileSets>
+</assembly>

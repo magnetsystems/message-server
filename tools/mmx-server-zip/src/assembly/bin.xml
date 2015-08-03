@@ -1,0 +1,25 @@
+<assembly>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory>${project.build.directory}/sandbox/mmx-server/openfire</directory>
+	    <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>**/**</include>
+            </includes>
+            <excludes>
+                <exclude>*.bat</exclude>
+            </excludes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/sandbox/mmx-server/openfire</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>*.bat</include>
+            </includes>
+            <lineEnding>dos</lineEnding>
+        </fileSet>
+    </fileSets>
+</assembly>

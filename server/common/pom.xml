@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.magnet.mmx</groupId>
+    <artifactId>mmx-server-root</artifactId>
+    <version>1.2.3</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>mmx-server-common</artifactId>
+  <name>Magnet Messaging Server Common Root</name>
+  <description>${project.name}</description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+        <source>1.6</source>
+        <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <!-- Add your module here -->
+
+  <dependencies>
+
+    <dependency>
+      <groupId>com.magnet.mmx</groupId>
+      <artifactId>mmx-common-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.magnet.mmx.ext</groupId>
+      <artifactId>openfire</artifactId>
+      <version>1.2.3</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>

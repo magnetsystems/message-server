@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Troubleshooting Guide - Magnet Message</title>
+
+<link href="files/bootstrap.css" rel="stylesheet" type="text/css" />
+<link href="files/custom.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="container">
+	<div class="row aligncenter">
+  		<h1><img src="files/magnetmesage.png" width="161" height="45" alt="Magnet message logo"/> Troubleshooting</h1>
+    	<p>Magnet Message<br/>
+        version number:<br/>
+        1.2.3</p>
+        <p>May 15, 2015</p>
+
+
+	</div>
+    <div class="row">
+    	<h3>First time Setup - Port Conflicts</h3>
+  		<h4>Magnet Message's default ports</h4>
+		<p>The followings are the default ports used by Magnet Message:</p>
+		<ul>
+			<li><b>Port 3000</b>: Used by the Magnet Message web interface</li>
+			<li><b>Port 5220, 5221, 5222, 5223, 6060, 6061, 9090, 9091</b>: Used by the Magnet Message server</li>
+		</ul>
+		<p>There are a few possible scenarios that can cause port conflicts:</p>
+		<ul>
+			<li>These ports are used by another service on your system and not available. If they cannot be made available and you need to designate a different port number, please follow the instructions below to change them.</li>
+			<li>Existing Magnet message processes are already running. Follow the steps below on how to stop them properly.</li>
+		</ul>
+		<p>Even if you removed the Magnet Message home directory, the processes may continue to run. Follow steps below on how to stop orphaned Magnet Message processes.</p>
+	</div>
+    <div class="row">
+		<h4>How to change the default ports</h4>
+    	<p>Steps</p>
+        <ol>
+     		<li>Open mmx-standalone-dist/startup.properties</li>
+     		<li>Change any port that is unavailable and save the file.</li>
+     		<li>Restart the Magnet Message. See the "How to start, stop, or restart Magnet Message" section.</li>
+     		<li>Open the wizard (http://127.0.0.1:&ltconsole_port&gt for a local installation, or http://&ltip_address&gt:&ltconsole_port&gt for a remote one) with a browser and continue with the configuration.</li>
+        </ol>
+        <p><i>Note: If you change the ports but cannot connect to the server, check your firewall settings. </i></p>
+	</div>
+
+	<div class="row">
+		<h4>How to start, stop, or restart Magnet Message</h4>
+		<p>IMPORTANT: You should always start and stop the server with the included batch script (mmx.bat).</p>
+    	<p>Start:</p>
+        <ol>
+     		<li>Use a Command Prompt and cd to "mmx-standalone-dist-win" in the directory that you
+         have unzipped the zip file to.</li>
+     		<li>Execute ".\mmx.bat start".</li>
+        </ol>
+        <p>Stop:</p>
+        <ol>
+     		<li>Use a Command Prompt and cd to "mmx-standalone-dist-win" in the directory that you
+         have unzipped the zip file to.</li>
+     		<li>Execute ".\mmx.bat stop".</li>
+        </ol>
+        <p>Restart:</p>
+        <ol>
+     		<li>Use a Command Prompt and cd to "mmx-standalone-dist-win" in the directory that you
+         have unzipped the zip file to.</li>
+     		<li>Execute ".\mmx.bat restart".</li>
+        </ol>
+	</div>
+	<div class="row">
+		<h4>How to force stop orphaned Magnet Message</h4>
+		<p>In the event that “mmx.bat” fails to stop the processes or you had removed the existing installation, you can find running process task pids with the following command:</p>
+		<ol>
+			<li>tasklist /nh /fi "WINDOWTITLE eq MessagingServer"</li>
+			<li>tasklist /nh /fi "WINDOWTITLE eq Administrationwebinterface"</li>
+			<li>Use the pid returned and this command "taskkill /f /t /pid <pid> " to stop the processes.</li>
+		</ol>
+		<p><i>Note:  The administration server starts two node.js processes (one parent & one child) when the shell script is executed.</i></p>
+	</div>
+
+
+	<div class="row">
+    	<h3>Documentation</h3>
+	    <p>Detailed documentation can be found at: <a href="https://www.magnet.com/developer/magnet-message/" target="_blank">https://www.magnet.com/developer/magnet-message/</a></p>
+   </div>
+   <div class="foot">
+    	<h5>Copyright info:</h5>
+    	<p>The contents of this document are subject to change without notice. </p>
+        <p>Copyright © 2015 Magnet Systems, Inc.</p>
+		<p>All Rights Reserved. MAGNET SYSTEMS, the MAGNET SYSTEMS</p>
+		<p>Logo and all other Magnet Systems product names are trademarks of Magnet Systems, Inc. All other trademarks are the property of their respective owners.</p>
+	</div>
+</div>
+
+</body>
+</html>

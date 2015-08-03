@@ -1,0 +1,91 @@
+This describes how to use "tsung" to run load test against XMPP server on the Mac
+
+What is "tsung"?
+
+It is a load testing tool that can be used to stress test HTTP, WebDAV, SOAP, PostgreSQL, MySQL, LDAP and Jabber/XMPP servers.
+More info at:
+
+  http://tsung.erlang-projects.org/
+
+
+How to run load test using "tsung" for MMX:
+------------------------------------------
+
+1. Install "tsung". From the Mac, you can use "brew"
+brew install tsung
+
+For other platforms, download the tar files from the web site.
+
+
+2. Create the tsung test script. See section below "Generating Test Script"
+to generate the script.
+ 
+openfire_login.xml : test script to simulate conn and auth packets to any XMPP server. It uses the prefixed user names,
+"loadtest". Make sure to populate XMPP server with the expected users before running the tests (see create_10_ofuser.sql)
+
+NOTE: Number of sessions that can be established to the server is limited by OS max fd limit. By default on the MAC,
+this is set at 256. Use "ulimit -n" to increase the limit if number of sessions is higher than 150 or so.
+
+
+3. Run the load test:
+tsung -f openfire_login.xml start
+
+The test log will be created in a new log directory based on timestamp in "~/.tsung/log"
+
+4. Generate the report:
+You will need to install "Template" module of perl first. On the Mac, run:
+  perl -MCPAN -eshell
+  install Template
+
+Once the perl Template is installed, cd to the log directory for the test, i.e.
+  ~/.tsung/log/<test-run-number>
+
+Run the perl script. This will create a "report.html" in the log directory:
+
+  perl /usr/local/Cellar/tsung/1.5.0/lib/tsung/bin/tsung_stats.pl
+
+
+Generating Test Script
+======================
+Before running the load test against MMX, do the following:
+- Create the appId and apiKey for the app project. You can use the mmx servlet running on your MMX server using "curl":
+
+curl -u admin:admin -X POST http://localhost:6060/mmxadmin/rest/v1/apps --header "Content-Type: application/json" --data @create_app.json
+
+Sample Response:
+{"name":"loadtestapp","id":3,"apnsCertPassword":null,"googleAPIKey":null,"apnsCertProduction":false,"iso8601Modificationdate":"2015-03-23T02:14:33.000Z","apnsCertUploaded":false,"modificationdate":1427076873000,"iso8601CreationDate":"2015-03-23T02:14:33.000Z","googleProjectId":null,"serverUserId":"328cuj7vz4f1%j1ri7l8q2fo","guestSecret":"-fc1g8cu39jnw","ownerEmail":null,"appId":"j1ri7l8q2fo","ownerId":"helen","appAPIKey":"77cf1d99-61f6-4fef-ab18-f1c6a5ae8de9","creationDate":1427076873000}
+
+** Note down the appId and apiKey, which will be used with "generate_testscript.sh" command
+
+- If you made source code edits to Java files in this directory, make sure to build it with "mvn clean install"
+- Run the script "generate_testscript.sh". This generates the sql file for
+creating users in Openfire, the corresponding user account csv file, and the tsung
+client scripts for running load test. The scripts are generated to "output" directory:
+
+Usage:  generate_testscript.sh <num-of-users> <user-name> <app-id> <api-key> <host-name> <server-name>
+Example: sh ./generate_testscript.sh 20 helen i1xq3w6q5kw 72261c25-ab20-4eb8-8648-aaa62c429ad8 localhost helen.local
+./generate_testscript.sh 10 helen i1xq3w6q5kw 72261c25-ab20-4eb8-8648-aaa62c429ad8 localhost helen.local 
+
+
+Run Load Test
+=============
+1. Create the users in Openfire database using the generated sql script in "output" directory
+2. Run the test:
+
+% cd output/
+
+# Simple connection test with MMX
+% tsung -f loadtest_login.xml start
+
+# Sends device registration IQ
+% tsung -f loadtest_devreg.xml start
+
+# Sends message
+% tsung -f loadtest_send_message.xml start
+
+Generate Report from the log
+============================
+- cd to the tsung log directory
+
+run:
+   perl /usr/local/Cellar/tsung/1.5.0/lib/tsung/bin/tsung_stats.pl

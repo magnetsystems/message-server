@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<appender name="openfire-out" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${openfireHome}/logs/openfire.log" />
+		<param name="MaxFileSize" value="512MB"/>
+		<param name="MaxBackupIndex" value="2"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} [%p] %c - %m%n" />
+		</layout>
+	</appender>
+
+        <appender name="mmxmgmt-out" class="org.apache.log4j.RollingFileAppender">
+                <param name="File" value="${openfireHome}/logs/mmxmgmt.log" />
+                <param name="MaxFileSize" value="512MB"/>
+                <param name="MaxBackupIndex" value="2"/>
+                <layout class="org.apache.log4j.PatternLayout">
+                        <param name="ConversionPattern" value="%d{yyyy.MM.dd HH:mm:ss} [%p] %c - %m%n" />
+                </layout>
+        </appender>
+	<!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
+	<logger name="org.eclipse.jetty">
+		<level value="debug" />
+	</logger>
+	<logger name="com.magnet.mmx.server.plugin.mmxmgmt">
+		<level value="trace"/>
+                <appender-ref ref="mmxmgmt-out"/>
+        </logger>
+   	<root>
+		<level value="debug" />
+		<appender-ref ref="openfire-out" />
+	</root>
+	
+</log4j:configuration>

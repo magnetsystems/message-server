@@ -1,0 +1,110 @@
+
+
+  Troubleshooting
+
+  -------------------------------------------------------------------------------
+  Magnet Message
+  version number:
+  1.2.3
+
+  May 15, 2015
+  -------------------------------------------------------------------------------
+
+  First time Setup - Port Conflicts
+
+
+  Magnet Message's default ports
+  ==================================================================
+
+  The followings are the default ports used by Magnet Message.
+
+  - Port 3000
+    Used by the Magnet Message web interface
+
+  - Port 5220, 5221, 5222, 5223, 6060, 6061, 9090, 9091
+    Used by the Magnet Message server
+
+  There are a few possible scenarios that can cause port conflicts:
+  1. These port are used by another service on your system and not available. If they cannot be  made available
+     and you need to designate a different port number, please follow the instructions below to change them.
+  2. Existing Magnet message processes are already running. Follow the steps below on how to stop them properly.
+
+  Note: Even if you removed the Magnet Message home directory, the processes may continue to run. Follow steps
+        below on how to stop orphaned Magnet Message processes.
+
+ 
+  How to change the default ports
+  ----------------------------------------------------
+    Steps
+     1. Open mmx-standalone-dist/startup.properties
+     2. Change any port that is unavailable, and save the file.
+     3. Restart Magnet Message. See "How to start, stop, or restart Magnet Message" section.
+     4. Open the wizard (http://127.0.0.1:<console_port> for a local installation, or
+        http://<ip_address>:<console_port> for a remote one) with a browser and continue with the configuration.
+
+  Note: If you change the ports but cannot connect to the server, check your firewall settings.
+
+  When there is a stale pid file
+  ----------------------------------------------------
+  Every time when Magnet Message starts, it will save the process ids of the servers in 2 places:
+  - mmx-standalone-dist/messaging/bin/mmx.pid
+  - mmx-standalone-dist/console/mmx-console.pid
+
+  If the server processes have ended abruptly (e.g., following a system restart), the earlier pid 
+  files will remain and the user will see a message similar to the following:
+    "Error! mmx-console is already running or you have a stale pid file. If mmx-console is not
+        running, please delete ..."
+
+  Please delete the pid file and start the server again with the following commands:
+    1. cd mmx-standalone-dist
+    2. rm messaging/bin/mmx.pid
+    3. rm console/mmx-console.pid
+    4. mmx.sh start
+
+
+  How to start, stop, or restart Magnet Message
+  =============================================
+  
+  IMPORTANT: You should always start and stop the server with the included shell script: “mmx.sh”
+
+   Start:
+      1. Use a terminal and go to “cd ~/mmx-standalone-dist".
+      2. Execute "./mmx.sh start".
+
+   Stop:
+      1. Use a terminal and go to “cd ~/mmx-standalone-dist".
+      2. Execute "./mmx.sh stop".
+
+   Restart:
+      1. Use a terminal and go to “cd ~/mmx-standalone-dist".
+      2. Execute "./mmx.sh restart".
+
+
+   
+   How to force stop orphaned Magnet Message Processes
+   ===================================================   
+   
+   In the event that “mmx.sh” fails to stop the processes or you had removed the existing installation, you can
+   find running proccess pids with the the following commands:
+
+     1. “ps aux | grep -e node -e /messaging/lib/startup.jar"
+     2. Use the "kill" command to stop the processes.
+
+   Note:  The administration server starts two node.js processes (one parent “start.js” & one child “app.js”).
+          You should stop the parent one first, shown in the process list as: 
+          “../node-v0.10.36-darwin-x64/bin/node start.js”
+
+
+  Documentation
+  ============================================
+  
+  Detailed documentation can be found at: https://www.magnet.com/developer/magnet-message/
+
+
+
+  -------------------------------------------------------------------------------
+  Copyright info:
+  The contents of this document are subject to change without notice.
+  Copyright © 2015 Magnet Systems, Inc.
+  All Rights Reserved. MAGNET SYSTEMS, the MAGNET SYSTEMS Logo and all other Magnet Systems product names
+  are trademarks of Magnet Systems, Inc. All other trademarks are the property of their respective owners.

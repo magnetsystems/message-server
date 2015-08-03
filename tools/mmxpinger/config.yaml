@@ -1,0 +1,51 @@
+configs:
+ - name: citest
+   mmx:
+     host: 207.135.69.242
+     port: 5222
+     apiKey: 969115d7-202b-45a7-8f94-1cf98cb351ad
+     appId: 5ifi5spfnmc
+     guestSecret: e9744010-9e3c-4bc5-876c-220e3560922f
+     guestUserId: 5ifi5spfnmc
+     appPath: /Users/sdatar/work/git/mmxpinger/src/main/resources/
+     enableSendLastPubItem: false
+   load:
+     prefix: loaduser
+     numUsers: 2
+     messagesPerUser: 1
+     sendReceipt: true
+     password: 1234
+
+ - name: localhost
+   mmx:
+     host: localhost
+     port: 5222
+     apiKey: 4fcff386-1f5f-42ef-90ff-6c557f9313f5
+     appId: l93i8m36szx
+     guestSecret: 2708a645-e1df-4970-8efa-c5238b478d71
+     guestUserId: 9u3i8aukna2
+     appPath: /Users/sdatar/work/git/mmxpinger/src/main/resources/
+     enableSendLastPubItem: false
+   load:
+     prefix: magnetuser
+     numUsers: 30
+     messagesPerUser: 10
+     interMessageDelay: 1000	
+     sendReceipt: true
+     password: 1234
+ - name: skwok
+   mmx:
+     host: 54.153.29.90
+     port: 5222
+     apiKey: 359dd9cf-1cad-4356-b1a0-ef31c91a20da
+     appId: 57mi6cid32d
+     guestSecret: 65751102-3367-4aa7-a403-194a28dcd007
+     guestUserId: 57mi6cid32d
+     appPath: /Users/sdatar/work/git/mmxpinger/src/main/resources/
+     enableSendLastPubItem: false
+   load:
+     prefix: ironman
+     numUsers: 11
+     messagesPerUser: 1
+     sendReceipt: true
+     password: 1234

@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <mmxApp id="1" serverUserId="wd0jyth6ekbf%azi6dw1weq" appName="My Messaging App" appId="azi6dw1weq" apiKey="a681e939-4391-4e45-a27b-4c326299b1bc" encryptedApiKey="e6e7424e2c683f32434784c15494da275d494dacfc90e689db236a1222a334eef2dcab50d2acbf5973499288805158106506847a2b5d711551d3a70dbe8ea7cbc89aae58cf06c066a1f28b31e66b484b414b40054415e2be" apnsCertProduction="0" creationDate="2015-02-20 10:05:44.0" modificationDate="2015-02-20 10:05:44.0" ownerId="24badc50-b922-11e4-bd3c-fff8a5a7972f" ownerEmail="manager1@magnetapi.com" guestSecret="6b1b9c62-2e73-4571-94c8-7302bc3075a7"/>
+  <mmxDevice id="1" name="yoyoyoyo0&apos;s device" ownerJid="yoyoyoyo0" appId="azi6dw1weq" osType="IOS" deviceId="yoyoyoyo0" versionInfo="10.10" dateCreated="2015-02-20 10:10:32.0" dateUpdated="2015-02-20 10:20:18.0" status="ACTIVE"/>
+  <mmxDevice id="2" name="yoyoyoyo1&apos;s device" ownerJid="yoyoyoyo1" appId="azi6dw1weq" osType="IOS" deviceId="yoyoyoyo1" versionInfo="10.10" dateCreated="2015-02-20 10:10:32.0" dateUpdated="2015-02-20 10:20:19.0" status="ACTIVE"/>
+  <mmxDevice id="3" name="zingthing0&apos;s device" ownerJid="zingthing0" appId="azi6dw1weq" osType="ANDROID" deviceId="zingthing0" versionInfo="10.10" dateCreated="2015-02-20 10:26:10.0" dateUpdated="2015-02-20 11:20:58.0" status="ACTIVE"/>
+  <mmxDevice id="4" name="zingthing1&apos;s device" ownerJid="zingthing1" appId="azi6dw1weq" osType="ANDROID" deviceId="zingthing1" versionInfo="10.10" dateCreated="2015-02-20 10:26:10.0" dateUpdated="2015-02-20 11:20:58.0" status="ACTIVE"/>
+  <mmxTag id="2" tagname="home" appid="azi6dw1weq" creationDate="2015-02-26 14:59:07" deviceId="1"/>
+  <mmxTag id="3" tagname="secure" appid="azi6dw1weq" creationDate="2015-02-26 14:59:07" deviceId="1"/>
+  <mmxTag id="4" tagname="office" appid="azi6dw1weq" creationDate="2015-02-26 14:59:07" deviceId="2"/>
+  <mmxTag id="5" tagname="secure" appid="azi6dw1weq" creationDate="2015-02-26 14:59:07" deviceId="4"/>
+
+  <mmxMessage/>
+  <ofUser username="admin" encryptedPassword="e32969d4dcb8d74b18686acacb192264463413a7c7005e92" name="Administrator" email="admin@example.com" creationDate="001424451712554" modificationDate="0"/>
+  <ofUser username="wd0jyth6ekbf%azi6dw1weq" encryptedPassword="36b960042e6dca0e2be6580f60c4386da0d0dcf986ee874572b75fd3ed822ce2134d0b54d957ff06" name="My Messaging App Wd0jyth6ekbf" creationDate="001424455544404" modificationDate="001424455544404"/>
+  <ofUser username="yoyoyoyo0%azi6dw1weq" encryptedPassword="988a370999efe9d6fa9b2c777b8f1f90fb960635073b1d78" name="yoyoyoyo0" creationDate="001424455832685" modificationDate="001424455832685"/>
+  <ofUser username="yoyoyoyo1%azi6dw1weq" encryptedPassword="025007e4da19a07e6bdd4ffc3c7c29a61e757727aa20ae0c" name="yoyoyoyo1" creationDate="001424455832879" modificationDate="001424455832879"/>
+  <ofUser username="zingthing0%azi6dw1weq" encryptedPassword="1f1c21886b0aba9461b44d7da29bb9ed1b4c151d4bc6327a" name="zingthing0" creationDate="001424456770029" modificationDate="001424456770029"/>
+  <ofUser username="zingthing1%azi6dw1weq" encryptedPassword="cd812222e269e6c1e94bef4b0a36a5b5d025829e61b91e16" name="zingthing1" creationDate="001424456770210" modificationDate="001424456770210"/>
+</dataset>

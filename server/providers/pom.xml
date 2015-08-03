@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>mmx-server-root</artifactId>
+        <groupId>com.magnet.mmx</groupId>
+        <version>1.2.3</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <name>Magnet Messaging Server Openfire Providers</name>
+    <description>${project.name}</description>
+    <artifactId>mmx-server-providers</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>mmxlockout</module>
+    </modules>
+
+
+</project>

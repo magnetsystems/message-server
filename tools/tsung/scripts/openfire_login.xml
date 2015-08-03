@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/local/Cellar/tsung/1.5.0/share/tsung/tsung-1.0.dtd" [] >
+<tsung loglevel="notice" version="1.0" dumptraffic="true">
+
+
+    <clients>
+        <client host="localhost" use_controller_vm="true"></client>
+        <!--client host="localhost" maxusers="1000"></client-->
+
+    </clients>
+
+    <servers>
+        <server host="citest01.magneteng.com" port="5222" type="tcp"></server>
+        <!--server host="localhost" port="5222" type="tcp"></server-->
+    </servers>
+
+    <load>
+        <arrivalphase phase="1" duration="10" unit="minute">
+            <users maxnumber="1000" arrivalrate="10" unit="second"></users>
+        </arrivalphase>
+    </load>
+
+
+    <options>
+        <option type="ts_jabber" name="global_number" value="1000"></option>
+        <option type="ts_jabber" name="userid_max" value="1000"></option>
+        <!--option type="ts_jabber" name="domain" value="127.0.0.1"></option-->
+        <option type="ts_jabber" name="username" value="loadtest"></option>
+        <option type="ts_jabber" name="passwd" value="loadtest"></option>
+    </options>
+
+    <sessions>
+        <session probability="100" name="jabber-example" type="ts_jabber">
+
+        <request>
+            <jabber type="connect" ack="local"></jabber>
+        </request>
+
+        <thinktime value="2"></thinktime>
+
+        <transaction name="authenticate">
+            <request> <jabber type="auth_get" ack="local"></jabber></request>
+            <request> <jabber type="auth_set_plain" ack="local"></jabber></request>
+        </transaction>
+        <thinktime value="2"/>
+        <request>
+            <jabber type="presence:initial" ack="global"></jabber></request>
+
+        <thinktime value="50"></thinktime>
+
+        <transaction name="close">
+            <request> <jabber type="close" ack="local"></jabber></request>
+        </transaction>
+    </session>
+</sessions>
+</tsung>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+  <!-- Main plugin class -->
+  <class>com.magnet.mmx.server.plugin.mmxmgmt.MMXPlugin</class>
+
+  <!-- Plugin meta-data -->
+  <name>${pom.name}</name>
+  <description>${pom.description}</description>
+  <author>${pom.organization.name}</author>
+  <version>${pom.version}</version>
+  <date>${openfire-plugin.build.date}</date>
+  <minServerVersion>3.3.0</minServerVersion>
+  <licenseType>Apache 2.0</licenseType>
+  <databaseKey>mmxappmgmt</databaseKey>
+  <databaseVersion>4</databaseVersion>
+  <!-- Admin console entries -->
+  <adminconsole>
+    <!-- More on this below -->
+  </adminconsole>
+</plugin>

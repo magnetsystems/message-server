@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jive> 
+  <adminConsole> 
+    <port>9090</port>  
+    <securePort>9091</securePort> 
+  </adminConsole>  
+  <locale>en</locale>  
+  <connectionProvider> 
+    <className>com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider</className>
+  </connectionProvider>  
+  <database> 
+    <defaultProvider> 
+      <driver>com.mysql.jdbc.Driver</driver>  
+      <serverURL>jdbc:mysql://localhost:3306/testdb?rewriteBatchedStatements=true</serverURL>  
+      <username encrypted="false">root</username>  
+      <password encrypted="false"></password>  
+      <minConnections>5</minConnections>  
+      <maxConnections>25</maxConnections>  
+      <connectionTimeout>1.0</connectionTimeout> 
+    </defaultProvider> 
+  </database>  
+  <setup>true</setup> 
+</jive>

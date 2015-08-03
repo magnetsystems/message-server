@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+  <mmxWakeupQueue id="10" deviceId="12345678987654321" clientToken="some-token" tokenType="GCM" googleApiKey="mygoogleapikey" payload="wakeup" messageId="1396563a43c349e8" dateCreatedUTC="1411410342" dateSentUTC="1411410357"/>
+  <mmxWakeupQueue id="11" deviceId="device2" clientToken="some-token2" tokenType="GCM" googleApiKey="mygoogleapikey" payload="wakeup" messageId="1396563a44077708" dateCreatedUTC="1411410342"/>
+  <mmxWakeupQueue id="12" deviceId="12345678987654323" clientToken="some-token3" tokenType="GCM" googleApiKey="mygoogleapikey" payload="wakeup" messageId="1396563a44094fb0" dateCreatedUTC="1411410342"/>
+  <mmxWakeupQueue id="13" deviceId="12345678987654324" clientToken="some-token4" tokenType="GCM" googleApiKey="mygoogleapikey" payload="wakeup" messageId="1396563a440ae9d8" dateCreatedUTC="1411410342"/>
+  <mmxWakeupQueue id="14" deviceId="12345678987654325" clientToken="some-token5" tokenType="GCM" googleApiKey="mygoogleapikey" payload="wakeup" messageId="1396563a440c60d8" dateCreatedUTC="1411410342"/>
+
+  <mmxWakeupQueue id="45" deviceId="device2" clientToken="APA91bHaCculnOoolX0HV3f3CLHBY52C-H0lDS_m-lXXg5MbT9-EJiE6ooe0dUWURLuTQmVOttBS18cQwX5Pe-k9JDI2o8bqRhi3UZ0McTNs9JADvguH63vihIbVAgAjUm4K8mOZcRG4MC-edQBiiZ87l-GnQKpZ4ejBRP3j72oVQI6ooDavac4" tokenType="GCM" googleApiKey="AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM" payload="wakeup" messageId="1396563a44077710" dateCreatedUTC="1411603210" dateSentUTC="1411603245"/>
+  <mmxWakeupQueue id="46" deviceId="device2" clientToken="APA91bHaCculnOoolX0HV3f3CLHBY52C-H0lDS_m-lXXg5MbT9-EJiE6ooe0dUWURLuTQmVOttBS18cQwX5Pe-k9JDI2o8bqRhi3UZ0McTNs9JADvguH63vihIbVAgAjUm4K8mOZcRG4MC-edQBiiZ87l-GnQKpZ4ejBRP3j72oVQI6ooDavac4" tokenType="GCM" googleApiKey="AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM" payload="wakeup" messageId="1396563a44077711" dateCreatedUTC="1411664415" dateSentUTC="1411664470"/>
+  <mmxWakeupQueue id="47" deviceId="device3" tokenType="GCM" googleApiKey="AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM" payload="wakeup" messageId="1396563a44077711" dateCreatedUTC="1411664415" />
+
+  <mmxWakeupQueue id="152" deviceId="398668AF-2395-4B64-B300-60F0ABC7459F" clientToken = "bogustoken" tokenType="APNS" appId="i26u1lmv7uc" googleApiKey="AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM" payload="{&quot;_mmx&quot;:{&quot;ty&quot;:&quot;mmx:w:retrieve&quot;},&quot;aps&quot;:{&quot;content-available&quot;:1}}" messageId="c27b391275f4144df3725acab19b2d48" dateCreatedUTC="1426655095"/>
+
+</dataset>

@@ -1,0 +1,7 @@
+<!-- data for pubsub tags -->
+<dataset>
+  <mmxTag id="10166" tagname="food" creationDate="2015-03-11 16:35:19.0" appid="7wmi73wxin9" serviceID="pubsub" nodeID="/7wmi73wxin9/*/restaurants"/>
+  <mmxTag id="10167" tagname="fitness" creationDate="2015-03-11 16:36:32.0" appid="7wmi73wxin9" serviceID="pubsub" nodeID="/7wmi73wxin9/*/restaurants"/>
+  <mmxTag id="10168" tagname="cricket" creationDate="2015-03-11 16:40:32.0" appid="7wmi73wxin9" serviceID="pubsub" nodeID="/7wmi73wxin9/*/sports"/>
+  <mmxTag id="10169" tagname="sport" creationDate="2015-03-11 16:40:32.0" appid="7wmi73wxin9" serviceID="pubsub" nodeID="/7wmi73wxin9/*/sports"/>
+</dataset>

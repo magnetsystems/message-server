@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/share/tsung/tsung-1.0.dtd">
+<tsung loglevel="notice" version="1.0" dumptraffic="true">
+  
+  <clients>
+    <client host="tsungaws" cpu="1"/>
+  </clients>
+  
+  <servers>
+    <server host="xmppload" port="5222" type="tcp"/>
+  </servers>
+  
+  <monitoring>
+    <monitor host="tsungaws" type="erlang"/>
+    <monitor host="tsungaws2" type="erlang"/>
+    <monitor host="xmppload" type="erlang"/>
+  </monitoring>
+
+  <load>
+    <arrivalphase phase="1" duration="90" unit="second">
+      <users maxnumber="4000" arrivalrate="50" unit="second"/>
+    </arrivalphase>
+  </load>
+  
+  <options>
+    <option type="ts_jabber" name="global_number" value="4000"/>
+    <option type="ts_jabber" name="userid_max" value="4000"/>
+    <option type="ts_jabber" name="domain" value="test.3zuce.com"/>
+    <option type="ts_jabber" name="username" value="0000"/>
+    <option type="ts_jabber" name="passwd" value="0000"/>
+    <!--option name="ports_range" min="1024" max="65535"/-->
+  </options>
+  
+  <sessions>
+    <session probability="100" name="connections-test" type="ts_jabber">
+      
+      <transaction name="01_connect">
+	<request>
+	  <jabber type="connect" ack="local"/>
+	</request>
+      </transaction>
+      
+      <thinktime value="2"/>
+      
+      <transaction name="02_authenticate">
+	<request>
+	  <jabber type="auth_get" ack="local"/>
+	</request>
+	<thinktime value="2"/>
+	<request>
+	  <match do="abort" when="match">&lt;error code=</match>
+	  <jabber type="auth_set_plain" ack="local"/>
+	</request>
+      </transaction>
+      
+      <thinktime value="2"/>
+      
+      <transaction name="03_presence">
+	<request>
+	  <!--match do="dump" when="match">&lt;error code=</match-->
+	  <jabber type="presence:initial" ack="global"/>
+	</request>
+      </transaction>
+      
+      <!-- try to send 100 requests/s; for 60k users, max thinktime should be 600s (60,000/100) -->
+      <thinktime min="1" max="40" random="true"/>
+      <!--thinktime value="2"/-->
+      
+      <transaction name="04_close">
+	<request>
+	  <jabber type="close" ack="local"/>
+	</request>
+      </transaction>
+    </session>
+  </sessions>
+</tsung>

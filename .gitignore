@@ -1,0 +1,15 @@
+.classpath
+.project
+.idea
+.settings
+target
+*.iml
+.idea
+build/
+.gradle/
+local.properties
+
+
+apps/android-basic/project.properties
+apps/android-basic/bin/classes/
+apps/android-basic/gen/com/magnet/app/mmxclient/
