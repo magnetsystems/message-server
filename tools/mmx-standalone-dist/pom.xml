@@ -19,7 +19,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sandbox.dir>${project.build.directory}/sandbox</sandbox.dir>
-        <version.addon>1.2.3</version.addon>
+        <version.addon>${project.version}</version.addon>
     </properties>
 
     <build>
@@ -40,7 +40,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx</groupId>
                                     <artifactId>mmx-server</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${version.addon}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}</outputDirectory>
@@ -61,7 +61,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.devex</groupId>
                                     <artifactId>messaging-console-server</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${version.addon}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}</outputDirectory>
@@ -96,7 +96,7 @@
                             <goal>rename</goal>
                         </goals>
                         <configuration>
-                            <sourceFile>${sandbox.dir}/mmx-server-1.2.3</sourceFile>
+                            <sourceFile>${sandbox.dir}/mmx-server-${version.addon}</sourceFile>
                             <destinationFile>${sandbox.dir}/messaging</destinationFile>
                         </configuration>
                     </execution>
@@ -109,7 +109,7 @@
                 <inherited>true</inherited>
                 <configuration>
                     <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
-                    <finalName>mmx-standalone-dist-1.2.3</finalName>
+                    <finalName>mmx-standalone-dist-${version.addon}</finalName>
                 </configuration>
                 <executions>
                     <!-- step 6. zip up the server. please see bin.xml -->
