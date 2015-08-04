@@ -278,7 +278,8 @@
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/tsung</module>
         <module>tools/code-utils</module>
-        <module>integration_test</module>
+        <!-- commented out since this depends on client also 
+          <module>integration_test</module> -->
       </modules>
     </profile>
     <profile>
