@@ -9,7 +9,7 @@
 #
 # Usage: mmx-rel-build old-version new-version release-branch-name
 #
-# For example: mmx-rel-build 1.3.11 1.0.2 release-1.0.2-RC8
+# For example: mmx-rel-build 1.3.12 1.0.2 release-1.0.2-RC8
 #
 
 mmx-repo() {

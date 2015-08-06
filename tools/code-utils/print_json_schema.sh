@@ -15,7 +15,7 @@
 #
 
 
-GEN_SCRIPT_JAR="target/mmx-tools-code-utils-1.3.11-shaded.jar"
+GEN_SCRIPT_JAR="target/mmx-tools-code-utils-1.3.12-shaded.jar"
 if [ ! -e ${GEN_SCRIPT_JAR} ]; then
     buildCommand="mvn clean install"
     eval "$buildCommand"
