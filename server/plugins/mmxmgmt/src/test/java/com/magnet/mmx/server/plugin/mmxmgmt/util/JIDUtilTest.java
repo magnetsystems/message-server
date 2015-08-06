@@ -25,7 +25,7 @@ import static org.junit.Assert.assertNull;
 public class JIDUtilTest {
   @Test
   public void testGetAppId() throws Exception {
-    String serialJID = "nexus%i26u1lmv7uc@192.168.101.146/8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
+    String serialJID = "nexus%i26u1lmv7uc@192.168.101.146/8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
 
     String appId = JIDUtil.getAppId(serialJID);
     String expected = "i26u1lmv7uc";
@@ -34,23 +34,23 @@ public class JIDUtilTest {
 
   @Test
   public void testGetAppId2() throws Exception {
-    String serialJID = "nexus@192.168.101.146/8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
+    String serialJID = "nexus@192.168.101.146/8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
     String appId = JIDUtil.getAppId(serialJID);
     assertNull(appId);
   }
 
   @Test
   public void testGetAppId3() throws Exception {
-    String serialJID = "nexus%i26u1lmv7uc192.168.101.146/8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
+    String serialJID = "nexus%i26u1lmv7uc192.168.101.146/8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
     String appId = JIDUtil.getAppId(serialJID);
     assertNull(appId);
   }
 
   @Test
   public void testGetResource() throws Exception {
-    String serialJID = "nexus%i26u1lmv7uc@192.168.101.146/8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
+    String serialJID = "nexus%i26u1lmv7uc@192.168.101.146/8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
     String deviceId = JIDUtil.getResource(serialJID);
-    String expected = "8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
+    String expected = "8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
     assertEquals("Non matching appId", expected, deviceId);
   }
 }

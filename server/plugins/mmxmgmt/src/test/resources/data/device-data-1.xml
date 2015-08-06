@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
   <mmxDevice id="1" name="Login3&apos;s android" ownerJid="login3" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="8933536df7038e1b7" tokenType="GCM" clientToken="APA91bHaCculnOoolX0HV3f3CLHBY52C-H0lDS_m-lXXg5MbT9-EJiE6ooe0dUWURLuTQmVOttBS18cQwX5Pe-k9JDI2o8bqRhi3UZ0McTNs9JADvguH63vihIbVAgAjUm4K8mOZcRG4MC-edQBiiZ87l-GnQKpZ4ejBRP3j72oVQI6ooDavac4" versionInfo="macron" dateCreated="2014-09-09 15:36:35.0" status="ACTIVE" phoneNumber="4083084001" phoneNumberRev="1004803804" carrierInfo ="ATT"/>
-  <mmxDevice id="8" name="Johns phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.7678987654321" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
-  <mmxDevice id="9" name="John Tablet" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.7678987654322" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
+  <mmxDevice id="8" name="Johns phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.8678987654321" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
+  <mmxDevice id="9" name="John Tablet" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.8678987654322" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
   <!-- this is an inactive device -->
-  <mmxDevice id="10" name="Johns other phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.7678987654324" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="INACTIVE"/>
+  <mmxDevice id="10" name="Johns other phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.8678987654324" tokenType="GCM" clientToken="some-token" versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="INACTIVE"/>
   <mmxDevice id="11" name="Todd desktop" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="UNIX" deviceId="00001LINUX"  dateCreated="2014-09-30 17:17:07.0" status="ACTIVE"/>
-  <mmxDevice id="12" name="Buds Phone" ownerJid="bud.worker" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.7678987654323"  dateCreated="2014-09-30 17:17:07.0" status="INACTIVE"/>
-  <mmxDevice id="13" name="Login10 phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.7678987654300" tokenType="GCM"  versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
+  <mmxDevice id="12" name="Buds Phone" ownerJid="bud.worker" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.8678987654323"  dateCreated="2014-09-30 17:17:07.0" status="INACTIVE"/>
+  <mmxDevice id="13" name="Login10 phone" ownerJid="magnet.way" appId="AAABSNIBKOstQST7" osType="ANDROID" deviceId="1.3.8678987654300" tokenType="GCM"  versionInfo="macron" dateCreated="2014-09-09 17:17:07.0" status="ACTIVE"/>
 
   <mmxDevice id="17" name="iPhone Simulator" ownerJid="login3" appId="AAABSNIBKOstQST7" osType="IOS" deviceId="9D49D5B1-8694-48A3-9D00-EC00ACE25794" tokenType="APNS" versionInfo="iPhone OS,8.1" dateCreated="2015-01-06 16:06:36.0" dateUpdated="2015-01-16 15:27:47.0" status="ACTIVE"/>
   <mmxDevice id="18" name="iPhone Simulator" ownerJid="login3" appId="AAABSNIBKOstQST7" osType="IOS" deviceId="398668AF-2395-4B64-B300-60F0ABC7459F" versionInfo="iPhone OS,8.1" dateCreated="2015-01-07 12:14:40.0" dateUpdated="2015-01-16 15:16:51.0" status="ACTIVE"/>

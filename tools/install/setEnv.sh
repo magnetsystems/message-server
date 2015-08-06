@@ -27,7 +27,7 @@ if [ "$JENKINS" == "" ]; then # deploying from a dev machine
 
     # the ec2 instance hosting the openfire server
     # --------------------------------------------
-    export INSTANCE_NAME=54.1.3.77.28
+    export INSTANCE_NAME=54.1.3.87.28
 
     # openfire home
     # -------------

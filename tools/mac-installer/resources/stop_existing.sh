@@ -14,7 +14,7 @@
 #   limitations under the License.
 #
 old_home_101=mmx-standalone-dist-1.0.1
-old_home=mmx-standalone-dist-1.3.7
+old_home=mmx-standalone-dist-1.3.8
 log="/Users/$USER/mmx-standalone-dist_installlog.txt"
 
 if [ -d "/Users/$USER/$old_home_101" ]; then
