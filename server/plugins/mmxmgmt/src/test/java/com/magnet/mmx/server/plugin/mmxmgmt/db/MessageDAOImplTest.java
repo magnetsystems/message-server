@@ -174,7 +174,7 @@ public class MessageDAOImplTest {
 
     String messageId = "zWoNarzoTGOZEL0UTwDB2w-6";
     String appId = "i26u1lmv7uc";
-    String deviceId = "8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
+    String deviceId = "8D2F9E5595E9989FEF3D1.3.9BA0FBE0BB318ED0";
     MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
     int count = dao.messageDelivered(appId, deviceId, messageId);
     assertEquals("Non matching message count", 1, count);
@@ -197,7 +197,7 @@ public class MessageDAOImplTest {
   @Test
   public void testMessageWakeupSent2() {
     String messageId = "e4c86b2e16b64c64c953de1789fdaf6d";
-    String deviceId = "8D2F9E5595E9989FEF3D1.3.8BA0FBE0BB318ED0";
+    String deviceId = "8D2F9E5595E9989FEF3D1.3.9BA0FBE0BB318ED0";
     MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
     dao.wakeupSent(messageId, deviceId);
     MessageEntity entity = dao.get(messageId, deviceId);

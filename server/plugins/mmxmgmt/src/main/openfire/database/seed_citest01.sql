@@ -28,15 +28,15 @@ LOCK TABLES `mmxApp` WRITE;
 
 INSERT INTO `mmxApp` (`serverUserId`, `appName`, `appId`, `apiKey`, `encryptedApiKey`, `googleApiKey`, `googleProjectId`, `apnsCert`, `apnsCertPlainPassword`, `apnsCertEncryptedPassword`, `creationDate`, `modificationDate`, `ownerId`,`guestUserId`,`guestSecret`)
 VALUES
-	('undvrml25hx2%i1sfpss5cmw','unittestapp','i1sfpss5cmw','c9bcd6b9-1e16-434d-a8d3-74d7c52d34d3','8a4ae3d7b511945201999aef5c8b06521d2ecd96c540c84ff41dd3cd94a5cd55c95bf3fcedda6cab7f4f2432a2054f3da2acf5279df63135c080e203994d62af06b8501892ef54af6365628d4e42bded44e28d432155f37c',NULL,NULL,NULL,NULL,NULL,'2014-10-27 23:06:26','2014-10-27 23:06:26','82969470-6119-11e3-84c0-7bfab15be5f6','i1sfpss5cmw%i1sfpss5cmw','foobar');
+	('undvrml25hx2%i1sfpss5cmw','unittestapp','i1sfpss5cmw','c9bcd6b9-1e16-434d-a8d3-74d7c52d34d3','8a4ae3d7b511945201999aef5c8b06521d2ecd96c540c84ff41dd3cd94a5cd55c95bf3fcedda6cab7f4f2432a2054f3da2acf5279df63135c080e203994d62af06b8501892ef54af6365628d4e42bded44e28d432155f37c',NULL,NULL,NULL,NULL,NULL,'2014-10-27 23:06:26','2014-10-27 23:06:26','82969470-6119-11.3.94c0-7bfab15be5f6','i1sfpss5cmw%i1sfpss5cmw','foobar');
 
 INSERT INTO `mmxApp` (`serverUserId`, `appName`, `appId`, `apiKey`, `encryptedApiKey`, `googleApiKey`, `googleProjectId`, `apnsCert`, `apnsCertPlainPassword`, `apnsCertEncryptedPassword`, `creationDate`, `modificationDate`, `ownerId`,`guestUserId`,`guestSecret`)
 VALUES
-	('manager1magnetapi.com%i223hxed420','android-basic','i223hxed420','20fe8256-e121-4252-aeeb-09756e6794aa','c52385ec383d0034b0d200d81cc39e079457aa5883eef8b37359f1a6364a7e7dc8592ba16ebf133e38cd670c79b8564649d30136daa917548ce61df3d2ec9b633149c14f1b4b85afc418cf4604a2c2460624fcf9470f49ac','AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM','599981932022',NULL,NULL,NULL,'2014-11-03 17:22:06','2014-11-03 17:25:49','82969470-6119-11e3-84c0-7bfab15be5f6','i223hxed420%i223hxed420','nkun1m0qiwio');
+	('manager1magnetapi.com%i223hxed420','android-basic','i223hxed420','20fe8256-e121-4252-aeeb-09756e6794aa','c52385ec383d0034b0d200d81cc39e079457aa5883eef8b37359f1a6364a7e7dc8592ba16ebf133e38cd670c79b8564649d30136daa917548ce61df3d2ec9b633149c14f1b4b85afc418cf4604a2c2460624fcf9470f49ac','AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM','599981932022',NULL,NULL,NULL,'2014-11-03 17:22:06','2014-11-03 17:25:49','82969470-6119-11.3.94c0-7bfab15be5f6','i223hxed420%i223hxed420','nkun1m0qiwio');
 
 INSERT INTO `mmxApp` (`serverUserId`, `appName`, `appId`, `apiKey`, `encryptedApiKey`, `googleApiKey`, `googleProjectId`, `apnsCert`, `apnsCertPlainPassword`, `apnsCertEncryptedPassword`, `creationDate`, `modificationDate`, `ownerId`,`guestUserId`,`guestSecret`)
 VALUES
-	('manager1magnetapi.com%gkhi369rspz','Functional Test','gkhi369rspz','b2069100-421e-4156-8485-e026d441ac76','c1363c65cd8157a07de751084c3ec0a8d6d4b92e4a05256ad4d3db7440672dfe11e4ef14770eb63259c7b65a030a92e8c2dc8127cf76bc89f74c70ff5821a3eedad54f0cf81ec289c9bc2df11c8ba4f69e8ddcd0e9c64a88','AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM','599981932022',NULL,NULL,NULL,'2014-12-01 20:08:31','2014-12-01 20:27:37','82969470-6119-11e3-84c0-7bfab15be5f6','gkhi369rspz%gkhi369rspz','-j0wtpkh570st');
+	('manager1magnetapi.com%gkhi369rspz','Functional Test','gkhi369rspz','b2069100-421e-4156-8485-e026d441ac76','c1363c65cd8157a07de751084c3ec0a8d6d4b92e4a05256ad4d3db7440672dfe11e4ef14770eb63259c7b65a030a92e8c2dc8127cf76bc89f74c70ff5821a3eedad54f0cf81ec289c9bc2df11c8ba4f69e8ddcd0e9c64a88','AIzaSyDYVjCGwLXDn_ChatnbePadt5GMp_LxpFM','599981932022',NULL,NULL,NULL,'2014-12-01 20:08:31','2014-12-01 20:27:37','82969470-6119-11.3.94c0-7bfab15be5f6','gkhi369rspz%gkhi369rspz','-j0wtpkh570st');
 
 /*!40000 ALTER TABLE `mmxApp` ENABLE KEYS */;
 
