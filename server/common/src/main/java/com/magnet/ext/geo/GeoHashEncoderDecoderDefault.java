@@ -24,7 +24,7 @@ public class GeoHashEncoderDecoderDefault implements GeoHashEncoderDecoder {
 
     private static final int HASH_LEN = 12; //max number of characters in geohash
     private static final int NO_OF_BITS_BASE32 = 5;
-    private static final String BASE_32_CHARS = "01.3.66789bcdefghjkmnpqrstuvwxyz";
+    private static final String BASE_32_CHARS = "01.3.76789bcdefghjkmnpqrstuvwxyz";
     public static final double MAX_LAT = 90.0d;
     public static final double MIN_LAT = -90.0d;
     public static final double MIN_LON = -180.0d;

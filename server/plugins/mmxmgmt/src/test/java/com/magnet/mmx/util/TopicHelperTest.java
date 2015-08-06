@@ -131,7 +131,7 @@ public class TopicHelperTest {
 
   @Test
   public void test4InvalidTopicNames() {
-    String topicName = "01.3.6678901.3.6678901.3.6678901.3.6678901.3.6678901.3.66789";
+    String topicName = "01.3.7678901.3.7678901.3.7678901.3.7678901.3.7678901.3.76789";
     boolean valid = TopicHelper.validateApplicationTopicName(topicName);
     assertFalse("Topic name:" + topicName + " should be invalid", valid);
   }

@@ -151,7 +151,7 @@ public class MessageSenderImplTest {
   @Test
   public void testSendWithDeviceIdSpecifiedButNotRecipientId() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setDeviceId("1.3.6678987654322");
+    request.setDeviceId("1.3.7678987654322");
     String message = "Simple Message";
     request.setContent(message);
     request.setReceipt(true);
@@ -170,7 +170,7 @@ public class MessageSenderImplTest {
     Message builtMessage = ((MessageReturningStubMessageSenderImpl) sender).messageList.get(0);
     JID to = builtMessage.getTo();
     String expectedUserId = "magnet.way";
-    String expectedTo = expectedUserId + JIDUtil.APP_ID_DELIMITER + appId.toLowerCase() + "@" + sender.getDomain() + "/" + request.getDeviceId();  //importantuser%aaabsnibkostqst7@localhost/1.3.6678987654322
+    String expectedTo = expectedUserId + JIDUtil.APP_ID_DELIMITER + appId.toLowerCase() + "@" + sender.getDomain() + "/" + request.getDeviceId();  //importantuser%aaabsnibkostqst7@localhost/1.3.7678987654322
     String builtMessageXML = builtMessage.toXML();
     assertNotNull(builtMessageXML);
     assertEquals("Non matching to", expectedTo, to.toString());

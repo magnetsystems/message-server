@@ -148,8 +148,8 @@ public class DeviceDAOImplSearchTest {
 
     String appId = "AAABSNIBKOstQST7";
     List<String> deviceIds = new ArrayList<String>(10);
-    deviceIds.add("1.3.6678987654321");
-    deviceIds.add("1.3.6678987654322");
+    deviceIds.add("1.3.7678987654321");
+    deviceIds.add("1.3.7678987654322");
     deviceIds.add("00001LINUX");
 
     List<DeviceEntity> results = dao.getDevices(appId, deviceIds, DeviceStatus.ACTIVE);

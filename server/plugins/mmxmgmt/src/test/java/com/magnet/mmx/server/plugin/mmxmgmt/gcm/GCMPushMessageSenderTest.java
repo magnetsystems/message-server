@@ -59,7 +59,7 @@ public class GCMPushMessageSenderTest {
 
   private static BasicDataSource ds;
 
-  private static String BAD_TOKEN_DEVICE_ID = "1.3.6678987654300";
+  private static String BAD_TOKEN_DEVICE_ID = "1.3.7678987654300";
   private static String VALID_IOS_DEVICE_ID = "7215B73D-5325-49E1-806A-2E4A5B3F7020";
 
   @BeforeClass

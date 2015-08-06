@@ -146,7 +146,7 @@ public class PushMessageDAOImplTest {
   @Test
   public void testSearchDevicesUsingQueryBuilder() throws Exception {
     String appId = "i26u1lmv7uc";
-    String deviceId = "8D2F9E5595E9989FEF3D1.3.6BA0FBE0BB318ED0";
+    String deviceId = "8D2F9E5595E9989FEF3D1.3.7BA0FBE0BB318ED0";
 
     PushMessageQuery pushMessageQuery = new PushMessageQuery();
     pushMessageQuery.setDeviceIds(Arrays.asList(deviceId));
