@@ -65,7 +65,7 @@ public class DeviceHolderTest {
 
   @Test
   public void testHasDevices() {
-    String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "12345678987654321"};
+    String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "1.3.6678987654321"};
 
     DeviceDAO deviceDAO = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
     String appId = "AAABSNIBKOstQST7";
@@ -79,7 +79,7 @@ public class DeviceHolderTest {
 
   @Test
   public void testGetDevicesofType() {
-    String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "12345678987654321"};
+    String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "1.3.6678987654321"};
 
     DeviceDAO deviceDAO = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
     String appId = "AAABSNIBKOstQST7";
