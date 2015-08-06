@@ -24,7 +24,7 @@
 #
 
 for dir in . ../../../target; do
-  LIBS=${dir}/mmx-sanity-app-1.5.1-SNAPSHOT-shaded.jar
+  LIBS=${dir}/mmx-sanity-app-1.8.1-SNAPSHOT-shaded.jar
   if [ -f ${LIBS} ]; then
     break;
   fi
