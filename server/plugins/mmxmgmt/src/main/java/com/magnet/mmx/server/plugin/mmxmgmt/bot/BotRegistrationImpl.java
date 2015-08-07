@@ -36,7 +36,9 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BotRegistrationImpl implements BotRegistration {
   private static final Logger LOGGER = LoggerFactory.getLogger(BotRegistrationImpl.class);
@@ -136,13 +138,35 @@ public class BotRegistrationImpl implements BotRegistration {
         packet.setTo(fromJID);
 
         Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
-        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
+        Element recieptRequest = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
+        boolean receiptRequested = recieptRequest != null;
 
         List<Element> payloadList = mmx.elements(Constants.MMX_PAYLOAD);
         if (payloadList != null || !payloadList.isEmpty()) {
           Element payload = payloadList.get(0);
-          //String text = payload.getText();
           payload.setText(AMAZING_MESSAGE);
+        }
+        Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
+        String userId = JIDUtil.getUserId(fromJID);
+        String devId = fromJID.getResource();
+        String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
+        if (internalMeta != null) {
+          mmx.remove(internalMeta);
+        }
+        Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
+        revisedMeta.setText(mmxMetaJSON);
+        //add the content to meta and replace the meta object.
+        Map<String, String> metaMap =  new HashMap<String, String>();
+        metaMap.put("textContent", AMAZING_MESSAGE);
+        Element meta = mmx.element(Constants.MMX_META);
+        if (meta == null) {
+          meta = mmx.addElement(Constants.MMX_META);
+        }
+        meta.setText(GsonData.getGson().toJson(metaMap));
+
+        //remove the receipt request element if it exists in the incoming request
+        if (receiptRequested) {
+          message.deleteExtension(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
         }
         try {
           //add a little sleep to differentiate between the send and recvd time.
