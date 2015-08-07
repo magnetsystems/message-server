@@ -107,10 +107,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-        		<inherited>true</inherited>
-        		<configuration>
-	            <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
-		        <finalName>${artifactId}-${version.addon}</finalName>
+                <inherited>true</inherited>
+                <configuration>
+                    <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
+                    <finalName>${artifactId}-${version.addon}</finalName>
                 </configuration>
                 <executions>
                     <!-- step 6. zip up the server. please see bin.xml -->
