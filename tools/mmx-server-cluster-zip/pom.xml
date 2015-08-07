@@ -47,7 +47,7 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>com.magnet.mmx.ext</groupId>
-                                    <artifactId>mmx-openfire</artifactId>
+                                    <artifactId>openfire</artifactId>
                                     <version>${version.addon}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
