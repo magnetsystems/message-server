@@ -10,7 +10,6 @@
     </parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-server-cluster</artifactId>
-    <version>1.3.12</version>
     <packaging>pom</packaging>
 
     <name>mmx-server-cluster</name>
@@ -19,7 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sandbox.dir>${project.build.directory}/sandbox</sandbox.dir>
-        <version.addon>1.2.3</version.addon>
+        <version.addon>${project.version}</version.addon>
     </properties>
 
     <dependencies>
@@ -49,7 +48,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx.ext</groupId>
                                     <artifactId>mmx-openfire</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${version.addon}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}/mmx-server</outputDirectory>
@@ -111,7 +110,7 @@
         		<inherited>true</inherited>
         		<configuration>
 	            <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
-		        <finalName>${artifactId}-1.2.3</finalName>
+		        <finalName>${artifactId}-${version.addon}</finalName>
                 </configuration>
                 <executions>
                     <!-- step 6. zip up the server. please see bin.xml -->
