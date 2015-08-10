@@ -25,7 +25,7 @@ public class MMXMetaBuilderTest extends TestCase {
   public void testBuild3() throws Exception {
     String json = MMXMetaBuilder.build(null, null);
     assertNotNull(json);
-    String expected = "{\"To\":[{\"userId\":\"rahul\"}]}";
+    String expected = "{\"To\":[{}]}";
     assertEquals("Non matching json string", expected, json);
   }
 
