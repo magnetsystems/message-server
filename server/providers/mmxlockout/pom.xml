@@ -64,7 +64,8 @@
                     <goal>shade</goal>
                 </goals>
                 <configuration>
-                    <filters>
+                    <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+                     <filters>
                         <filter>
                             <artifact>com.magnet.mmx:*</artifact>
                             <includes>
