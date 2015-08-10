@@ -47,6 +47,7 @@ public class BotRegistrationImpl implements BotRegistration {
   private static final String BOT_DEVICE_NAME_TEMPLATE = "%s Device";
   private static final OSType BOT_DEVICE_OS_TYPE = OSType.OTHER;
   private static final String AMAZING_MESSAGE = "This is simply amazing";
+  private static final String TEXT_CONTENT = "textContent";
   /**
    * Register a bot with the specified mmxUserName.
    *
@@ -157,7 +158,7 @@ public class BotRegistrationImpl implements BotRegistration {
         revisedMeta.setText(mmxMetaJSON);
         //add the content to meta (as requested by iOS team) and replace the meta object.
         Map<String, String> metaMap =  new HashMap<String, String>();
-        metaMap.put("textContent", AMAZING_MESSAGE);
+        metaMap.put(TEXT_CONTENT, AMAZING_MESSAGE);
         Element meta = mmx.element(Constants.MMX_META);
         if (meta == null) {
           meta = mmx.addElement(Constants.MMX_META);
