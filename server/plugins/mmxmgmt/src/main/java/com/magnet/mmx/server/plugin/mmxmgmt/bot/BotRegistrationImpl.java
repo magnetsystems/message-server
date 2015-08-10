@@ -155,7 +155,7 @@ public class BotRegistrationImpl implements BotRegistration {
         }
         Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
         revisedMeta.setText(mmxMetaJSON);
-        //add the content to meta and replace the meta object.
+        //add the content to meta (as requested by iOS team) and replace the meta object.
         Map<String, String> metaMap =  new HashMap<String, String>();
         metaMap.put("textContent", AMAZING_MESSAGE);
         Element meta = mmx.element(Constants.MMX_META);
@@ -252,10 +252,28 @@ public class BotRegistrationImpl implements BotRegistration {
       if (packet instanceof Message) {
         LOGGER.debug("Sending the same message back");
         Message message = (Message) packet;
+        Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
 
         JID fromJID = message.getFrom();
         JID toJID = message.getTo();
         message.setTo(fromJID);
+
+        Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
+        String userId = JIDUtil.getUserId(fromJID);
+        String devId = fromJID.getResource();
+        String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
+        if (internalMeta != null) {
+          mmx.remove(internalMeta);
+        }
+
+        Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
+        revisedMeta.setText(mmxMetaJSON);
+
+        if (receiptRequested) {
+          //remove the receipt requested element to ensure we don't have a loop
+          message.deleteExtension(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
+        }
         try {
           //add a little sleep to differentiate between the send and recvd time.
           Thread.sleep(1000L);
@@ -278,8 +296,6 @@ public class BotRegistrationImpl implements BotRegistration {
           LOGGER.debug("Ack IQ:{}", ackIQ.toXML());
         }
         autoRespondingConnection.sendPacket(ackIQ);
-
-        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
 
         if (receiptRequested) {
           LOGGER.debug("Sending delivery receipt for message with id:{}", originalMessageId);
