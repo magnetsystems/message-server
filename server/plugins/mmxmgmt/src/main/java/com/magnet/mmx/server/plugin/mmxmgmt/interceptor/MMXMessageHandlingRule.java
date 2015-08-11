@@ -26,9 +26,20 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.PushStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.event.MMXXmppRateExceededEvent;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.ErrorMessageBuilder;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.ServerAckMessageBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterDescriptor;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterService;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertEventsManager;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.slf4j.Logger;
@@ -38,10 +49,12 @@ import org.xmpp.packet.PacketError;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXMessageHandlingRule.class);
   private static final String SERVER_USER = "serveruser";
+  private static final String SERVER_ACK_SENDER_POOL = "ServerAckSenderPool";
 
   public void handle(MMXMsgRuleInput input) throws PacketRejectedException {
     LOGGER.trace("handle : input={}", input);
@@ -234,6 +247,10 @@ public class MMXMessageHandlingRule {
           .build();
       XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), errorMessage, true);
     }
+    //build a message sent ack message to the sender of this message.
+    ServerAckMessageBuilder serverAckMessageBuilder = new ServerAckMessageBuilder(message, appEntity.getAppId());
+    Message serverAck = serverAckMessageBuilder.build();
+    sendServerAckMessage(serverAck);
   }
 
   /**
@@ -277,5 +294,21 @@ public class MMXMessageHandlingRule {
   private boolean canBeWokenUp(DeviceEntity deviceEntity) {
     return deviceEntity != null && deviceEntity.getClientToken() != null &&
         deviceEntity.getPushStatus() != PushStatus.INVALID;
+  }
+
+
+  /**
+   * Send the serverAck message asynchronously.
+   * @param serverAckMessage
+   */
+  protected void sendServerAckMessage(final Message serverAckMessage) {
+    ExecutorService service = MMXExecutors.getOrCreate(SERVER_ACK_SENDER_POOL, 10);
+    service.submit(new Runnable() {
+      @Override
+      public void run() {
+        PacketRouter router = XMPPServer.getInstance().getPacketRouter();
+        router.route(serverAckMessage);
+      }
+    });
   }
 }
