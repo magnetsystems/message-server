@@ -201,7 +201,8 @@ public class MMXMessageHandlingRule {
       }
       if (!isOnline) {
         //stop further processing of the message by throwing packet rejected exception since the user is not online.
-        throw new PacketRejectedException("Device offline, stopping processing for the message addressed to fullJID=" + input.getMessage().getTo());
+        throw new PacketRejectedException("Device offline, stopping processing for the message addressed to fullJID="
+            + input.getMessage().getTo());
       }
     }
   }
@@ -310,19 +311,6 @@ public class MMXMessageHandlingRule {
   private boolean canBeWokenUp(DeviceEntity deviceEntity) {
     return deviceEntity != null && deviceEntity.getClientToken() != null &&
         deviceEntity.getPushStatus() != PushStatus.INVALID;
-  }
-
-
-  /**
-   * Check if the input message has the distributed flag set
-   * @param input
-   * @return
-   */
-  public boolean isDistributedMessage(Message input) {
-    boolean rv = false;
-    MessageAnnotator annotator = new MessageDistributedAnnotator();
-    rv = annotator.isAnnotated(input);
-    return rv;
   }
 
 
