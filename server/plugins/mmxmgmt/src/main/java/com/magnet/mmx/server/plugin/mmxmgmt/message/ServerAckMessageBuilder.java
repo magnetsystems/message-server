@@ -20,6 +20,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.JSONifiable;
+import com.magnet.mmx.util.Utils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
@@ -27,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +39,11 @@ public class ServerAckMessageBuilder {
   private Message originalMessage;
   private String appId;
 
+  /**
+   * Constructor
+   * @param originalMessage
+   * @param appId
+   */
   public ServerAckMessageBuilder(Message originalMessage, String appId) {
     this.originalMessage = originalMessage;
     this.appId = appId;
@@ -56,11 +64,11 @@ public class ServerAckMessageBuilder {
     String receiverDeviceId = receiver.getResource();
 
     Message ackMessage = new Message();
-    ackMessage.setType(Message.Type.normal);
+    ackMessage.setType(Message.Type.chat);
     ackMessage.setFrom(appId + "%" + appId + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
     ackMessage.setTo(sender);
     ackMessage.setID(new MessageIdGeneratorImpl().generate(sender.toString(), appId, senderDeviceId));
-    Element mmxElement = ackMessage.addChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+    Element mmxElement = ackMessage.addChildElement(Constants.MMX, Constants.MMX_NS_MSG_SIGNAL);
     Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
     Map<String, ServerAckMmxMeta> mmxMetaMap = new HashMap<String, ServerAckMmxMeta>();
     ServerAckMmxMeta meta = new ServerAckMmxMeta();
@@ -71,8 +79,16 @@ public class ServerAckMessageBuilder {
 
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMetaMap);
     mmxMetaElement.setText(mmxMetaJSON);
-    ackMessage.setBody(MMXServerConstants.MESSAGE_BODY_DOT);
 
+    Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
+
+    DateFormat fmt = Utils.buildISO8601DateFormat();
+    String formattedDateTime = fmt.format(new Date());
+    payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
+    String text = ".";
+    payloadElement.setText(text);
+    payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, MessageBuilder.buildChunkAttributeValue(text));
+    ackMessage.setBody(MMXServerConstants.MESSAGE_BODY_DOT);
     return ackMessage;
   }
 
@@ -111,11 +127,4 @@ public class ServerAckMessageBuilder {
       receiver = entry;
     }
   }
-
-
-
-
-
-
-
 }

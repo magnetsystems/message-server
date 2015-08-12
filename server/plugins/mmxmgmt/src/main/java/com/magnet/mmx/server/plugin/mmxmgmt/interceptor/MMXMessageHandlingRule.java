@@ -166,6 +166,8 @@ public class MMXMessageHandlingRule {
       MessageEntity messageEntity = getMessageEntity(input.getMessage());
       MMXPresenceFinder presenceFinder = new MMXPresenceFinderImpl();
       boolean isOnline = presenceFinder.isOnline(input.getMessage().getTo());
+      AppDAO appDAO = DBUtil.getAppDAO();
+      AppEntity appEntity = appDAO.getAppForAppKey(appId);
       if (!isOnline) {
         MMXOfflineStorageUtil.storeMessage(input.getMessage());
         /**
@@ -175,8 +177,6 @@ public class MMXMessageHandlingRule {
         boolean wakeupPossible = canBeWokenUp(deviceEntity);
         if (wakeupPossible) {
           messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
-          AppDAO appDAO = DBUtil.getAppDAO();
-          AppEntity appEntity = appDAO.getAppForAppKey(appId);
           WakeupUtil.queueWakeup(appEntity, deviceEntity, messageEntity.getMessageId());
         } else {
           if (LOGGER.isDebugEnabled()) {
@@ -185,10 +185,23 @@ public class MMXMessageHandlingRule {
           messageEntity.setState(MessageEntity.MessageState.PENDING);
         }
         DBUtil.getMessageDAO().persist(messageEntity);
-        throw new PacketRejectedException("Device offline, stopping processing for the message addressed to fullJID=" + input.getMessage().getTo());
       } else {
         messageEntity.setState(MessageEntity.MessageState.DELIVERY_ATTEMPTED);
         DBUtil.getMessageDAO().persist(messageEntity);
+      }
+      //send a server ack message if the message is direct message to a full JID and not a distributed message.
+      Message mmxMessage = input.getMessage();
+      MessageAnnotator annotator = new MessageDistributedAnnotator();
+      boolean isDistributed = annotator.isAnnotated(mmxMessage);
+      if (!isDistributed) {
+        //send the server ack message.
+        ServerAckMessageBuilder serverAckMessageBuilder = new ServerAckMessageBuilder(mmxMessage, appEntity.getAppId());
+        Message serverAck = serverAckMessageBuilder.build();
+        sendServerAckMessage(serverAck);
+      }
+      if (!isOnline) {
+        //stop further processing of the message by throwing packet rejected exception since the user is not online.
+        throw new PacketRejectedException("Device offline, stopping processing for the message addressed to fullJID=" + input.getMessage().getTo());
       }
     }
   }
@@ -209,7 +222,9 @@ public class MMXMessageHandlingRule {
       // It is a multicast message (XEP-0033); let MulticastRouter handle it.
       return;
     }
-
+    //annotate the message to indicate that we have distributed it.
+    MessageAnnotator annotator = new MessageDistributedAnnotator();
+    annotator.annotate(message);
     LOGGER.trace("handleBareJID : message={}", message);
     MessageEntity messageEntity = MMXMessageHandlingRule.getMessageEntity(message);
     String domain = message.getTo().getDomain();
@@ -246,11 +261,12 @@ public class MMXMessageHandlingRule {
           .setError(error)
           .build();
       XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), errorMessage, true);
+    } else {
+      //build a message sent ack message to the sender of this message.
+      ServerAckMessageBuilder serverAckMessageBuilder = new ServerAckMessageBuilder(message, appEntity.getAppId());
+      Message serverAck = serverAckMessageBuilder.build();
+      sendServerAckMessage(serverAck);
     }
-    //build a message sent ack message to the sender of this message.
-    ServerAckMessageBuilder serverAckMessageBuilder = new ServerAckMessageBuilder(message, appEntity.getAppId());
-    Message serverAck = serverAckMessageBuilder.build();
-    sendServerAckMessage(serverAck);
   }
 
   /**
@@ -298,15 +314,34 @@ public class MMXMessageHandlingRule {
 
 
   /**
+   * Check if the input message has the distributed flag set
+   * @param input
+   * @return
+   */
+  public boolean isDistributedMessage(Message input) {
+    boolean rv = false;
+    MessageAnnotator annotator = new MessageDistributedAnnotator();
+    rv = annotator.isAnnotated(input);
+    return rv;
+  }
+
+
+  /**
    * Send the serverAck message asynchronously.
    * @param serverAckMessage
    */
   protected void sendServerAckMessage(final Message serverAckMessage) {
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("Sending server ack message:{}", serverAckMessage);
+    }
     ExecutorService service = MMXExecutors.getOrCreate(SERVER_ACK_SENDER_POOL, 10);
     service.submit(new Runnable() {
       @Override
       public void run() {
         PacketRouter router = XMPPServer.getInstance().getPacketRouter();
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("Sending server ack message:{}", serverAckMessage);
+        }
         router.route(serverAckMessage);
       }
     });
