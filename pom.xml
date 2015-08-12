@@ -239,14 +239,7 @@
         </file>
       </activation>
       <modules>
-        <!--
-        <module>common</module>
-        <module>client</module>
-        -->
         <module>server</module>
-        <!-- 
-        <module>apps</module>
-        -->
         <module>tools/tsung</module>
         <module>tools/mmx-sanity-app</module>
         <module>tools/mmx-server-cluster-zip</module>
@@ -264,22 +257,13 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <modules>
-        <!--
-        <module>common</module>
-        <module>client</module>
-        -->
         <module>server</module>
-        <!--
-        <module>apps</module>
-       -->
-         <module>tools/mmx-server-zip</module>
+        <module>tools/mmx-server-zip</module>
         <module>tools/mmx-standalone-dist</module>
         <module>tools/mmx-standalone-dist-win</module>
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/tsung</module>
         <module>tools/code-utils</module>
-        <!-- commented out since this depends on client also 
-          <module>integration_test</module> -->
       </modules>
     </profile>
     <profile>
@@ -290,8 +274,6 @@
         </file>
       </activation>
       <modules>
-        <!--<module>common</module>
-        <module>client</module> -->
         <module>server</module>
       </modules>
     </profile>
