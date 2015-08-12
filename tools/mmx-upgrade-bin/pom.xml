@@ -19,7 +19,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sandbox.dir>${project.build.directory}/sandbox</sandbox.dir>
-        <version.addon>1.2.3</version.addon>
+        <version.addon>${project.version}</version.addon>
     </properties>
 
     <build>
@@ -40,7 +40,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx.ext</groupId>
                                     <artifactId>openfire</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${project.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/${project.artifactId}/lib</outputDirectory>
@@ -49,7 +49,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx</groupId>
                                     <artifactId>mmx-server-providers-lockout</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${project.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/${project.artifactId}/lib</outputDirectory>
@@ -58,7 +58,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx</groupId>
                                     <artifactId>mmxmgmt</artifactId>
-                                    <version>1.2.3</version>
+                                    <version>${project.version}</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/${project.artifactId}/plugins</outputDirectory>

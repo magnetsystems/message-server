@@ -177,7 +177,7 @@ public class TestApp {
           accountGet(message.getFrom().getUserId());
         }
         if (payload.getMetaData("type", null).equals("LARGEMSG")) {
-          println("onMessageReceived: LARGEMSG, hdrs="+message.getAllMetaData()+
+          println("onMessageReceived: LARGEMSG, hdrs="+message.getPayload().getAllMetaData()x+
               ", size="+payload.getDataSize()+", elapsed="+elapsed);
           println(Utils.subSequenceHeadTail(payload.getDataAsText(), 1024));
         } else {

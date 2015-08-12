@@ -19,7 +19,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2.3</version>
+        <version>${project.version}</version>
         <configuration>
           <executable>java</executable>
           <arguments>
@@ -46,12 +46,12 @@
     <dependency>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-client-java</artifactId>
-      <version>1.2.3</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-common-api</artifactId>
-      <version>1.2.3</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -72,7 +72,7 @@
     <dependency>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-client-common-api</artifactId>
-      <version>1.2.3</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
