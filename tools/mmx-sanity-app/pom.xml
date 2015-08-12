@@ -22,7 +22,7 @@
     <dependency>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-client-java</artifactId>
-      <version>1.2.3</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>com.samskivert</groupId>
