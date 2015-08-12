@@ -22,7 +22,7 @@ The build will generate the following installation packages:
 `./tools/mmx-standalone-dist/target/mmx-standalone-dist-{version}.zip`
 2. Linux / Mac OS X installer for clustered mode:
 `./tools/mmx-server-cluster-zip/target/mmx-server-cluster-{version}.zip`
-3.Windows installer for standalone mode:
+3. Windows installer for standalone mode:
 `./tools/mmx-standalone-dist-win/target/mmx-standalone-dist-win-{version}.zip`
 
 There are README files in each of the individual packages for server installation instructions.
