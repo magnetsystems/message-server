@@ -28,6 +28,6 @@ The build will generate the following installation packages:
 There are README files in each of the individual packages for server installation instructions.
 
 ### Note
-For detailed installation instructions for your favorite platform, please check (Magnet's developer hub)[https://docs.magnet.com/message/local-installation/]
+For detailed installation instructions for your favorite platform, please check [Magnet's developer hub](https://docs.magnet.com/message/local-installation/)
 
 
