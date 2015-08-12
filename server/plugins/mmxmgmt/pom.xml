@@ -64,8 +64,8 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>com.magnet.mmx.ext</groupId>
-                  <artifactId>mmx-openfire</artifactId>
-                  <version>1.2.3</version>
+                  <artifactId>openfire</artifactId>
+                  <version>${project.version}</version>
                   <type>zip</type>
                   <overWrite>false</overWrite>
                   <outputDirectory>${project.build.directory}/mmx-openfire</outputDirectory>
