@@ -31,14 +31,17 @@ public class MMXMetaBuilder {
    */
   public static String build (String userId, String deviceId) {
     MetaTo metaTo = new MetaTo();
-    MetaEntry entry = new MetaEntry();
+    MetaToEntry entry = new MetaToEntry();
     entry.setUserId(userId);
     entry.setDevId(deviceId);
     metaTo.setTo(Collections.singletonList(entry));
     return metaTo.toJson();
   }
 
-  private static class MetaEntry extends JSONifiable {
+  /**
+   * Class that represents an entry in the To list.
+   */
+  public static class MetaToEntry extends JSONifiable {
     private String devId;
     private String userId;
 
@@ -64,14 +67,14 @@ public class MMXMetaBuilder {
    */
   private static class MetaTo extends JSONifiable {
     @SerializedName("To")
-    private List<MetaEntry> to = new ArrayList<MetaEntry>();
+    private List<MetaToEntry> to = new ArrayList<MetaToEntry>();
 
 
-    public List<MetaEntry> getTo() {
+    public List<MetaToEntry> getTo() {
       return to;
     }
 
-    public void setTo(List<MetaEntry> to) {
+    public void setTo(List<MetaToEntry> to) {
       this.to = to;
     }
   }

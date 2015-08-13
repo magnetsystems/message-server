@@ -274,8 +274,6 @@
         </file>
       </activation>
       <modules>
-        <!--<module>common</module>
-        <module>client</module> -->
         <module>server</module>
       </modules>
     </profile>

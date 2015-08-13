@@ -15,6 +15,9 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
 import com.google.common.base.Strings;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.magnet.mmx.protocol.Constants;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -66,6 +69,11 @@ public class MMXMessageUtil {
       return false;
     }
 
+    if (isServerAckMessage(mmxMessage)) {
+      LOGGER.debug("isValidDistributableMessage :false packet is a ServerAck message");
+      return false;
+    }
+
     return true;
   }
 
@@ -106,5 +114,30 @@ public class MMXMessageUtil {
 
   public static boolean isConfirmationMessage(Message message) {
     return message.getExtension(Constants.XMPP_RECEIVED, Constants.XMPP_NS_RECEIPTS) != null;
+  }
+
+
+  /**
+   * Check if the message is a server ack message.
+   * @param message
+   * @return
+   */
+  private static boolean isServerAckMessage(Message message) {
+    Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_SIGNAL);
+    if (mmx == null) {
+      return false;
+    }
+    Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
+    String json = internalMeta != null ? internalMeta.getText() : null;
+    if (json == null) {
+      return false;
+    }
+    JsonElement jsonElement = new JsonParser().parse(json);
+    if (jsonElement == null || !jsonElement.isJsonObject()) {
+      return false;
+    }
+    JsonObject jsonObject = jsonElement.getAsJsonObject();
+    boolean serverAck = jsonObject.has(MMXServerConstants.SERVER_ACK_KEY);
+    return serverAck;
   }
 }
