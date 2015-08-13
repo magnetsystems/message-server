@@ -14,7 +14,7 @@ To try out Magnet Message server in a sandbox environment please go to Magnet's 
 - Maven 3 or above.
 
 1. `git clone https://github.com/magnetsystems/message-server`
-2. `mvn clean install -s settings-magnet.xml`
+2. `mvn clean install -s settings-magnet.xml -gs settings-magnet.xml`
 
 The build will generate the following installation packages:
 

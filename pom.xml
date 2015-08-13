@@ -11,7 +11,7 @@
 
   <groupId>com.magnet.mmx</groupId>
   <artifactId>mmx-root</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>1.5.0-SNAPSHOT</version>
 
   <packaging>pom</packaging>
   <name>Magnet Messaging Root</name>
@@ -241,14 +241,14 @@
       <modules>
         <module>server</module>
         <module>tools/tsung</module>
-        <module>tools/mmx-sanity-app</module>
+        <!-- <module>tools/mmx-sanity-app</module> -->
         <module>tools/mmx-server-cluster-zip</module>
         <module>tools/mmx-server-zip</module>
         <module>tools/mmx-standalone-dist</module>
         <module>tools/mmx-standalone-dist-win</module>
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/code-utils</module>
-        <module>tools/mmx-perf-driver</module>
+        <!--<module>tools/mmx-perf-driver</module> -->
       </modules>
     </profile>
     <profile>
