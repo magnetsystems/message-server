@@ -33,6 +33,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Builder that builds the server ack message.
+ */
 public class ServerAckMessageBuilder {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerAckMessageBuilder.class);
@@ -51,7 +54,7 @@ public class ServerAckMessageBuilder {
 
   /**
    * Build the ServerAckMessage
-   * @return
+   * @return Message
    */
   public Message build() {
 
@@ -75,7 +78,7 @@ public class ServerAckMessageBuilder {
     meta.setAckForMsgId(originalMessage.getID());
     meta.setReceiver(receiverUserId, receiverDeviceId);
     meta.setSender(senderUserId, senderDeviceId);
-    mmxMetaMap.put("serverack", meta);
+    mmxMetaMap.put(MMXServerConstants.SERVER_ACK_KEY, meta);
 
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMetaMap);
     mmxMetaElement.setText(mmxMetaJSON);
@@ -92,6 +95,9 @@ public class ServerAckMessageBuilder {
     return ackMessage;
   }
 
+  /**
+   * Class for modeling the server ack mmx meta data.
+   */
   static class ServerAckMmxMeta extends JSONifiable {
     private String ackForMsgId;
     private MMXMetaBuilder.MetaToEntry sender;
