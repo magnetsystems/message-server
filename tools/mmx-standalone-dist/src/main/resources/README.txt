@@ -5,7 +5,7 @@
  -------------------------------------------------------------------------------
   Magnet Message
   version number:
-  1.4.5
+  1.4.6
 
   JUNE 12, 2015
   -------------------------------------------------------------------------------
@@ -81,15 +81,15 @@ For more details on Magnet Message, please visit: https://www.magnet.com/develop
   IMPORTANT: You should always start and stop the server with the included shell script (mmx.sh).
 
   Start
-  Use a terminal and cd to “~/mmx-standalone-dist-1.4.5“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
+  Use a terminal and cd to “~/mmx-standalone-dist-1.4.6“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
   Execute “./mmx.sh start".
 
   Stop
-  Use a terminal and cd to “~/mmx-standalone-dist-1.4.5“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
+  Use a terminal and cd to “~/mmx-standalone-dist-1.4.6“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
   Execute “./mmx.sh stop".
 
   Restart
-  Use a terminal and cd to “~/mmx-standalone-dist-1.4.5“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
+  Use a terminal and cd to “~/mmx-standalone-dist-1.4.6“ (for Mac) or the directory that you have unzipped the zip file to instead of “~” (for Linux).
   Execute “./mmx.sh restart".
 
 
