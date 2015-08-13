@@ -64,9 +64,8 @@ then
 	exit 0
 fi
 
-file_ct=$(git grep -lz $s | xargs -0 | wc -w | xargs echo)
-
-line_ct=$(git grep -lz $s | xargs -0 grep $s | wc -l | xargs echo)
+file_ct=$(git grep -lz $s -- `git ls-files | grep -v pom.xml` | xargs -0 | wc -w | xargs echo)
+line_ct=$(git grep -lz $s -- `git ls-files | grep -v pom.xml` | xargs -0 grep $s | wc -l | xargs echo)
 
 if [ $line_ct -ne $l ];
 then
@@ -82,4 +81,4 @@ fi
 
 echo "Replacing '$s' with '$r'"
 
-git grep -lz $s | xargs -0 perl -i'' -pE "s/$s/$r/g"
+git grep -lz $s -- `git ls-files | grep -v pom.xml` | xargs -0 perl -i'' -pE "s/$s/$r/g"

@@ -26,8 +26,8 @@ then
 	usage
 fi
 
-line_ct=$(git grep -lz $s | xargs -0 grep $s | wc -l | xargs echo)
-file_ct=$(git grep -lz $s | xargs -0 | wc -w | xargs echo)
+line_ct=$(git grep -lz $s -- `git ls-files | grep -v pom.xml` | xargs -0 grep $s | wc -l | xargs echo)
+file_ct=$(git grep -lz $s -- `git ls-files | grep -v pom.xml` | xargs -0 | wc -w | xargs echo)
 
 echo "filecount=$file_ct"
 echo "linecount=$line_ct"
