@@ -6,13 +6,13 @@
   <parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-root</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.4.1</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <groupId>com.magnet.mmx</groupId>
   <artifactId>mmx-perf-driver</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>1.4.1</version>
   <packaging>jar</packaging>
 
   <name>MMX Performance Driver</name>
