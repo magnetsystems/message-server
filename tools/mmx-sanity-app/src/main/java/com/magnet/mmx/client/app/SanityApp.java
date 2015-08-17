@@ -425,6 +425,11 @@ public class SanityApp {
         
         // Sanity test 2: create a topic, subscribe the topic, publish to the
         // topic, fetch the item.
+        try {
+          mPubMgr.deleteTopic(VITAL_TOPIC);
+        } catch (Throwable e) {
+          // Ignored.
+        }
         MMXTopic topic = mPubMgr.createTopic(VITAL_TOPIC, mTopicOpts);
         if (!topic.equals(VITAL_TOPIC)) {
           throw new RuntimeException("Mismatch topic: "+VITAL_TOPIC+" != "+topic);
@@ -450,7 +455,7 @@ public class SanityApp {
           throw new RuntimeException("Fetched item mismatched: "+
               VITAL_POJO+"!="+payload);
         }
-      } catch (MMXException e) {
+      } catch (Throwable e) {
         waitForIO();
         throw e;
       } finally {
