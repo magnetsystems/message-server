@@ -1763,6 +1763,33 @@ public class MMXTopicManager {
     return resp;
   }
   
+  public TopicAction.SubscribersResponse getSubscribers(JID from, String appId,
+      TopicAction.SubscribersRequest rqt) throws MMXException {
+    String topic = TopicHelper.normalizePath(rqt.getTopic());
+    String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
+    Node node = mPubSubModule.getNode(realTopic);
+    if (node == null) {
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
+          StatusCode.TOPIC_NOT_FOUND.getCode());
+    }
+
+    JID owner = from.asBareJID();
+    // Check if the requester has any affiliations but not outcast affiliation.
+    NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
+    if (nodeAffiliate == null ||
+        nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
+          StatusCode.FORBIDDEN.getCode());
+    }
+
+    // TODO: a stub response.
+    TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()
+      .setTotal(0).setSubscribers(null);
+    resp.setCode(StatusCode.SUCCESS.getCode())
+      .setMessage(StatusCode.SUCCESS.getMessage());
+    return resp;
+  }
+  
   /**
    * Enum for the status codes
    */
