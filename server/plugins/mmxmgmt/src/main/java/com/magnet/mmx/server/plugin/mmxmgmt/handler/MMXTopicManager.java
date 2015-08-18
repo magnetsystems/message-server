@@ -1778,14 +1778,18 @@ public class MMXTopicManager {
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
 
-    JID requester = from.asBareJID();
-    // Check if the requester has any affiliations but not outcast affiliation.
-    NodeAffiliate nodeAffiliate = node.getAffiliate(requester);
-    if (nodeAffiliate == null ||
-        nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
-          StatusCode.FORBIDDEN.getCode());
+    if (rqt.getUserId() != null) {
+      //do the affiliation check only for personal topics
+      JID requester = from.asBareJID();
+      // Check if the requester has any affiliations but not outcast affiliation.
+      NodeAffiliate nodeAffiliate = node.getAffiliate(requester);
+      if (nodeAffiliate == null ||
+          nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
+            StatusCode.FORBIDDEN.getCode());
+      }
     }
+
     Collection<NodeSubscription> allSubscriptions = node.getAllSubscriptions();
     /**
      * all subscriptions has all subscriptions in all possible states. We need
@@ -1804,8 +1808,9 @@ public class MMXTopicManager {
     }
     List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
     UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
-    int addedCount = 0;
+    int addedCount = 0; //for applying the limit
     for (String username : subscriberUserNameSet) {
+      //TODO: Improve this
       UserEntity userEntity = userDAO.getUser(username);
       com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
       if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
@@ -1814,6 +1819,7 @@ public class MMXTopicManager {
       userInfoList.add(userInfo);
       addedCount++;
     }
+
     TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()
       .setTotal(count).setSubscribers(userInfoList);
     resp.setCode(StatusCode.SUCCESS.getCode())
