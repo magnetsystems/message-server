@@ -40,6 +40,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
 import com.magnet.mmx.util.AppHelper;
+import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.Utils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -122,6 +123,8 @@ public class MMXUserHandler extends IQHandler {
       }
       
       switch(cmd) {
+      case list:
+        return handleListUsers(packet, fromJID, appId, payload);
       case get:
         return handleGetUser(packet, fromJID, appId, payload);
       case search:
@@ -328,6 +331,38 @@ public class MMXUserHandler extends IQHandler {
     userResp.setCode(UserOperationStatusCode.USER_UPDATED.getCode());
     userResp.setMessage(UserOperationStatusCode.USER_UPDATED.getMessage());
     IQ response = IQUtils.createResultIQ(packet, userResp.toJson());
+    return response;
+  }
+  
+  private static class ListOfUserId extends ArrayList<UserId> {
+    public ListOfUserId() {
+      super();
+    }
+    
+    public ListOfUserId(int size) {
+      super(size);
+    }
+  }
+  
+  IQ handleListUsers(IQ packet, JID from, String appId, String payload)
+      throws UnauthorizedException {
+    List<UserId> userIds = GsonData.getGson().fromJson(payload, ListOfUserId.class);
+    HashMap<String, UserInfo> map = new HashMap<String, UserInfo>(userIds.size());
+    UserManager userManager = XMPPServer.getInstance().getUserManager();
+    for (UserId userId : userIds) {
+      try {
+        String uid = userId.getUserId();
+        String userName = JIDUtil.makeNode(uid, appId);
+        User user = userManager.getUser(userName);
+        map.put(uid, new UserInfo()
+          .setUserId(uid))
+          .setDisplayName(user.getName())
+          .setEmail(user.getEmail());
+      } catch (UserNotFoundException e) {
+        // Ignored.
+      }
+    }
+    IQ response = IQUtils.createResultIQ(packet, GsonData.getGson().toJson(map));
     return response;
   }
   
