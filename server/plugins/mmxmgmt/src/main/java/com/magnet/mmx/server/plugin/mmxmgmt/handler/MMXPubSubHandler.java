@@ -168,6 +168,10 @@ public class MMXPubSubHandler extends IQHandler {
         TopicAction.FetchResponse getresp = topicMgr.getItems(from, appId, 
             TopicAction.ItemsByIdsRequest.fromJson(payload));
         return IQUtils.createResultIQ(iq, getresp.toJson());
+      case getSubscribers:
+        TopicAction.SubscribersResponse subresp = topicMgr.getSubscribers(from,
+            appId, TopicAction.SubscribersRequest.fromJson(payload));
+        return IQUtils.createResultIQ(iq,  GsonData.getGson().toJson(subresp));
       }
     } catch (IllegalArgumentException e) {
       Log.info("Invalid pubsub command string:" + commandId, e);
