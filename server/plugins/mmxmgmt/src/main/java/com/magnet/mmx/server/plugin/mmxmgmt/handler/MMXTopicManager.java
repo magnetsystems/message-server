@@ -18,7 +18,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXAttribute;
 import com.magnet.mmx.protocol.MMXStatus;
-import com.magnet.mmx.protocol.MMXTopic;
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXTopicOptions;
 import com.magnet.mmx.protocol.OSType;
@@ -32,6 +31,7 @@ import com.magnet.mmx.protocol.TopicSummary;
 import com.magnet.mmx.server.api.v1.protocol.TopicCreateInfo;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DbInteractionException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
@@ -39,6 +39,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.ConfigureForm.PublishModel;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.TopicQueryBuilder;
@@ -84,9 +87,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class MMXTopicManager {
 
@@ -1761,6 +1766,69 @@ public class MMXTopicManager {
     TopicAction.FetchResponse resp = new TopicAction.FetchResponse(
         rqt.getUserId(), topic, mmxItems);
     return resp;
+  }
+  
+  public TopicAction.SubscribersResponse getSubscribers(JID from, String appId,
+      TopicAction.SubscribersRequest rqt) throws MMXException {
+    String topic = TopicHelper.normalizePath(rqt.getTopic());
+    String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
+    Node node = mPubSubModule.getNode(realTopic);
+    if (node == null) {
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
+          StatusCode.TOPIC_NOT_FOUND.getCode());
+    }
+
+    if (rqt.getUserId() != null) {
+      //do the affiliation check only for personal topics
+      JID requester = from.asBareJID();
+      // Check if the requester has any affiliations but not outcast affiliation.
+      NodeAffiliate nodeAffiliate = node.getAffiliate(requester);
+      if (nodeAffiliate == null ||
+          nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
+            StatusCode.FORBIDDEN.getCode());
+      }
+    }
+
+    Collection<NodeSubscription> allSubscriptions = node.getAllSubscriptions();
+    /**
+     * all subscriptions has all subscriptions in all possible states. We need
+     * cull out subscriptions in state == subscribed.
+     */
+    int count = 0;
+    TreeSet<String> subscriberUserNameSet = new TreeSet<String>();
+    for (NodeSubscription ns : allSubscriptions) {
+      if ((ns.getState() != null) && (ns.getState() == NodeSubscription.State.subscribed)) {
+        JID subscriberJID = ns.getJID();
+        String subscriberJIDNode = subscriberJID.getNode();
+        String username = subscriberJIDNode;
+        subscriberUserNameSet.add(username);
+        count++;
+      }
+    }
+    List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
+    UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
+    int addedCount = 0; //for applying the limit
+    for (String username : subscriberUserNameSet) {
+      //TODO: Improve this
+      UserEntity userEntity = userDAO.getUser(username);
+      com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+      if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
+        break;
+      }
+      userInfoList.add(userInfo);
+      addedCount++;
+    }
+
+    TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()
+      .setTotal(count).setSubscribers(userInfoList);
+    resp.setCode(StatusCode.SUCCESS.getCode())
+      .setMessage(StatusCode.SUCCESS.getMessage());
+    return resp;
+  }
+
+  public ConnectionProvider getConnectionProvider() {
+    return new OpenFireDBConnectionProvider();
   }
   
   /**

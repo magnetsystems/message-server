@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.search.UserEntityPostProcessor;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlRootElement;
@@ -128,5 +129,18 @@ public class UserEntity {
       }
       return entity;
     }
+  }
+
+  /**
+   * Get userinfo object from an user entity.
+   * @param entity
+   * @return
+   */
+  public static com.magnet.mmx.protocol.UserInfo toUserInfo(UserEntity entity) {
+    com.magnet.mmx.protocol.UserInfo info = new com.magnet.mmx.protocol.UserInfo();
+    info.setUserId(JIDUtil.getReadableUserId(entity.getUsername()));
+    info.setEmail(entity.getEmail());
+    info.setDisplayName(entity.getName());
+    return info;
   }
 }
