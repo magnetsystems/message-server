@@ -13,7 +13,8 @@ public class RPSLSGameInfoTest {
 
   @Test
   public void testGetType() throws Exception {
-    String json = "{ \"gameId\" : \"1440024852.501820\", \"losses\" : \"0\", \"username\" : \"seaworld\", \"wins\" : \"0\", \"type\" : \"INVITATION\", \"timestamp\" : \"1440024852000\", \"ties\" : \"0\" }";
+    String json = "{ \"gameId\" : \"1440024852.501820\", \"losses\" : \"0\", \"username\" : \"seaworld\", " +
+        "\"wins\" : \"0\", \"type\" : \"INVITATION\", \"timestamp\" : \"1440024852000\", \"ties\" : \"0\" }";
 
     RPSLSPlayerBotProcessor.RPSLSGameInfo gameInfo = GsonData.getGson().fromJson(json, RPSLSPlayerBotProcessor.RPSLSGameInfo.class);
 
