@@ -183,9 +183,11 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
     acceptance.setLosses(0);
     acceptance.setWins(0);
     acceptance.setTies(0);
-    acceptance.setTimestamp(gameInfo.getTimestamp());
+    Date current = new Date();
+    acceptance.setTimestamp(current.getTime());
     acceptance.setType(RPSLSMessageType.ACCEPTANCE);
-    acceptance.setUsername(userId);
+    String myUserId = JIDUtil.getUserId(sourceTo);
+    acceptance.setUsername(myUserId); // user id of the bot user.
 
     String acceptanceJSON = acceptance.toJson();
     meta.setText(acceptanceJSON);
@@ -236,9 +238,11 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
     choice.setLosses(0);
     choice.setWins(0);
     choice.setTies(0);
-    choice.setTimestamp(gameInfo.getTimestamp());
+    Date current = new Date();
+    choice.setTimestamp(current.getTime());
     choice.setType(RPSLSMessageType.CHOICE);
-    choice.setUsername(userId);
+    String myUserId = JIDUtil.getUserId(sourceTo);
+    choice.setUsername(myUserId); // user id of the bot user.
     String choiceValue = getRandomChoice();
     choice.setChoice(choiceValue);
 
