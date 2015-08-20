@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -72,13 +73,7 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
 
       if (isBotEnabled(appName)) {
         LOGGER.debug("Creating bot for app name:{} and id:{}", appName, app.getAppId());
-        Callable<Boolean> perAppBotStarter = null;
-        if (MMXServerConstants.QUICKSTART_APP.equals(appName)) {
-          perAppBotStarter = new PerAppBotStarter(app.getAppId());
-        } else {
-          perAppBotStarter = new RPSLBotStarter(app.getAppId());
-        }
-        executorService.submit(perAppBotStarter);
+        startApplicableBots(appName, app.getAppId(), executorService);
       } else {
         LOGGER.debug("Not creating bot for app name:{} and id:{}", appName, app.getId());
       }
@@ -91,6 +86,31 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
   protected ConnectionProvider getConnectionProvider() {
     return new OpenFireDBConnectionProvider();
   }
+
+  /**
+   * Start applicable bots for app with supplied app information. Passed in executor service is used to submit the
+   * bot starting task.
+   * @param appName
+   * @param appId
+   * @param service - not null.
+   * @return Future that can be used to get the status of the bot start task completion. null if no bots are designed
+   * to be started for this app.
+   */
+  public static Future<Boolean> startApplicableBots (String appName, String appId, ExecutorService service) {
+    Callable<Boolean> perAppBotStarter = null;
+    if (appName != null) {
+      String lowerCased = appName.toLowerCase();
+      if (MMXServerConstants.QUICKSTART_APP.equals(lowerCased)) {
+        perAppBotStarter = new PerAppBotStarter(appId);
+      } else if (MMXServerConstants.RPSLS_APP.equals(lowerCased)) {
+        perAppBotStarter = new RPSLBotStarter(appId);
+      }
+      return perAppBotStarter != null ? service.submit(perAppBotStarter) : null;
+    } else {
+      return null;
+    }
+  }
+
 
   /**
    * Check if app with supplied name is bot enabled.
