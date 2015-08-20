@@ -134,13 +134,11 @@ public class AppResource {
 
       // If we just created a bot enabled app, we want to create the bots for the app.
       if (BotStarter.isBotEnabled(appName)) {
-        BotStarter.PerAppBotStarter starter = new BotStarter.PerAppBotStarter(appId);
-        Future<Boolean> resultFuture = Executors.newSingleThreadExecutor().submit(starter);
-        Boolean result = resultFuture.get();
-        if (result.booleanValue()) {
-          LOGGER.debug("Created/Started bots for appId:{}", appId);
+        Future<Boolean> resultFuture = BotStarter.startApplicableBots(appName, appId, Executors.newSingleThreadExecutor());
+        if (resultFuture != null && resultFuture.get()) {
+          LOGGER.debug("Created/Started bots for appId:{} and name:{}", appId, appName);
         } else {
-          LOGGER.warn("Failed to create bots for appId:{}", appId);
+          LOGGER.warn("Failed to create bots for appId:{} and name:{}", appId, appName);
         }
       }
       Response createdResponse = Response.status(Response.Status.CREATED)
