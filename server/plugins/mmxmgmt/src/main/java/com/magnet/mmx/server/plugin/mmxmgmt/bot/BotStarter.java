@@ -42,15 +42,15 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
   /**
    * Lower cased app names for which we need to start the bots.
    */
-  private static String[] BOT_APP_NAME_LIST = {"quickstart"};
+  private static String[] BOT_APP_NAME_LIST = { MMXServerConstants.QUICKSTART_APP, MMXServerConstants.RPSLS_APP};
 
+  //sort the list so we can use binary search.
   static {
     Arrays.sort(BOT_APP_NAME_LIST);
   }
 
   public BotStarter(Lock lock) {
     super(lock);
-    Arrays.sort(BOT_APP_NAME_LIST);
   }
 
   @Override
@@ -72,7 +72,12 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
 
       if (isBotEnabled(appName)) {
         LOGGER.debug("Creating bot for app name:{} and id:{}", appName, app.getAppId());
-        PerAppBotStarter perAppBotStarter = new PerAppBotStarter(app.getAppId());
+        Callable<Boolean> perAppBotStarter = null;
+        if (MMXServerConstants.QUICKSTART_APP.equals(appName)) {
+          perAppBotStarter = new PerAppBotStarter(app.getAppId());
+        } else {
+          perAppBotStarter = new RPSLBotStarter(app.getAppId());
+        }
         executorService.submit(perAppBotStarter);
       } else {
         LOGGER.debug("Not creating bot for app name:{} and id:{}", appName, app.getId());
@@ -127,4 +132,30 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
     }
   }
 
+  /**
+   * Specialized starter for RPSLS bot.
+   */
+  public static class RPSLBotStarter implements Callable<Boolean> {
+    private Logger LOGGER = LoggerFactory.getLogger(RPSLBotStarter.class);
+    private String botAppId;
+
+    public RPSLBotStarter(String appId) {
+      this.botAppId = appId;
+    }
+
+    /**
+     * Create the bots for the app and return true.
+     *
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Boolean call() {
+      LOGGER.warn("Registering a bot for botAppId:{}", botAppId);
+      BotRegistration registration = new BotRegistrationImpl();
+      registration.registerBot(botAppId, MMXServerConstants.PLAYER_BOT_NAME, new RPSLSPlayerBotProcessor());
+      LOGGER.warn("Bot registered for botAppId:{}", botAppId);
+      return Boolean.TRUE;
+    }
+  }
 }

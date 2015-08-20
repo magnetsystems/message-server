@@ -144,6 +144,9 @@ public final class MMXServerConstants {
 
   public final static String AMAZING_BOT_NAME = "amazing_bot";
   public final static String ECHO_BOT_NAME = "echo_bot";
+  public final static String PLAYER_BOT_NAME = "player_bot";
+  public final static String QUICKSTART_APP = "quickstart";
+  public final static String RPSLS_APP = "rpsls";
 
   public final static String DISTRIBUTED_KEY = "mmxdistributed";
   public final static String SERVER_ACK_KEY = "serverack";
