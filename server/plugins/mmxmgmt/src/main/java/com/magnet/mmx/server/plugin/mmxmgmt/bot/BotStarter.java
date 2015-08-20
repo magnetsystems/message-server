@@ -43,7 +43,7 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
   /**
    * Lower cased app names for which we need to start the bots.
    */
-  private static String[] BOT_APP_NAME_LIST = { MMXServerConstants.QUICKSTART_APP, MMXServerConstants.RPSLS_APP};
+  private static String[] BOT_APP_NAME_LIST = {MMXServerConstants.QUICKSTART_APP, MMXServerConstants.RPSLS_APP};
 
   //sort the list so we can use binary search.
   static {
@@ -62,7 +62,6 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
     }
 
     LOGGER.info("BotStarter.run() : Successfully acquired BotStarter lock");
-
     ExecutorService executorService = MMXExecutors.getOrCreate(THREAD_POOL_NAME, THREAD_POOL_SIZE);
     long startTime = System.nanoTime();
     AppDAO appDAO = new AppDAOImpl(getConnectionProvider());
@@ -70,7 +69,6 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
 
     for (AppEntity app : apps) {
       String appName = app.getName().toLowerCase();
-
       if (isBotEnabled(appName)) {
         LOGGER.debug("Creating bot for app name:{} and id:{}", appName, app.getAppId());
         startApplicableBots(appName, app.getAppId(), executorService);
@@ -78,6 +76,7 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
         LOGGER.debug("Not creating bot for app name:{} and id:{}", appName, app.getId());
       }
     }
+
     long endTime = System.nanoTime();
     LOGGER.info("Completed run execution in {} milliseconds",
         TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
