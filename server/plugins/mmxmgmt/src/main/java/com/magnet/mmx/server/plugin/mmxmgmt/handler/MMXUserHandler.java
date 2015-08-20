@@ -346,18 +346,18 @@ public class MMXUserHandler extends IQHandler {
   
   IQ handleListUsers(IQ packet, JID from, String appId, String payload)
       throws UnauthorizedException {
-    List<UserId> userIds = GsonData.getGson().fromJson(payload, ListOfUserId.class);
+    ListOfUserId userIds = GsonData.getGson().fromJson(payload, ListOfUserId.class);
     HashMap<String, UserInfo> map = new HashMap<String, UserInfo>(userIds.size());
     UserManager userManager = XMPPServer.getInstance().getUserManager();
     for (UserId userId : userIds) {
+      String uid = userId.getUserId().toLowerCase();
+      String userName = JIDUtil.makeNode(uid, appId);
       try {
-        String uid = userId.getUserId();
-        String userName = JIDUtil.makeNode(uid, appId);
         User user = userManager.getUser(userName);
         map.put(uid, new UserInfo()
-          .setUserId(uid))
+          .setUserId(uid)
           .setDisplayName(user.getName())
-          .setEmail(user.getEmail());
+          .setEmail(user.getEmail()));
       } catch (UserNotFoundException e) {
         // Ignored.
       }
@@ -373,7 +373,7 @@ public class MMXUserHandler extends IQHandler {
     if (userId == null || userId.getUserId() == null)
       userName = from.getNode();
     else
-      userName = JIDUtil.makeNode(userId.getUserId(), appId);
+      userName = JIDUtil.makeNode(userId.getUserId().toLowerCase(), appId);
     
     try {
       UserManager userManager = XMPPServer.getInstance().getUserManager();
