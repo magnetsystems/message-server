@@ -117,6 +117,21 @@ public class BotRegistrationImpl implements BotRegistration {
     return name;
   }
 
+
+  protected static IQ buildAckIQ(String fromJID, String toJID, String incomingMessageId) {
+    IQ ackIQ = new IQ(IQ.Type.set);
+
+    Element mmxElement = ackIQ.setChildElement(Constants.MMX, Constants.MMX_NS_MSG_ACK);
+    mmxElement.addAttribute(Constants.MMX_ATTR_COMMAND, Constants.MessageCommand.ack.toString());
+    mmxElement.addAttribute(Constants.MMX_ATTR_CTYPE, GsonData.CONTENT_TYPE_JSON);
+
+    MsgAck msgAck = new MsgAck(fromJID, toJID, incomingMessageId);
+    Gson gson = GsonData.getGson();
+    String ackJSON = gson.toJson(msgAck);
+    mmxElement.setText(ackJSON);
+    return ackIQ;
+  }
+
   /**
    * Bot processor that responds with "This is amazing" to all messages.
    */
@@ -214,19 +229,7 @@ public class BotRegistrationImpl implements BotRegistration {
     }
 
 
-    protected IQ buildAckIQ(String fromJID, String toJID, String incomingMessageId) {
-      IQ ackIQ = new IQ(IQ.Type.set);
 
-      Element mmxElement = ackIQ.setChildElement(Constants.MMX, Constants.MMX_NS_MSG_ACK);
-      mmxElement.addAttribute(Constants.MMX_ATTR_COMMAND, Constants.MessageCommand.ack.toString());
-      mmxElement.addAttribute(Constants.MMX_ATTR_CTYPE, GsonData.CONTENT_TYPE_JSON);
-
-      MsgAck msgAck = new MsgAck(fromJID, toJID, incomingMessageId);
-      Gson gson = GsonData.getGson();
-      String ackJSON = gson.toJson(msgAck);
-      mmxElement.setText(ackJSON);
-      return ackIQ;
-    }
 
     protected Message buildDeliveryReceipt(String appId, String incomingMessageFromJID, String incomingMessageToJID,
                                            String incomingMessageId) {
