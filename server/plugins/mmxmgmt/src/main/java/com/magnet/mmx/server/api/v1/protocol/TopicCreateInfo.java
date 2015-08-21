@@ -22,6 +22,7 @@ public class TopicCreateInfo {
   private String topicName;
   private String description;
   private boolean subscriptionEnabled = true;
+  private boolean subscribeOnCreate;
 
 
   public TopicCreateInfo() {
@@ -59,6 +60,14 @@ public class TopicCreateInfo {
   public void setSubscriptionEnabled(boolean subscriptionEnabled) {
     this.subscriptionEnabled = subscriptionEnabled;
   }
+  
+  public boolean isSubscribeOnCreate() {
+    return subscribeOnCreate;
+  }
+  
+  public void setSubscribeOnCreate(boolean subscribeOnCreate) {
+    this.subscribeOnCreate = subscribeOnCreate;
+  }
 
   @Override
   public String toString() {
@@ -67,6 +76,7 @@ public class TopicCreateInfo {
             ", topicName='" + topicName + '\'' +
             ", description='" + description + '\'' +
             ", subscriptionEnabled=" + subscriptionEnabled +
+            ", subscribeOnCreate=" + subscribeOnCreate +
             '}';
   }
 }

@@ -404,6 +404,12 @@ public class MMXTopicManager {
         LOGGER.warn("NotAcceptableException", e);
         throw e;
       }
+      
+      if (topicInfo.isSubscribeOnCreate()) {
+        NodeSubscription subscription = subscribeToNode(node, jid, jid);
+        // TODO: not returning the subscription ID yet.
+      }
+      
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       createdNode = node;
@@ -637,8 +643,14 @@ public class MMXTopicManager {
       // Add the creator as the owner.
       node.addOwner(owner);
       setOptions(topic, node, rqt.getOptions());
-      node.saveToDB();
+
+      // Do the auto-subscription for creator.
+      if (rqt.getOptions() != null && rqt.getOptions().isSubscribeOnCreate()) {
+        NodeSubscription subscription = subscribeToNode(node, owner, owner);
+        // TODO: not returning the subscription ID yet.
+      }
       
+      node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
     }
 //    LOGGER.trace("create node="+realTopic+" success");
@@ -647,6 +659,20 @@ public class MMXTopicManager {
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
+  }
+  
+  private NodeSubscription subscribeToNode(Node node, JID owner, JID subscriber) {
+    SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
+    // Receive notification of new items only.
+    optionsForm.setSubscriptionType(NodeSubscription.Type.items);
+    optionsForm.setSubscriptionDepth("all");
+    // Don't set other options; it will change the subscription state to
+    // pending because it will wait for the owner's approval.
+    
+    // Need a modified Node.java from mmx-openfire repo.
+    NodeSubscription subscription = node.createSubscription(null, owner,
+        subscriber, false, optionsForm);
+    return subscription;
   }
   
   private int deleteNode(Node node, JID owner) throws MMXException {
@@ -837,17 +863,7 @@ public class MMXTopicManager {
       }
     }
     
-    SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
-    // Receive notification of new items only.
-    optionsForm.setSubscriptionType(NodeSubscription.Type.items);
-    optionsForm.setSubscriptionDepth("all");
-    // Don't set other options; it will change the subscription state to pending
-    // because it is supposed to wait for the owner's approval.
-    
-    // Need a modified Node.java from mmx-openfire repo.  Warning, it may be
-    // slower because it saves to DB and update the cluster.
-    subscription = node.createSubscription(null, owner, subscriber, false,
-        optionsForm);
+    subscription = subscribeToNode(node, owner, subscriber);
     
     TopicAction.SubscribeResponse resp = new TopicAction.SubscribeResponse(
         subscription.getID(), StatusCode.SUCCESS.getCode(), 
