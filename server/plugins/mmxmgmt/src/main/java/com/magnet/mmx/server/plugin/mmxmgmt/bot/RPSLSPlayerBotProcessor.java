@@ -47,7 +47,7 @@ import java.util.concurrent.ExecutorService;
 public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(RPSLSPlayerBotProcessor.class);
   private AutoRespondingConnection connection;
-  private static final String[] POSSIBLE_CHOICES = {"ROCK", "PAPER", "LIZARD", "SPOCK", "SCISSOR"};
+  private static final String[] POSSIBLE_CHOICES = {"ROCK", "PAPER", "SCISSORS", "LIZARD", "SPOCK"};
   private static final String INVITE_REPLY_MESSAGE = "This is an invite reply message";
   private static final String CHOICE_TEMPLATE = "I chose %s";
   private static final String RPSLS_BOT_POOL_NAME = "RPSLSBOT_POOL";
