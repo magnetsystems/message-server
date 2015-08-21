@@ -1105,9 +1105,9 @@ public class MMXTopicManager {
           TopicAction.SummaryRequest rqt) throws MMXException {
     // Build a collection of topic ID's from the request; it contains topics
     // without any published items.
-    HashSet<String> tpNoItems = new HashSet<String>(rqt.getTopicNodes().size());
+    HashSet<MMXTopicId> tpNoItems = new HashSet<MMXTopicId>(rqt.getTopicNodes().size());
     for (MMXTopicId topicId : rqt.getTopicNodes()) {
-      tpNoItems.add(topicId.toString());
+      tpNoItems.add(topicId);
     }
     TopicAction.SummaryResponse resp = new TopicAction.SummaryResponse(
         rqt.getTopicNodes().size());
@@ -1152,20 +1152,19 @@ public class MMXTopicManager {
           int count = rs.getInt(2);
           Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
           String nodeId = rs.getString(4);
-          MMXTopicId topic = TopicHelper.parseNode(nodeId);
-          resp.add(new TopicSummary(topic)
+          MMXTopicId topicId = TopicHelper.parseNode(nodeId);
+          resp.add(new TopicSummary(topicId)
             .setCount((maxItems < 0) ? count : Math.min(maxItems, count))
             .setLastPubTime(creationDate));
           // This topic has published items; remove it from the collection.
-          tpNoItems.remove(topic.toString());
+          tpNoItems.remove(topicId);
         }
         start += topics.length;
       } while (start < numOfTopics);
       // Fill the response with the topics having no published items.
-      Iterator<String> it = tpNoItems.iterator();
+      Iterator<MMXTopicId> it = tpNoItems.iterator();
       while (it.hasNext()) {
-        String topicId = it.next();
-        resp.add(new TopicSummary(MMXTopicId.parse(topicId)).setCount(0));
+        resp.add(new TopicSummary(it.next()).setCount(0));
       }
       return resp;
     } catch (Exception sqle) {
