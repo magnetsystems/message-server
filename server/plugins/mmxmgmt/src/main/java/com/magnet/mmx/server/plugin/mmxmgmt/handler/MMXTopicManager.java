@@ -1136,9 +1136,11 @@ public class MMXTopicManager {
           break;
         }
         String argList = SQLHelper.generateArgList(topics.length);
-        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.name "+
-                     "FROM ofPubsubItem, ofPubsubNode  " +
-                     "WHERE ofPubsubItem.serviceID=? AND ofPubsubItem.nodeID = ofPubsubNode.nodeId AND ofPubsubItem.nodeID IN ("+argList+") "+dateRange+
+        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.nodeId "+
+                     "FROM ofPubsubItem, ofPubsubNode " +
+                     "WHERE ofPubsubItem.serviceID=? AND " +
+                     "      ofPubsubItem.nodeID = ofPubsubNode.nodeId AND " +
+                     "      ofPubsubItem.nodeID IN ("+argList+") "+dateRange+
                      "GROUP BY ofPubsubItem.nodeID";
         pstmt = con.prepareStatement(sql);
         pstmt.setString(1, mPubSubModule.getServiceID());
@@ -1149,8 +1151,8 @@ public class MMXTopicManager {
           int maxItems = rs.getInt(1);
           int count = rs.getInt(2);
           Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-          String topicName = rs.getString(4);
-          MMXTopicId topic = new MMXTopicId(topicName);
+          String nodeId = rs.getString(4);
+          MMXTopicId topic = TopicHelper.parseNode(nodeId);
           resp.add(new TopicSummary(topic)
             .setCount((maxItems < 0) ? count : Math.min(maxItems, count))
             .setLastPubTime(creationDate));
