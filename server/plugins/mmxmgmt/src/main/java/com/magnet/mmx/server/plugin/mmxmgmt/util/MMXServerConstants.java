@@ -150,4 +150,8 @@ public final class MMXServerConstants {
 
   public final static String DISTRIBUTED_KEY = "mmxdistributed";
   public final static String SERVER_ACK_KEY = "serverack";
+  /**
+   * Content is included in meta using the following key.
+   */
+  public static final String TEXT_CONTENT_KEY = "textContent";
 }
