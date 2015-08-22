@@ -23,7 +23,7 @@ check_port() {
 }
 
 home="mmx-standalone-dist"
-homev="mmx-standalone-dist-1.5.2"
+homev="mmx-standalone-dist-1.5.3"
 homev101="mmx-standalone-dist-1.0.1"
 log="/Users/$USER/${home}_installlog.txt"
 
