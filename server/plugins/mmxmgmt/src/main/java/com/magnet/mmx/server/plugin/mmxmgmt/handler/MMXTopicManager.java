@@ -1870,7 +1870,7 @@ public class MMXTopicManager {
     NOT_ACCEPTABLE(406, "Instant topic creation is disabled"),
     SERVER_ERROR(500, "Server error; please check the server log"),
     NOT_IMPLEMENTED(501, "Feature not implemented: "),
-    INVALID_TOPIC_NAME(400, "Topic name should be less than 50 characters long and can only have numbers, letters, hyphen, underscores, and dashes")
+    INVALID_TOPIC_NAME(400, "Channel name should be less than 50 characters long and can only have numbers, letters, hyphen, underscores, and dashes")
     ;
 
     private int code;
