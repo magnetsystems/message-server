@@ -14,9 +14,8 @@
  */
 package com.magnet.mmx.server.api.v1.protocol;
 
-import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 
 import java.util.Date;
 
@@ -74,11 +73,12 @@ public class UserInfo {
 
   public static UserInfo fromUserEntity(UserEntity entity) {
     UserInfo info = new UserInfo();
-    info.setUsername(Helper.removeSuffix(entity.getUsername(), Character.toString(Constants.APP_ID_DELIMITER)));
+    info.setUsername(JIDUtil.getReadableUserId(entity.getUsername()));
     info.setEmail(entity.getEmail());
     info.setCreationDate(entity.getCreationDate());
     info.setModificationDate(entity.getModificationDate());
     info.setName(entity.getName());
     return info;
   }
+
 }

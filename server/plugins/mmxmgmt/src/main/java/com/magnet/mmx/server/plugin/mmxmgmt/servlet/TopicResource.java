@@ -88,7 +88,7 @@ public class TopicResource {
     }
 
     if(!Strings.isNullOrEmpty(topicInfo.getDescription()) && topicInfo.getDescription().length() > MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN) {
-      errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "topic description too long, max length = " +
+      errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "channel description too long, max length = " +
               MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN);
       return RestUtils.getBadReqJAXRSResp(errorResponse);
     }
@@ -111,11 +111,11 @@ public class TopicResource {
         return RestUtils.getCreatedJAXRSResp();
       } else {
         if(result.getCode().equals(MMXTopicManager.TopicFailureCode.DUPLICATE)) {
-          errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Topic already exists");
+          errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Channel already exists");
           return RestUtils.getBadReqJAXRSResp(errorResponse);
         }
         if(result.getCode().equals(MMXTopicManager.TopicFailureCode.INVALID_TOPIC_ID)) {
-          errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Invalid topic id");
+          errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Invalid channel id");
           return RestUtils.getBadReqJAXRSResp(errorResponse);
         }
       }
@@ -281,7 +281,7 @@ public class TopicResource {
       info.setDescription(leafNode.getDescription());
       return Response.status(Response.Status.OK).type(MediaType.APPLICATION_JSON).entity(info).build();
     } else {
-      ErrorResponse errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Topic not found");
+      ErrorResponse errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Channel not found");
       return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
     }
   }
@@ -316,7 +316,7 @@ public class TopicResource {
       Response response;
       switch(code) {
         case INVALID_TOPIC_ID:
-          errorResponse.setMessage("Invalid topicName");
+          errorResponse.setMessage("Invalid channel name");
           response = RestUtils.getBadReqJAXRSResp(errorResponse);
           break;
         case NOTFOUND:

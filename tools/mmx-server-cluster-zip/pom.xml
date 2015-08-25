@@ -5,12 +5,11 @@
     <parent>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-root</artifactId>
-      <version>1.2.3</version>
+      <version>1.5.7</version>
       <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-server-cluster</artifactId>
-    <version>1.2.3</version>
     <packaging>pom</packaging>
 
     <name>mmx-server-cluster</name>
@@ -19,7 +18,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sandbox.dir>${project.build.directory}/sandbox</sandbox.dir>
-        <version.addon>1.2.3</version.addon>
+        <version.addon>${project.version}</version.addon>
     </properties>
 
     <dependencies>
@@ -48,8 +47,8 @@
                             <artifactItems>
                                 <artifactItem>
                                     <groupId>com.magnet.mmx.ext</groupId>
-                                    <artifactId>mmx-openfire</artifactId>
-                                    <version>1.2.3</version>
+                                    <artifactId>openfire</artifactId>
+                                    <version>${version.addon}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}/mmx-server</outputDirectory>
@@ -108,10 +107,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-        		<inherited>true</inherited>
-        		<configuration>
-	            <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
-		        <finalName>${artifactId}-1.2.3</finalName>
+                <inherited>true</inherited>
+                <configuration>
+                    <descriptor>${basedir}/src/assembly/bin.xml</descriptor>
+                    <finalName>${artifactId}-${version.addon}</finalName>
                 </configuration>
                 <executions>
                     <!-- step 6. zip up the server. please see bin.xml -->

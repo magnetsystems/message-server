@@ -40,6 +40,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
 import com.magnet.mmx.util.AppHelper;
+import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.Utils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -122,6 +123,8 @@ public class MMXUserHandler extends IQHandler {
       }
       
       switch(cmd) {
+      case list:
+        return handleListUsers(packet, fromJID, appId, payload);
       case get:
         return handleGetUser(packet, fromJID, appId, payload);
       case search:
@@ -331,6 +334,38 @@ public class MMXUserHandler extends IQHandler {
     return response;
   }
   
+  private static class ListOfUserId extends ArrayList<UserId> {
+    public ListOfUserId() {
+      super();
+    }
+    
+    public ListOfUserId(int size) {
+      super(size);
+    }
+  }
+  
+  IQ handleListUsers(IQ packet, JID from, String appId, String payload)
+      throws UnauthorizedException {
+    ListOfUserId userIds = GsonData.getGson().fromJson(payload, ListOfUserId.class);
+    HashMap<String, UserInfo> map = new HashMap<String, UserInfo>(userIds.size());
+    UserManager userManager = XMPPServer.getInstance().getUserManager();
+    for (UserId userId : userIds) {
+      String uid = userId.getUserId().toLowerCase();
+      String userName = JIDUtil.makeNode(uid, appId);
+      try {
+        User user = userManager.getUser(userName);
+        map.put(uid, new UserInfo()
+          .setUserId(uid)
+          .setDisplayName(user.getName())
+          .setEmail(user.getEmail()));
+      } catch (UserNotFoundException e) {
+        // Ignored.
+      }
+    }
+    IQ response = IQUtils.createResultIQ(packet, GsonData.getGson().toJson(map));
+    return response;
+  }
+  
   IQ handleGetUser(IQ packet, JID from, String appId, String payload) 
       throws UnauthorizedException {
     String userName;
@@ -338,7 +373,7 @@ public class MMXUserHandler extends IQHandler {
     if (userId == null || userId.getUserId() == null)
       userName = from.getNode();
     else
-      userName = JIDUtil.makeNode(userId.getUserId(), appId);
+      userName = JIDUtil.makeNode(userId.getUserId().toLowerCase(), appId);
     
     try {
       UserManager userManager = XMPPServer.getInstance().getUserManager();

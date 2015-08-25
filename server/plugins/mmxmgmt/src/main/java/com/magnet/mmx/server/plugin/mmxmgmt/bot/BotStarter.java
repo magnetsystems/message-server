@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
@@ -42,15 +43,15 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
   /**
    * Lower cased app names for which we need to start the bots.
    */
-  private static String[] BOT_APP_NAME_LIST = {"quickstart"};
+  private static String[] BOT_APP_NAME_LIST = {MMXServerConstants.QUICKSTART_APP, MMXServerConstants.RPSLS_APP};
 
+  //sort the list so we can use binary search.
   static {
     Arrays.sort(BOT_APP_NAME_LIST);
   }
 
   public BotStarter(Lock lock) {
     super(lock);
-    Arrays.sort(BOT_APP_NAME_LIST);
   }
 
   @Override
@@ -61,7 +62,6 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
     }
 
     LOGGER.info("BotStarter.run() : Successfully acquired BotStarter lock");
-
     ExecutorService executorService = MMXExecutors.getOrCreate(THREAD_POOL_NAME, THREAD_POOL_SIZE);
     long startTime = System.nanoTime();
     AppDAO appDAO = new AppDAOImpl(getConnectionProvider());
@@ -69,15 +69,14 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
 
     for (AppEntity app : apps) {
       String appName = app.getName().toLowerCase();
-
       if (isBotEnabled(appName)) {
         LOGGER.debug("Creating bot for app name:{} and id:{}", appName, app.getAppId());
-        PerAppBotStarter perAppBotStarter = new PerAppBotStarter(app.getAppId());
-        executorService.submit(perAppBotStarter);
+        startApplicableBots(appName, app.getAppId(), executorService);
       } else {
         LOGGER.debug("Not creating bot for app name:{} and id:{}", appName, app.getId());
       }
     }
+
     long endTime = System.nanoTime();
     LOGGER.info("Completed run execution in {} milliseconds",
         TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
@@ -86,6 +85,31 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
   protected ConnectionProvider getConnectionProvider() {
     return new OpenFireDBConnectionProvider();
   }
+
+  /**
+   * Start applicable bots for app with supplied app information. Passed in executor service is used to submit the
+   * bot starting task.
+   * @param appName
+   * @param appId
+   * @param service - not null.
+   * @return Future that can be used to get the status of the bot start task completion. null if no bots are designed
+   * to be started for this app.
+   */
+  public static Future<Boolean> startApplicableBots (String appName, String appId, ExecutorService service) {
+    Callable<Boolean> perAppBotStarter = null;
+    if (appName != null) {
+      String lowerCased = appName.toLowerCase();
+      if (MMXServerConstants.QUICKSTART_APP.equals(lowerCased)) {
+        perAppBotStarter = new PerAppBotStarter(appId);
+      } else if (MMXServerConstants.RPSLS_APP.equals(lowerCased)) {
+        perAppBotStarter = new RPSLBotStarter(appId);
+      }
+      return perAppBotStarter != null ? service.submit(perAppBotStarter) : null;
+    } else {
+      return null;
+    }
+  }
+
 
   /**
    * Check if app with supplied name is bot enabled.
@@ -127,4 +151,30 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
     }
   }
 
+  /**
+   * Specialized starter for RPSLS bot.
+   */
+  public static class RPSLBotStarter implements Callable<Boolean> {
+    private Logger LOGGER = LoggerFactory.getLogger(RPSLBotStarter.class);
+    private String botAppId;
+
+    public RPSLBotStarter(String appId) {
+      this.botAppId = appId;
+    }
+
+    /**
+     * Create the bots for the app and return true.
+     *
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Boolean call() {
+      LOGGER.warn("Registering a bot for botAppId:{}", botAppId);
+      BotRegistration registration = new BotRegistrationImpl();
+      registration.registerBot(botAppId, MMXServerConstants.PLAYER_BOT_NAME, new RPSLSPlayerBotProcessor());
+      LOGGER.warn("Bot registered for botAppId:{}", botAppId);
+      return Boolean.TRUE;
+    }
+  }
 }

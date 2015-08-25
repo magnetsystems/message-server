@@ -46,16 +46,16 @@ public final class ErrorMessages {
   public static final String ERROR_USERNAME_INVALID_LENGTH= "Username must be %d to %d characters long";
   public static final String ERROR_INVALID_PASSWORD_VALUE = "Supplied user password is empty";
   public static final String ERROR_PASSWORD_INVALID_LENGTH= "User password must not exceed %d characters long";
-  public static final String ERROR_TOPIC_NOT_FOUND = "Topic with name:%s not found";
+  public static final String ERROR_TOPIC_NOT_FOUND = "Channel with name:%s not found";
   public static final String ERROR_USERNAME_NOT_FOUND = "Username not found";
   public static final String ERROR_USERNAME_LIST_TOO_LONG = "Supplied username list exceeds the maximum allowed. At the most %d names are permitted";
   public static final String ERROR_APNS_CERT_PASSWORD_MISSING = "APNS certificate password is empty or null. APNS certificate password is required";
-  public static final String ERROR_TOPIC_PUBLISHING_NOT_ALLOWED = "Topic with name:%s doesn't allow publishing using API";
-  public static final String ERROR_TOPIC_INVALID_CONTENT = "Topic message content can't be empty";
+  public static final String ERROR_TOPIC_PUBLISHING_NOT_ALLOWED = "Channel with name:%s doesn't allow publishing using API";
+  public static final String ERROR_TOPIC_INVALID_CONTENT = "Channel message content can't be empty";
   public static final String ERROR_USERNAME_INVALID_CHARACTERS = "Invalid character specified in username";
   public static final String ERROR_USERNAME_EXISTS = "User with username:%s already exists";
   public static final String ERROR_CONFIG_LIST_NULL_OR_EMPTY = "Configuration list in the request is null or empty";
   public static final String ERROR_CONFIG_BAD_KEY = "Configuration contains an invalid key";
   public static final String ERROR_CONFIG_BAD_VALUE = "Configuration contains an invalid value";
-  public static final String ERROR_ITEM_ID_LIST_INVALID = "Supplied topic item id list is invalid";
+  public static final String ERROR_ITEM_ID_LIST_INVALID = "Supplied channel item id list is invalid";
 }

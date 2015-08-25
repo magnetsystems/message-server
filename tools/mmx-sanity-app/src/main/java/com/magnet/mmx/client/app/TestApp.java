@@ -177,7 +177,7 @@ public class TestApp {
           accountGet(message.getFrom().getUserId());
         }
         if (payload.getMetaData("type", null).equals("LARGEMSG")) {
-          println("onMessageReceived: LARGEMSG, hdrs="+message.getAllMetaData()+
+          println("onMessageReceived: LARGEMSG, hdrs="+message.getPayload().getAllMetaData()+
               ", size="+payload.getDataSize()+", elapsed="+elapsed);
           println(Utils.subSequenceHeadTail(payload.getDataAsText(), 1024));
         } else {
@@ -1106,7 +1106,23 @@ public class TestApp {
       println("search result="+info);
     }
   }
-  
+
+  private void getSubscribers(String topicName, String uid) throws MMXException {
+    MMXTopic topic = null;
+    if (uid == null || uid.isEmpty()) {
+      topic = new MMXGlobalTopic(topicName);
+    } else {
+      topic = new MMXUserTopic(uid, topicName);
+    }
+    PubSubManager mgr = PubSubManager.getInstance(mCon);
+    List<UserInfo> subscribers = mgr.getSubscribers(topic, 200);
+    String template = "Topic:%s subscribed to by user:%s named:%s";
+    for (UserInfo info : subscribers) {
+      String message = String.format(template, topicName, info.getUserId(), info.getDisplayName());
+      println(message);
+    }
+  }
+
   private void changePwd(String passwd) throws MMXException {
     AccountManager acctMgr = AccountManager.getInstance(mCon);
     acctMgr.changePassword(passwd);
@@ -1184,11 +1200,11 @@ public class TestApp {
         "     topicPub topic text, topicSub topic devonly, topicUnsub topic [sid],\n"+
         "     topicGetTags topic, topicAddTags|topicDelTags|topicSetTags topic [tag ...]\n" +
         "     topicSrchTags and|or [tag ...]\n" +
-
+        "     topicSubList topic\n" +
         "     utopicGet uid topic, utopicCrt topic df|pa|to|ps|po|ta, utopicDel topic,\n"+
         "     utopicPub topic text, utopicSub uid topic devonly, utopicUnsub uid topic [sid],\n"+
         "     utopicGetTags uid topic, utopicAddTags|utopicDelTags|utopicSetTags uid topic [tag ...]\n" +
-
+        "     utopicSubList uid topic \n" +
         "     geo lat lng, stalk user, unstalk user [subid], showsender true|false\n" +
         "     pingpong user devid, ping user devid, setview topic pubfile subfile, pubview topic, exit, ?");
   }
@@ -1237,6 +1253,7 @@ public class TestApp {
     topiclistsubs,
     topicpub,
     topicsub,
+    topicsublist,
     topicsrch,
     topicunsub,
     topicsummary,
@@ -1251,6 +1268,7 @@ public class TestApp {
     utopiccrt,
     utopicdel,
     utopicget,
+    utopicsublist,
     utopicpub,
     utopicsub,
     utopicunsub,
@@ -1433,10 +1451,14 @@ public class TestApp {
           assertNumOfArgs(cmds, 1);
           unsubscribe(null, cmds[1], getString(cmds, 2, null));
           break;
-        case topicsub:
-          assertNumOfArgs(cmds, 2);
-          subscribe(null, cmds[1], Boolean.parseBoolean(cmds[2]));
-          break;
+          case topicsublist:
+            assertNumOfArgs(cmds, 1);
+            getSubscribers(cmds[1], null);
+            break;
+          case topicsub:
+            assertNumOfArgs(cmds, 2);
+            subscribe(null, cmds[1], Boolean.parseBoolean(cmds[2]));
+            break;
         case topicdeltags:
           assertNumOfArgs(cmds, 1);
           topicTagsOp(TagOp.remove, null, cmds[1], getVarArgs(cmds, 2));
@@ -1561,7 +1583,10 @@ public class TestApp {
           assertNumOfArgs(cmds, 2);
           topicTagsOp(TagOp.add, cmds[1], cmds[2], getVarArgs(cmds, 3));
           break;
-
+          case utopicsublist:
+            assertNumOfArgs(cmds, 2);
+            getSubscribers(cmds[2], cmds[1]);
+            break;
         case setview:
           assertNumOfArgs(cmds, 3);
           setTopicWithTemplates(cmds[1], cmds[2], cmds[3]);

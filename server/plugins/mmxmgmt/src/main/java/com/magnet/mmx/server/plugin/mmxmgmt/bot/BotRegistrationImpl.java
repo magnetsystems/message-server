@@ -26,6 +26,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageIdGenerator;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageIdGeneratorImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 import org.dom4j.Element;
 import org.slf4j.Logger;
@@ -36,7 +37,9 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BotRegistrationImpl implements BotRegistration {
   private static final Logger LOGGER = LoggerFactory.getLogger(BotRegistrationImpl.class);
@@ -45,6 +48,7 @@ public class BotRegistrationImpl implements BotRegistration {
   private static final String BOT_DEVICE_NAME_TEMPLATE = "%s Device";
   private static final OSType BOT_DEVICE_OS_TYPE = OSType.OTHER;
   private static final String AMAZING_MESSAGE = "This is simply amazing";
+
   /**
    * Register a bot with the specified mmxUserName.
    *
@@ -114,6 +118,21 @@ public class BotRegistrationImpl implements BotRegistration {
     return name;
   }
 
+
+  protected static IQ buildAckIQ(String fromJID, String toJID, String incomingMessageId) {
+    IQ ackIQ = new IQ(IQ.Type.set);
+
+    Element mmxElement = ackIQ.setChildElement(Constants.MMX, Constants.MMX_NS_MSG_ACK);
+    mmxElement.addAttribute(Constants.MMX_ATTR_COMMAND, Constants.MessageCommand.ack.toString());
+    mmxElement.addAttribute(Constants.MMX_ATTR_CTYPE, GsonData.CONTENT_TYPE_JSON);
+
+    MsgAck msgAck = new MsgAck(fromJID, toJID, incomingMessageId);
+    Gson gson = GsonData.getGson();
+    String ackJSON = gson.toJson(msgAck);
+    mmxElement.setText(ackJSON);
+    return ackIQ;
+  }
+
   /**
    * Bot processor that responds with "This is amazing" to all messages.
    */
@@ -136,13 +155,35 @@ public class BotRegistrationImpl implements BotRegistration {
         packet.setTo(fromJID);
 
         Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
-        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
+        Element recieptRequest = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
+        boolean receiptRequested = recieptRequest != null;
 
         List<Element> payloadList = mmx.elements(Constants.MMX_PAYLOAD);
         if (payloadList != null || !payloadList.isEmpty()) {
           Element payload = payloadList.get(0);
-          //String text = payload.getText();
           payload.setText(AMAZING_MESSAGE);
+        }
+        Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
+        String userId = JIDUtil.getUserId(fromJID);
+        String devId = fromJID.getResource();
+        String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
+        if (internalMeta != null) {
+          mmx.remove(internalMeta);
+        }
+        Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
+        revisedMeta.setText(mmxMetaJSON);
+        //add the content to meta (as requested by iOS team) and replace the meta object.
+        Map<String, String> metaMap =  new HashMap<String, String>();
+        metaMap.put(MMXServerConstants.TEXT_CONTENT_KEY, AMAZING_MESSAGE);
+        Element meta = mmx.element(Constants.MMX_META);
+        if (meta == null) {
+          meta = mmx.addElement(Constants.MMX_META);
+        }
+        meta.setText(GsonData.getGson().toJson(metaMap));
+
+        //remove the receipt request element if it exists in the incoming request
+        if (receiptRequested) {
+          message.deleteExtension(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
         }
         try {
           //add a little sleep to differentiate between the send and recvd time.
@@ -189,19 +230,7 @@ public class BotRegistrationImpl implements BotRegistration {
     }
 
 
-    protected IQ buildAckIQ(String fromJID, String toJID, String incomingMessageId) {
-      IQ ackIQ = new IQ(IQ.Type.set);
 
-      Element mmxElement = ackIQ.setChildElement(Constants.MMX, Constants.MMX_NS_MSG_ACK);
-      mmxElement.addAttribute(Constants.MMX_ATTR_COMMAND, Constants.MessageCommand.ack.toString());
-      mmxElement.addAttribute(Constants.MMX_ATTR_CTYPE, GsonData.CONTENT_TYPE_JSON);
-
-      MsgAck msgAck = new MsgAck(fromJID, toJID, incomingMessageId);
-      Gson gson = GsonData.getGson();
-      String ackJSON = gson.toJson(msgAck);
-      mmxElement.setText(ackJSON);
-      return ackIQ;
-    }
 
     protected Message buildDeliveryReceipt(String appId, String incomingMessageFromJID, String incomingMessageToJID,
                                            String incomingMessageId) {
@@ -228,10 +257,28 @@ public class BotRegistrationImpl implements BotRegistration {
       if (packet instanceof Message) {
         LOGGER.debug("Sending the same message back");
         Message message = (Message) packet;
+        Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
 
         JID fromJID = message.getFrom();
         JID toJID = message.getTo();
         message.setTo(fromJID);
+
+        Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
+        String userId = JIDUtil.getUserId(fromJID);
+        String devId = fromJID.getResource();
+        String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
+        if (internalMeta != null) {
+          mmx.remove(internalMeta);
+        }
+
+        Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
+        revisedMeta.setText(mmxMetaJSON);
+
+        if (receiptRequested) {
+          //remove the receipt requested element to ensure we don't have a loop
+          message.deleteExtension(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
+        }
         try {
           //add a little sleep to differentiate between the send and recvd time.
           Thread.sleep(1000L);
@@ -254,8 +301,6 @@ public class BotRegistrationImpl implements BotRegistration {
           LOGGER.debug("Ack IQ:{}", ackIQ.toXML());
         }
         autoRespondingConnection.sendPacket(ackIQ);
-
-        boolean receiptRequested = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS) != null;
 
         if (receiptRequested) {
           LOGGER.debug("Sending delivery receipt for message with id:{}", originalMessageId);

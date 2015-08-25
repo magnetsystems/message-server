@@ -11,14 +11,14 @@
 
   <groupId>com.magnet.mmx</groupId>
   <artifactId>mmx-root</artifactId>
-  <version>1.2.3</version>
+  <version>1.5.7</version>
 
   <packaging>pom</packaging>
   <name>Magnet Messaging Root</name>
   <description>Magnet Messaging Root</description>
 
   <properties>
-    <mmx.version>1.2.3</mmx.version>
+    <mmx.version>${project.version}</mmx.version>
     <javadoc.version>2.8.1</javadoc.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jvm.source.version>1.6</jvm.source.version>
@@ -239,23 +239,16 @@
         </file>
       </activation>
       <modules>
-        <!--
-        <module>common</module>
-        <module>client</module>
-        -->
         <module>server</module>
-        <!-- 
-        <module>apps</module>
-        -->
         <module>tools/tsung</module>
-        <module>tools/mmx-sanity-app</module>
+        <!-- <module>tools/mmx-sanity-app</module> -->
         <module>tools/mmx-server-cluster-zip</module>
         <module>tools/mmx-server-zip</module>
         <module>tools/mmx-standalone-dist</module>
         <module>tools/mmx-standalone-dist-win</module>
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/code-utils</module>
-        <module>tools/mmx-perf-driver</module>
+        <!--<module>tools/mmx-perf-driver</module> -->
       </modules>
     </profile>
     <profile>
@@ -264,21 +257,13 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <modules>
-        <!--
-        <module>common</module>
-        <module>client</module>
-        -->
         <module>server</module>
-        <!--
-        <module>apps</module>
-       -->
-         <module>tools/mmx-server-zip</module>
+        <module>tools/mmx-server-zip</module>
         <module>tools/mmx-standalone-dist</module>
         <module>tools/mmx-standalone-dist-win</module>
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/tsung</module>
         <module>tools/code-utils</module>
-        <module>integration_test</module>
       </modules>
     </profile>
     <profile>
@@ -289,8 +274,6 @@
         </file>
       </activation>
       <modules>
-        <!--<module>common</module>
-        <module>client</module> -->
         <module>server</module>
       </modules>
     </profile>

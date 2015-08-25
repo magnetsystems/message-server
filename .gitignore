@@ -8,7 +8,7 @@ target
 build/
 .gradle/
 local.properties
-
+pom.xml.versionsBackup
 
 apps/android-basic/project.properties
 apps/android-basic/bin/classes/

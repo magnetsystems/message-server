@@ -116,13 +116,17 @@ public class MessageBuilder {
       metadata.put(MMXServerConstants.REPLY_TO, formatReplyTo(replyTo));
     }
 
-    if (metadata != null && !metadata.isEmpty()) {
-      //we have header information
-      Map<String, String> meta = metadata;
-      String metaJSON = GsonData.getGson().toJson(meta);
-      Element metaElement = mmxElement.addElement(Constants.MMX_META);
-      metaElement.setText(metaJSON);
+    if (metadata == null) {
+      metadata = new HashMap<String, String>();
     }
+    //as per the latest changes we need to add the content to the metadata using key "textContent"
+    metadata.put(MMXServerConstants.TEXT_CONTENT_KEY, messageContent);
+
+    Map<String, String> meta = metadata;
+    String metaJSON = GsonData.getGson().toJson(meta);
+    Element metaElement = mmxElement.addElement(Constants.MMX_META);
+    metaElement.setText(metaJSON);
+
     Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
 
     DateFormat fmt = Utils.buildISO8601DateFormat();

@@ -18,7 +18,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXAttribute;
 import com.magnet.mmx.protocol.MMXStatus;
-import com.magnet.mmx.protocol.MMXTopic;
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXTopicOptions;
 import com.magnet.mmx.protocol.OSType;
@@ -32,6 +31,7 @@ import com.magnet.mmx.protocol.TopicSummary;
 import com.magnet.mmx.server.api.v1.protocol.TopicCreateInfo;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DbInteractionException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
@@ -39,6 +39,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.ConfigureForm.PublishModel;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.TopicQueryBuilder;
@@ -84,9 +87,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class MMXTopicManager {
 
@@ -399,6 +404,12 @@ public class MMXTopicManager {
         LOGGER.warn("NotAcceptableException", e);
         throw e;
       }
+      
+      if (topicInfo.isSubscribeOnCreate()) {
+        NodeSubscription subscription = subscribeToNode(node, jid, jid);
+        // TODO: not returning the subscription ID yet.
+      }
+      
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       createdNode = node;
@@ -632,8 +643,14 @@ public class MMXTopicManager {
       // Add the creator as the owner.
       node.addOwner(owner);
       setOptions(topic, node, rqt.getOptions());
-      node.saveToDB();
+
+      // Do the auto-subscription for creator.
+      if (rqt.getOptions() != null && rqt.getOptions().isSubscribeOnCreate()) {
+        NodeSubscription subscription = subscribeToNode(node, owner, owner);
+        // TODO: not returning the subscription ID yet.
+      }
       
+      node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
     }
 //    LOGGER.trace("create node="+realTopic+" success");
@@ -642,6 +659,20 @@ public class MMXTopicManager {
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
+  }
+  
+  private NodeSubscription subscribeToNode(Node node, JID owner, JID subscriber) {
+    SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
+    // Receive notification of new items only.
+    optionsForm.setSubscriptionType(NodeSubscription.Type.items);
+    optionsForm.setSubscriptionDepth("all");
+    // Don't set other options; it will change the subscription state to
+    // pending because it will wait for the owner's approval.
+    
+    // Need a modified Node.java from mmx-openfire repo.
+    NodeSubscription subscription = node.createSubscription(null, owner,
+        subscriber, false, optionsForm);
+    return subscription;
   }
   
   private int deleteNode(Node node, JID owner) throws MMXException {
@@ -832,17 +863,7 @@ public class MMXTopicManager {
       }
     }
     
-    SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
-    // Receive notification of new items only.
-    optionsForm.setSubscriptionType(NodeSubscription.Type.items);
-    optionsForm.setSubscriptionDepth("all");
-    // Don't set other options; it will change the subscription state to pending
-    // because it is supposed to wait for the owner's approval.
-    
-    // Need a modified Node.java from mmx-openfire repo.  Warning, it may be
-    // slower because it saves to DB and update the cluster.
-    subscription = node.createSubscription(null, owner, subscriber, false,
-        optionsForm);
+    subscription = subscribeToNode(node, owner, subscriber);
     
     TopicAction.SubscribeResponse resp = new TopicAction.SubscribeResponse(
         subscription.getID(), StatusCode.SUCCESS.getCode(), 
@@ -1084,9 +1105,9 @@ public class MMXTopicManager {
           TopicAction.SummaryRequest rqt) throws MMXException {
     // Build a collection of topic ID's from the request; it contains topics
     // without any published items.
-    HashSet<String> tpNoItems = new HashSet<String>(rqt.getTopicNodes().size());
+    HashSet<MMXTopicId> tpNoItems = new HashSet<MMXTopicId>(rqt.getTopicNodes().size());
     for (MMXTopicId topicId : rqt.getTopicNodes()) {
-      tpNoItems.add(topicId.toString());
+      tpNoItems.add(topicId);
     }
     TopicAction.SummaryResponse resp = new TopicAction.SummaryResponse(
         rqt.getTopicNodes().size());
@@ -1115,9 +1136,11 @@ public class MMXTopicManager {
           break;
         }
         String argList = SQLHelper.generateArgList(topics.length);
-        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.name "+
-                     "FROM ofPubsubItem, ofPubsubNode  " +
-                     "WHERE ofPubsubItem.serviceID=? AND ofPubsubItem.nodeID = ofPubsubNode.nodeId AND ofPubsubItem.nodeID IN ("+argList+") "+dateRange+
+        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.nodeId "+
+                     "FROM ofPubsubItem, ofPubsubNode " +
+                     "WHERE ofPubsubItem.serviceID=? AND " +
+                     "      ofPubsubItem.nodeID = ofPubsubNode.nodeId AND " +
+                     "      ofPubsubItem.nodeID IN ("+argList+") "+dateRange+
                      "GROUP BY ofPubsubItem.nodeID";
         pstmt = con.prepareStatement(sql);
         pstmt.setString(1, mPubSubModule.getServiceID());
@@ -1128,21 +1151,20 @@ public class MMXTopicManager {
           int maxItems = rs.getInt(1);
           int count = rs.getInt(2);
           Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-          String topicName = rs.getString(4);
-          MMXTopicId topic = new MMXTopicId(topicName);
-          resp.add(new TopicSummary(topic)
+          String nodeId = rs.getString(4);
+          MMXTopicId topicId = TopicHelper.parseNode(nodeId);
+          resp.add(new TopicSummary(topicId)
             .setCount((maxItems < 0) ? count : Math.min(maxItems, count))
             .setLastPubTime(creationDate));
           // This topic has published items; remove it from the collection.
-          tpNoItems.remove(topic.toString());
+          tpNoItems.remove(topicId);
         }
         start += topics.length;
       } while (start < numOfTopics);
       // Fill the response with the topics having no published items.
-      Iterator<String> it = tpNoItems.iterator();
+      Iterator<MMXTopicId> it = tpNoItems.iterator();
       while (it.hasNext()) {
-        String topicId = it.next();
-        resp.add(new TopicSummary(MMXTopicId.parse(topicId)).setCount(0));
+        resp.add(new TopicSummary(it.next()).setCount(0));
       }
       return resp;
     } catch (Exception sqle) {
@@ -1763,6 +1785,69 @@ public class MMXTopicManager {
     return resp;
   }
   
+  public TopicAction.SubscribersResponse getSubscribers(JID from, String appId,
+      TopicAction.SubscribersRequest rqt) throws MMXException {
+    String topic = TopicHelper.normalizePath(rqt.getTopic());
+    String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
+    Node node = mPubSubModule.getNode(realTopic);
+    if (node == null) {
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
+          StatusCode.TOPIC_NOT_FOUND.getCode());
+    }
+
+    if (rqt.getUserId() != null) {
+      //do the affiliation check only for personal topics
+      JID requester = from.asBareJID();
+      // Check if the requester has any affiliations but not outcast affiliation.
+      NodeAffiliate nodeAffiliate = node.getAffiliate(requester);
+      if (nodeAffiliate == null ||
+          nodeAffiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
+            StatusCode.FORBIDDEN.getCode());
+      }
+    }
+
+    Collection<NodeSubscription> allSubscriptions = node.getAllSubscriptions();
+    /**
+     * all subscriptions has all subscriptions in all possible states. We need
+     * cull out subscriptions in state == subscribed.
+     */
+    int count = 0;
+    TreeSet<String> subscriberUserNameSet = new TreeSet<String>();
+    for (NodeSubscription ns : allSubscriptions) {
+      if ((ns.getState() != null) && (ns.getState() == NodeSubscription.State.subscribed)) {
+        JID subscriberJID = ns.getJID();
+        String subscriberJIDNode = subscriberJID.getNode();
+        String username = subscriberJIDNode;
+        subscriberUserNameSet.add(username);
+        count++;
+      }
+    }
+    List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
+    UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
+    int addedCount = 0; //for applying the limit
+    for (String username : subscriberUserNameSet) {
+      //TODO: Improve this
+      UserEntity userEntity = userDAO.getUser(username);
+      com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+      if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
+        break;
+      }
+      userInfoList.add(userInfo);
+      addedCount++;
+    }
+
+    TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()
+      .setTotal(count).setSubscribers(userInfoList);
+    resp.setCode(StatusCode.SUCCESS.getCode())
+      .setMessage(StatusCode.SUCCESS.getMessage());
+    return resp;
+  }
+
+  public ConnectionProvider getConnectionProvider() {
+    return new OpenFireDBConnectionProvider();
+  }
+  
   /**
    * Enum for the status codes
    */
@@ -1785,7 +1870,7 @@ public class MMXTopicManager {
     NOT_ACCEPTABLE(406, "Instant topic creation is disabled"),
     SERVER_ERROR(500, "Server error; please check the server log"),
     NOT_IMPLEMENTED(501, "Feature not implemented: "),
-    INVALID_TOPIC_NAME(400, "Topic name should be less than 50 characters long and can only have numbers, letters, hyphen, underscores, and dashes")
+    INVALID_TOPIC_NAME(400, "Channel name should be less than 50 characters long and can only have numbers, letters, hyphen, underscores, and dashes")
     ;
 
     private int code;

@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-server-providers</artifactId>
-    <version>1.2.3</version>
+    <version>1.5.7</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -30,7 +30,7 @@
     <dependency>
       <groupId>com.magnet.mmx.ext</groupId>
       <artifactId>openfire</artifactId>
-      <version>1.2.3</version>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -64,7 +64,8 @@
                     <goal>shade</goal>
                 </goals>
                 <configuration>
-                    <filters>
+                    <dependencyReducedPomLocation>${project.build.directory}/dependency-reduced-pom.xml</dependencyReducedPomLocation>
+                     <filters>
                         <filter>
                             <artifact>com.magnet.mmx:*</artifact>
                             <includes>
