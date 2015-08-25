@@ -429,7 +429,7 @@
 											<key>GID</key>
 											<integer>0</integer>
 											<key>PATH</key>
-											<string>../payload/mmx-standalone-dist-1.5.0-SNAPSHOT</string>
+											<string>../payload/mmx-standalone-dist-1.6.0-SNAPSHOT</string>
 											<key>PATH_TYPE</key>
 											<integer>1</integer>
 											<key>PERMISSIONS</key>
@@ -519,7 +519,7 @@
 				<key>RELOCATABLE</key>
 				<true/>
 				<key>VERSION</key>
-				<string>1.5.0-SNAPSHOT</string>
+				<string>1.6.0-SNAPSHOT</string>
 			</dict>
 			<key>UUID</key>
 			<string>85F15DF0-2953-405C-B3EC-C909010F7EBA</string>
@@ -730,7 +730,7 @@
 						<key>LANGUAGE</key>
 						<string>English</string>
 						<key>VALUE</key>
-						<string>Magnet Message Server v1.5.0-SNAPSHOT</string>
+						<string>Magnet Message Server v1.6.0-SNAPSHOT</string>
 					</dict>
 				</array>
 			</dict>
@@ -1549,7 +1549,7 @@ Please install JDK 6 or higher, and continue with the installation.</string>
 				</dict>
 			</array>
 			<key>NAME</key>
-			<string>Magnet_Message_Server-1.5.0-SNAPSHOT</string>
+			<string>Magnet_Message_Server-1.6.0-SNAPSHOT</string>
 		</dict>
 	</dict>
 	<key>TYPE</key>
