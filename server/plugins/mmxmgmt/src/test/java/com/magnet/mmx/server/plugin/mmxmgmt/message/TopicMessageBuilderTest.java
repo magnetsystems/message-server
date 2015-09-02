@@ -14,14 +14,27 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import org.dom4j.Element;
+import org.junit.Assert;
 import org.junit.Test;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
 
 public class TopicMessageBuilderTest {
 
@@ -30,7 +43,11 @@ public class TopicMessageBuilderTest {
     TopicPostMessageRequest request = new TopicPostMessageRequest();
     String topicId = "/i1cglsw8dsa/*/demo/chatter";
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
-    request.setContent(message);
+    Map<String, String> content = new HashMap<String, String>();
+    content.put("textContent", message);
+    content.put("ts", Long.toString(new Date().getTime()));
+
+    request.setContent(content);
     request.setContentType("text");
 
     AppEntity app = new AppEntity();
@@ -55,6 +72,32 @@ public class TopicMessageBuilderTest {
 
     JID to = iqPublishMessage.getTo();
     assertEquals("No matching to", "pubsub.localhost", to.toString());
+
+    Element iqRoot = iqPublishMessage.getElement();
+
+    Element pubsub = iqRoot.element(TopicMessageBuilder.PUBSUB_NAME);
+    Element publish = pubsub.element(TopicMessageBuilder.PUBLISH_NAME);
+    Element item = publish.element(TopicMessageBuilder.ITEM_NAME);
+    Element mmx = item.element(Constants.MMX);
+    Element mmxMeta = mmx.element(Constants.MMX_META);
+    assertNotNull("meta element is null", mmxMeta);
+    String json = mmxMeta.getText();
+    assertNotNull("meta json is null", json);
+
+    JsonParser parser = new JsonParser();
+    JsonObject jsonObject = null;
+    try {
+      jsonObject =  parser.parse(json).getAsJsonObject();
+    } catch (JsonSyntaxException e) {
+      fail("JsonSyntax exception");
+    }
+
+    for (String key : content.keySet()) {
+      JsonElement entry = jsonObject.get(key);
+      assertNotNull("No entry found for key:" + key, entry);
+      String value = entry.getAsString();
+      Assert.assertEquals("Non match value for key:" + key, content.get(key), value);
+    }
 
   }
 }

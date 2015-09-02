@@ -14,20 +14,23 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.topic;
 
+import java.util.Map;
+
 /**
  * Object that represents a topic post message request.
  */
 public class TopicPostMessageRequest {
 
-  private String content;
+  private Map<String, String> content;
+
   private String messageType;
   private String contentType;
 
-  public String getContent() {
+  public Map<String, String> getContent() {
     return content;
   }
 
-  public void setContent(String content) {
+  public void setContent(Map<String, String> content) {
     this.content = content;
   }
 
