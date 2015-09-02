@@ -16,6 +16,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.util.GsonData;
@@ -114,6 +115,7 @@ public class TopicMessageBuilder {
 
     String id = idGenerator.generateTopicMessageId(appId, topicId);
     String toAddress = "pubsub." + domain;
+    String serverUser = appEntity.getServerUserId();
     JID from = buildFromJID(appEntity, domain);
 
     message.setType(IQ.Type.set);
@@ -133,6 +135,10 @@ public class TopicMessageBuilder {
     String metaJSON = GsonData.getGson().toJson(meta);
     Element metaElement = mmxElement.addElement(Constants.MMX_META);
     metaElement.setText(metaJSON);
+
+    Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
+    String mmxMetaJSON = MMXMetaBuilder.buildFrom(JIDUtil.getUserId(serverUser), null);
+    mmxMetaElement.setText(mmxMetaJSON);
 
     Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
     payloadElement.addAttribute(Constants.MMX_ATTR_CTYPE, request.getContentType());
