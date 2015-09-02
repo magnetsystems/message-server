@@ -42,7 +42,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
-import com.magnet.mmx.server.plugin.mmxmgmt.web.SendMessageRequest;
 import com.magnet.mmx.util.TopicHelper;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -56,6 +55,7 @@ import org.xmpp.packet.Message;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -64,16 +64,13 @@ public class MessageSenderImpl implements MessageSender {
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageSenderImpl.class);
   private static final String ERROR_INVALID_APPID = "Supplied application id is invalid.";
   private static final String ERROR_INVALID_SEND_MESSAGE_REQUEST = "Supplied send message request is invalid.";
-  private static final String ERROR_INVALID_SEND_MESSAGE_CLIENT = "Supplied client id is invalid.";
   private static final String ERROR_INVALID_SEND_MESSAGE_DEVICE = "Supplied device id is invalid.";
-  private static final String ERROR_INVALID_SEND_MESSAGE_RECIPIENT = "Supplied recipient username is invalid.";
   private static final String ERROR_INVALID_POST_MESSAGE_TOPIC = "Supplied topic id is invalid.";
-  private static final String ERROR_NULL_OR_EMPTY_CONTENT = "No content provided for the message";
+  private static final String ERROR_NULL_OR_EMPTY_META = "No content provided for the message.";
 
   private static final int FAILURE_CODE_NULL_REQUEST = 1001;
   private static final int FAILURE_CODE_BAD_DEVICE_ID = 1003;
   private static final int FAILURE_CODE_NO_CONTENT = 1004;
-  private static final int FAILURE_CODE_BAD_RECIPIENT= 1005;
 
   private static final String SEND_MESSAGE_STATUS_OK = "OK";
   private static final String SEND_MESSAGE_STATUS_ERROR = "ERROR";
@@ -124,8 +121,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setDeviceEntity(validationResult.getDeviceEntity())
                 .setUserId(username)
                 .setReplyTo(request.getReplyTo())
-                .setMessageContent(request.getContent())
-                .setMetadata(request.getMetadata())
+                .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
             Message message = builder.build();
@@ -153,8 +149,7 @@ public class MessageSenderImpl implements MessageSender {
             .setDeviceEntity(validationResult.getDeviceEntity())
             .setUserId(recipient)
             .setReplyTo(request.getReplyTo())
-            .setMessageContent(request.getContent())
-            .setMetadata(request.getMetadata())
+            .setMetadata(request.getContent())
             .setDomain(domain)
             .setReceipt(request.isReceipt());
         Message message = builder.build();
@@ -192,8 +187,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setUtcTime(System.currentTimeMillis())
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
-                .setMessageContent(request.getContent())
-                .setMetadata(request.getMetadata())
+                .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
             Message message = builder.build();
@@ -227,8 +221,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setDeviceEntity(de)
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
-                .setMessageContent(request.getContent())
-                .setMetadata(request.getMetadata())
+                .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
             Message message = builder.build();
@@ -328,51 +321,6 @@ public class MessageSenderImpl implements MessageSender {
     return result;
   }
 
-  protected ValidationResult validateRequest(String appId, SendMessageRequest request, AppDAO appDAO, DeviceDAO deviceDAO) {
-    if (appId == null || appId.isEmpty()) {
-      ValidationResult result = new ValidationResult();
-      result.setValid(false, ERROR_INVALID_APPID);
-      return result;
-    }
-    AppEntity appEntity = appDAO.getAppForAppKey(appId);
-    if (appEntity == null) {
-      ValidationResult result = new ValidationResult();
-      result.setValid(false, ERROR_INVALID_APPID);
-      return result;
-    }
-
-    if (request == null) {
-      ValidationResult result = new ValidationResult();
-      result.setValid(false);
-      result.setFailureMessage(ERROR_INVALID_SEND_MESSAGE_REQUEST);
-      return result;
-    }
-
-    String clientId = request.getClientId();
-    if (clientId == null || clientId.isEmpty()) {
-      ValidationResult result = new ValidationResult();
-      result.setValid(false, ERROR_INVALID_SEND_MESSAGE_CLIENT);
-      return result;
-    }
-    //TODO: Do we need to check if the client is registered in the app ?
-
-    String deviceId = request.getDeviceId();
-    DeviceEntity deviceEntity = null;
-    if (deviceId != null && !deviceId.isEmpty()) {
-      deviceEntity = deviceDAO.getDeviceUsingId(appId, deviceId, DeviceStatus.ACTIVE);
-      if (deviceEntity == null) {
-        ValidationResult result = new ValidationResult();
-        result.setValid(false, ERROR_INVALID_SEND_MESSAGE_DEVICE);
-        return result;
-      }
-    }
-    //things are fine here
-    ValidationResult result = new ValidationResult();
-    result.setValid(true);
-    result.setAppEntity(appEntity);
-    result.setDeviceEntity(deviceEntity);
-    return result;
-  }
 
   protected ValidationResult validateRequest(String appId, com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request, AppDAO appDAO, DeviceDAO deviceDAO) {
     if (request == null) {
@@ -409,9 +357,10 @@ public class MessageSenderImpl implements MessageSender {
         return ValidationResult.failure(ERROR_INVALID_SEND_MESSAGE_DEVICE, FAILURE_CODE_BAD_DEVICE_ID);
       }
     }
-    String content = request.getContent();
-    if (content == null || content.isEmpty()) {
-      return ValidationResult.failure(ERROR_NULL_OR_EMPTY_CONTENT, FAILURE_CODE_NO_CONTENT);
+    // need to ensure that content isn't empty.
+    Map<String, String> meta = request.getContent();
+    if (meta == null || meta.isEmpty()) {
+      return ValidationResult.failure(ERROR_NULL_OR_EMPTY_META, FAILURE_CODE_NO_CONTENT);
     }
     //things are fine here
     ValidationResult result = new ValidationResult();
@@ -447,7 +396,7 @@ public class MessageSenderImpl implements MessageSender {
       result.setValid(false, String.format(ErrorMessages.ERROR_TOPIC_NOT_FOUND, topicName));
       return result;
     }
-    String messageContent =  request.getContent();
+    Map<String, String> messageContent =  request.getContent();
     if (messageContent == null || messageContent.isEmpty()) {
       ValidationResult result = new ValidationResult();
       result.setValid(false, String.format(ErrorMessages.ERROR_TOPIC_INVALID_CONTENT, topicName));
@@ -499,8 +448,6 @@ public class MessageSenderImpl implements MessageSender {
     private AppEntity appEntity;
     private DeviceEntity deviceEntity;
     private String failureMessage;
-    private List<UserEntity> userEntityList;
-    private List<DeviceEntity> deviceEntityList;
     private Node topicNode;
 
     public boolean isValid() {
