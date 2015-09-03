@@ -41,7 +41,6 @@ import java.util.Map;
 public class MessageBuilder {
   private static Logger LOGGER = LoggerFactory.getLogger(MessageBuilder.class);
 
-  //private SendMessageRequest request;
   private AppEntity appEntity;
   private DeviceEntity deviceEntity;
   private long utcTime;
@@ -50,8 +49,8 @@ public class MessageBuilder {
   private String userId;
   private String replyTo;
   private Map<String, String> metadata;
-  private String messageContent;
   private boolean receipt;
+  private static final String EMPTY = "";
 
   public MessageBuilder setAppEntity(AppEntity appEntity) {
     this.appEntity = appEntity;
@@ -93,11 +92,6 @@ public class MessageBuilder {
     return this;
   }
 
-  public MessageBuilder setMessageContent(String messageContent) {
-    this.messageContent = messageContent;
-    return this;
-  }
-
   public MessageBuilder setReceipt(boolean receipt) {
     this.receipt = receipt;
     return this;
@@ -119,8 +113,6 @@ public class MessageBuilder {
     if (metadata == null) {
       metadata = new HashMap<String, String>();
     }
-    //as per the latest changes we need to add the content to the metadata using key "textContent"
-    metadata.put(MMXServerConstants.TEXT_CONTENT_KEY, messageContent);
 
     Map<String, String> meta = metadata;
     String metaJSON = GsonData.getGson().toJson(meta);
@@ -132,7 +124,7 @@ public class MessageBuilder {
     DateFormat fmt = Utils.buildISO8601DateFormat();
     String formattedDateTime = fmt.format(new Date(utcTime));
     payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
-    String text = messageContent;
+    String text = EMPTY;
     payloadElement.setText(text);
     payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, buildChunkAttributeValue(text));
 

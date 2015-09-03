@@ -25,12 +25,11 @@ import java.util.Map;
 public class SendMessageRequest {
   private List<String> recipientUsernames;
   private String deviceId;
-  private String content;
+  private Map<String, String> content;
   private boolean receipt;
   private String replyTo;
   private Target target;
 
-  private Map<String, String> metadata = new HashMap<String, String>();
 
   public List<String> getRecipientUsernames() {
     return recipientUsernames;
@@ -48,11 +47,11 @@ public class SendMessageRequest {
     this.deviceId = deviceId;
   }
 
-  public String getContent() {
+  public Map<String, String> getContent() {
     return content;
   }
 
-  public void setContent(String content) {
+  public void setContent(Map<String, String> content) {
     this.content = content;
   }
 
@@ -72,17 +71,6 @@ public class SendMessageRequest {
     this.replyTo = replyTo;
   }
 
-  public Map<String, String> getMetadata() {
-    return metadata;
-  }
-
-  public void setMetadata(Map<String, String> metadata) {
-    this.metadata = metadata;
-  }
-
-  public void addMetadata(String key, String value) {
-    this.metadata.put(key, value);
-  }
 
   public Target getTarget() {
     return target;
@@ -95,12 +83,12 @@ public class SendMessageRequest {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("SendMessageRequest{");
-    sb.append("recipientUsernames='").append(recipientUsernames).append('\'');
+    sb.append("content=").append(content);
+    sb.append(", recipientUsernames=").append(recipientUsernames);
     sb.append(", deviceId='").append(deviceId).append('\'');
-    sb.append(", content='").append(content).append('\'');
     sb.append(", receipt=").append(receipt);
     sb.append(", replyTo='").append(replyTo).append('\'');
-    sb.append(", metadata=").append(metadata);
+    sb.append(", target=").append(target);
     sb.append('}');
     return sb.toString();
   }

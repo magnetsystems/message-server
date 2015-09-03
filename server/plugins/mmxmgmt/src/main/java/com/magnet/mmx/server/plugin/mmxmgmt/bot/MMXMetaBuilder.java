@@ -38,6 +38,15 @@ public class MMXMetaBuilder {
     return metaTo.toJson();
   }
 
+  public static String buildFrom (String userId, String deviceId) {
+    MetaFrom metaFrom = new MetaFrom();
+    MetaToEntry entry = new MetaToEntry();
+    entry.setUserId(userId);
+    entry.setDevId(deviceId);
+    metaFrom.setFrom(entry);
+    return metaFrom.toJson();
+  }
+
   /**
    * Class that represents an entry in the To list.
    */
@@ -79,4 +88,20 @@ public class MMXMetaBuilder {
     }
   }
 
+
+  /**
+   * Internal meta from entry
+   */
+  private static class MetaFrom extends JSONifiable {
+    @SerializedName("From")
+    private MetaToEntry from;
+
+    public MetaToEntry getFrom() {
+      return from;
+    }
+
+    public void setFrom(MetaToEntry from) {
+      this.from = from;
+    }
+  }
 }
