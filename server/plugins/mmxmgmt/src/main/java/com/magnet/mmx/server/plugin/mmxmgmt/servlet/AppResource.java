@@ -95,7 +95,7 @@ public class AppResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response createApp(AppRequest request) {
+  public Response createApp(AppInfo request) {
     LOGGER.trace("createApp : request={}", request);
     try {
       String appName = request.getName();

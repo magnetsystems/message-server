@@ -155,5 +155,5 @@ public final class MMXServerConstants {
    */
   public static final String TEXT_CONTENT_KEY = "textContent";
 
-  public final static String TOPIC_ROLE_PUBLIC = "public";
+  public final static String TOPIC_ROLE_PUBLIC = "PUBLIC";
 }

@@ -68,7 +68,7 @@ public class TopicRoleDAOImpl implements TopicRoleDAO {
   public void addTopicRoles(String serviceId, String nodeId, List<String> roles) {
     if (roles == null || roles.isEmpty()) {
       LOGGER.warn("addTopicRoles called with null or empty roles list");
-      return;
+      throw new IllegalArgumentException("roles list can't be empty");
     }
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Adding roles:{} for topicId:{}", roles, nodeId);
@@ -81,7 +81,7 @@ public class TopicRoleDAOImpl implements TopicRoleDAO {
       for (String role : roles)  {
         pstmt.setString(1, serviceId);
         pstmt.setString(2, nodeId);
-        pstmt.setString(3, role);
+        pstmt.setString(3, role.toUpperCase());
         pstmt.executeUpdate();
         pstmt.clearParameters();
       }

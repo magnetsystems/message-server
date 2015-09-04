@@ -13,4 +13,4 @@ CREATE TABLE mmxTopicRole (
 ALTER TABLE mmxTopicRole ADD UNIQUE KEY `mmxTopicRole_uk` (serviceID, nodeID, role);
 
 INSERT INTO mmxTopicRole (serviceID, nodeID, role, creationDate)
-SELECT serviceID,nodeID,'public', now() FROM ofPubsubNode WHERE nodeID IS NOT NULL;
+SELECT serviceID,nodeID,'PUBLIC', now() FROM ofPubsubNode WHERE nodeID IS NOT NULL;

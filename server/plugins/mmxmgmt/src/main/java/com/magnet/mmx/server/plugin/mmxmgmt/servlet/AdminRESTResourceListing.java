@@ -14,6 +14,8 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationAppResource;
+
 /**
  */
 public final class AdminRESTResourceListing {
@@ -25,7 +27,8 @@ public final class AdminRESTResourceListing {
       MMXAppStatsResource.class.getName(),
       EndPointResource.class.getName(),
       MMXSetupStatusResource.class.getName(),
-      AppResource.class.getName()
+      AppResource.class.getName(),
+      IntegrationAppResource.class.getName()
   };
 
 

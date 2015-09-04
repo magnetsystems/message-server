@@ -255,6 +255,15 @@ public class MMXTopicManager {
       newAppTopic = createLeafNode(entity.getServerUserId(), topicId, appRootNode, topicInfo);
       result.setSuccess(true);
       result.setNode(TopicNode.build(appId, newAppTopic));
+      /*
+       * Add role mappings
+       */
+      List<String> roles = topicInfo.getRoles();
+      if (roles == null || roles.isEmpty()) {
+        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+      }
+      TopicRoleDAO roleDAO = getTopicRoleDAO();
+      roleDAO.addTopicRoles("pubsub", newAppTopic.getNodeID(), roles);
     } catch (NotAcceptableException e) {
       result.setSuccess(false);
       result.setCode(TopicFailureCode.UNKNOWN);
@@ -655,7 +664,7 @@ public class MMXTopicManager {
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       /**
-       * Add the mapping for the nodes.
+       * Add the mapping for the roles.
        */
       TopicRoleDAO roleDAO = getTopicRoleDAO();
       List<String> roles = rqt.getRoles();

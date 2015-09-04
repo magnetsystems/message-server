@@ -14,6 +14,8 @@
  */
 package com.magnet.mmx.server.api.v1.protocol;
 
+import java.util.List;
+
 /**
  * Request object describing a topic create request.
  */
@@ -23,7 +25,7 @@ public class TopicCreateInfo {
   private String description;
   private boolean subscriptionEnabled = true;
   private boolean subscribeOnCreate;
-
+  private List<String> roles;
 
   public TopicCreateInfo() {
   }
@@ -69,6 +71,13 @@ public class TopicCreateInfo {
     this.subscribeOnCreate = subscribeOnCreate;
   }
 
+  public List<String> getRoles() {
+    return roles;
+  }
+
+  public void setRoles(List<String> roles) {
+    this.roles = roles;
+  }
   @Override
   public String toString() {
     return "TopicInfo{" +
