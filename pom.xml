@@ -245,10 +245,10 @@
         <module>tools/mmx-server-cluster-zip</module>
         <module>tools/mmx-server-zip</module>
         <module>tools/mmx-standalone-dist</module>
-        <module>tools/mmx-standalone-dist-win</module>
+        <!--<module>tools/mmx-standalone-dist-win</module>
         <module>tools/mmx-upgrade-bin</module>
         <module>tools/code-utils</module>
-        <!--<module>tools/mmx-perf-driver</module> -->
+        <module>tools/mmx-perf-driver</module> -->
       </modules>
     </profile>
     <profile>

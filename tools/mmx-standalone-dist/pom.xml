@@ -61,7 +61,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.devex</groupId>
                                     <artifactId>messaging-console-server</artifactId>
-                                    <version>${version.addon}</version>
+                                    <version>1.6.0-SNAPSHOT</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}</outputDirectory>
