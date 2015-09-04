@@ -8,7 +8,7 @@ if [ $# -ne 1 ]; then
 fi
 
 for dir in . ../../../target; do
-  LIBS=${dir}/mmx-sanity-app-1.6.1-shaded.jar
+  LIBS=${dir}/mmx-sanity-app-1.6.2-shaded.jar
   if [ -f ${LIBS} ]; then
     break;
   fi
