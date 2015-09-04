@@ -60,15 +60,6 @@ import java.sql.SQLException;
 public class IntegrationDeviceResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationDeviceResource.class);
 
-  @GET
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Path("{deviceId}")
-  public DeviceResponse getDevice(@PathParam("deviceId")String deviceId) {
-    LOGGER.trace("getDevice : getting device for deviceId={}", deviceId);
-    return null;
-  }
-
   @Path("{deviceId}")
   @POST
   @Produces(MediaType.APPLICATION_JSON)
@@ -166,6 +157,100 @@ public class IntegrationDeviceResource {
     }
   }
 
+  @Path("{deviceId}")
+  @DELETE
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response deleteDevice(@Context HttpHeaders headers, @PathParam("deviceId") String deviceId) {
+    try {
+      LOGGER.trace("deleteDevice : deleting device={}", deviceId);
+      String appId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_APP_ID);
+      String userId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_USER_ID);
+      String apiKey = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_REST_API_KEY);
+
+      ErrorResponse validation = validateDeleteRequest(appId, deviceId);
+      if (validation != null) {
+        return Response
+            .status(Response.Status.BAD_REQUEST)
+            .entity(validation)
+            .build();
+      }
+      DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
+      DeviceEntity deviceEntity = deviceDAO.getDevice(appId, deviceId);
+      deviceDAO.deactivateDevice(deviceId);
+      return Response
+          .status(Response.Status.OK)
+          .build();
+    } catch (DeviceNotFoundException e) {
+      LOGGER.info("Device Not found exception", e);
+      ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_DELETION_ERROR.getCode(),
+          String.format("Device with id:%s not found", deviceId));
+      return Response
+          .status(Response.Status.NOT_FOUND)
+          .entity(response)
+          .build();
+    } catch (Throwable t) {
+      LOGGER.warn("Unknown exception in device delete", t);
+      ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_DELETION_ERROR.getCode(), t.getMessage());
+      return Response
+          .status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(response)
+          .build();
+    }
+  }
+
+  @Path("{deviceId}")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  public Response getDevice(@Context HttpHeaders headers, @PathParam("deviceId") String deviceId) {
+    try {
+      LOGGER.trace("getDevice : getting device for id={}", deviceId);
+      String appId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_APP_ID);
+      String userId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_USER_ID);
+      String apiKey = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_REST_API_KEY);
+
+      ErrorResponse validation = validateGetRequest(appId, deviceId);
+      if (validation != null) {
+        return Response
+            .status(Response.Status.BAD_REQUEST)
+            .entity(validation)
+            .build();
+      }
+      DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
+      DeviceEntity deviceEntity = deviceDAO.getDevice(appId, deviceId);
+      com.magnet.mmx.server.api.v1.protocol.DeviceInfo deviceInfo = DeviceEntity.toDeviceInfo(deviceEntity);
+
+      return Response
+          .status(Response.Status.OK)
+          .entity(deviceInfo)
+          .build();
+
+    } catch (DeviceNotFoundException e) {
+      LOGGER.info("Device Not found exception", e);
+      ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_RETRIEVAL_ERROR.getCode(),
+          String.format("Device with id:%s not found", deviceId));
+
+      return Response
+          .status(Response.Status.NOT_FOUND)
+          .entity(response)
+          .build();
+    } catch (Throwable t) {
+      LOGGER.warn("Unknown exception in device retrieval", t);
+      ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_RETRIEVAL_ERROR.getCode(), t.getMessage());
+      return Response
+          .status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(response)
+          .build();
+    }
+  }
+
+  /**
+   * Validate create request.
+   * @param appId
+   * @param apiKey
+   * @param ownerJid
+   * @param deviceRequest
+   * @return
+   */
   private ErrorResponse validateRequest(String appId, String apiKey, String ownerJid, DeviceInfo deviceRequest) {
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity app = appDAO.getAppForAppKey(appId);
@@ -175,7 +260,6 @@ public class IntegrationDeviceResource {
           DeviceHandler.DeviceOperationStatusCode.INVALID_OWNER_ID.getMessage());
     }
 
-    //String ownerJid = JIDUtil.getUserId(input.getFrom());
     if (app == null) {
       return new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(),
           DeviceHandler.DeviceOperationStatusCode.INVALID_APP_ID.getMessage());
@@ -231,12 +315,47 @@ public class IntegrationDeviceResource {
     return null;
   }
 
+  /**
+   * Validate delete request.
+   * @param appId
+   * @param deviceId
+   * @return
+   */
+  private ErrorResponse validateDeleteRequest(String appId, String deviceId) {
+    AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
+    AppEntity app = appDAO.getAppForAppKey(appId);
 
-  @DELETE
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
-  public DeviceResponse deleteDevice(com.magnet.mmx.protocol.DeviceInfo device) {
-    LOGGER.trace("deleteDevice : deleting device={}", device);
+    if (app == null) {
+      return new ErrorResponse(ErrorCode.DEVICE_DELETION_ERROR.getCode(),
+          DeviceHandler.DeviceOperationStatusCode.INVALID_APP_ID.getMessage());
+    }
+    if (deviceId == null || deviceId.isEmpty()) {
+      return new ErrorResponse(ErrorCode.DEVICE_DELETION_ERROR.getCode(),
+          DeviceHandler.DeviceOperationStatusCode.INVALID_DEVICE_ID.getMessage());
+
+    }
+    return null;
+  }
+
+  /**
+   * Validate get request.
+   * @param appId
+   * @param deviceId
+   * @return
+   */
+  private ErrorResponse validateGetRequest(String appId, String deviceId) {
+    AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
+    AppEntity app = appDAO.getAppForAppKey(appId);
+
+    if (app == null) {
+      return new ErrorResponse(ErrorCode.DEVICE_RETRIEVAL_ERROR.getCode(),
+          DeviceHandler.DeviceOperationStatusCode.INVALID_APP_ID.getMessage());
+    }
+    if (deviceId == null || deviceId.isEmpty()) {
+      return new ErrorResponse(ErrorCode.DEVICE_RETRIEVAL_ERROR.getCode(),
+          DeviceHandler.DeviceOperationStatusCode.INVALID_DEVICE_ID.getMessage());
+
+    }
     return null;
   }
 }
