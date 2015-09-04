@@ -90,7 +90,7 @@ public class IntegrationDeviceResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response createDevice(@Context HttpHeaders headers, com.magnet.mmx.protocol.DeviceInfo device) {
-    LOGGER.trace("createDevice : getting device for device={}", device);
+    LOGGER.trace("createDevice : creating device for device={}", device);
     try {
       String appId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_APP_ID);
       String userId = headers.getHeaderString(MMXServerConstants.HTTP_HEADER_USER_ID);
@@ -127,7 +127,7 @@ public class IntegrationDeviceResource {
           if (newToken != null) {
             status = PushStatus.VALID;
           }
-          LOGGER.trace("processRegistration : updateDevice resultCount={}, deviceId={}", rowCount, device.getDevId());
+          LOGGER.trace("createDevice : updateDevice resultCount={}, deviceId={}", rowCount, device.getDevId());
           deviceDAO.updatePushStatus(device.getDevId(), Helper.enumerateOSType(device.getOsType()), appId, status);
         }
       } else {
@@ -143,7 +143,7 @@ public class IntegrationDeviceResource {
           .entity(devInfo)
           .build();
     } catch (SQLException e) {
-      LOGGER.warn("SQL Exception in create topic", e);
+      LOGGER.warn("SQL Exception in create device", e);
       ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(), e.getMessage());
       return Response
           .status(Response.Status.INTERNAL_SERVER_ERROR)
@@ -152,6 +152,13 @@ public class IntegrationDeviceResource {
     } catch (DeviceNotFoundException e) {
       LOGGER.warn("SQL Exception in create topic", e);
       ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(), e.getMessage());
+      return Response
+          .status(Response.Status.INTERNAL_SERVER_ERROR)
+          .entity(response)
+          .build();
+    } catch (Throwable t) {
+      LOGGER.warn("Unknown exception in create device", t);
+      ErrorResponse response = new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(), t.getMessage());
       return Response
           .status(Response.Status.INTERNAL_SERVER_ERROR)
           .entity(response)
