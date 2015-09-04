@@ -838,7 +838,7 @@ public class MMXTopicManager {
   }
   
   public TopicAction.SubscribeResponse subscribeTopic(JID from, String appId, 
-              TopicAction.SubscribeRequest rqt) throws MMXException {    
+              TopicAction.SubscribeRequest rqt, List<String> userRoles) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
@@ -870,7 +870,15 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
-
+    /*
+     * ensure user has the necessary role for subscribing to the topic.
+     */
+    boolean isSubScriptionAllowed = isAllowed(node.getNodeID(), userRoles);
+    if (!isSubScriptionAllowed) {
+      LOGGER.info("Subscription to Topic:{} not allowed for user with roles:{}", node.getNodeID(), userRoles);
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
+          StatusCode.FORBIDDEN.getCode());
+    }
     // Check for duplicated subscription; return error or existing subscription.
     NodeSubscription subscription;
     if ((subscription = node.getSubscription(subscriber)) != null) {

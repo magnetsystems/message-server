@@ -78,7 +78,11 @@ public class MMXPubSubHandler extends IQHandler {
           StatusCode.INVALID_COMMAND.getMessage()+commandId,
           StatusCode.INVALID_COMMAND.getCode());
     }
-    List<String> userRoles = UserRoleCache.getRoles(JIDUtil.getUserId(from));
+    String userId = JIDUtil.getUserId(from);
+    if (Log.isDebugEnabled()) {
+           Log.debug("Getting roles for userId:{}", userId);
+    }
+    List<String> userRoles = UserRoleCache.getRoles(userId);
     if (userRoles == null || userRoles.isEmpty()) {
       userRoles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
     }
@@ -125,7 +129,7 @@ public class MMXPubSubHandler extends IQHandler {
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(status));
       case subscribe:
         TopicAction.SubscribeResponse resp = topicMgr.subscribeTopic(from, appId,
-            TopicAction.SubscribeRequest.fromJson(payload));
+            TopicAction.SubscribeRequest.fromJson(payload), userRoles);
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(resp));
       case unsubscribe:
         status = topicMgr.unsubscribeTopic(from, appId,

@@ -28,7 +28,7 @@ public class TopicRoleDAOImpl implements TopicRoleDAO {
   private static Logger LOGGER = LoggerFactory.getLogger(TopicRoleDAOImpl.class);
   private ConnectionProvider provider;
 
-  private static final String GET_ROLES_FOR_TOPIC = "SELECT id, serviceID, nodeID, role, creationDate FROM serviceID = ? AND nodeID = ? ORDER BY role";
+  private static final String GET_ROLES_FOR_TOPIC = "SELECT id, serviceID, nodeID, role, creationDate FROM mmxTopicRole WHERE serviceID = ? AND nodeID = ? ORDER BY role";
   private static final String ADD_ROLE_FOR_TOPIC = "INSERT INTO mmxTopicRole(serviceID, nodeID, role, creationDate) VALUES (?, ?, ?, now()) ON DUPLICATE KEY UPDATE id=id";
 
 
