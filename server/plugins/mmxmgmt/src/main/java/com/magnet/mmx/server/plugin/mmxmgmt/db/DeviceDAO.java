@@ -14,7 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import com.magnet.mmx.protocol.DevReg;
 import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
@@ -41,7 +40,7 @@ public interface DeviceDAO {
    * @return
    * @throws DbInteractionException
    */
-  public int addDevice (String ownerId, String appId, DevReg request) throws DbInteractionException;
+  public int addDevice (String ownerId, String appId, com.magnet.mmx.protocol.DeviceInfo request) throws DbInteractionException;
 
   /**
    * Get a device using the passed in values
@@ -64,7 +63,7 @@ public interface DeviceDAO {
    * @param status  updated device status
    * @return the number of devices updated
    */
-  public int updateDevice(String deviceId, OSType type, String appId, DevReg update, String ownerId, DeviceStatus status) throws DbInteractionException;
+  public int updateDevice(String deviceId, OSType type, String appId, com.magnet.mmx.protocol.DeviceInfo update, String ownerId, DeviceStatus status) throws DbInteractionException;
 
 
   public int deactivateDevice(String deviceId) throws DbInteractionException;
