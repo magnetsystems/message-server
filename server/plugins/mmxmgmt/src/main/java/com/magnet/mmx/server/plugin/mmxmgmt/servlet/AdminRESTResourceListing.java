@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationAppResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationDeviceResource;
 
 /**
  */
