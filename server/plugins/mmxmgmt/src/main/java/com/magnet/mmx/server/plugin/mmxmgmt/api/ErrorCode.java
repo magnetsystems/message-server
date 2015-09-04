@@ -64,6 +64,8 @@ public enum ErrorCode {
   TOPIC_ITEMS_BY_ID(53),
   RATE_LIMIT_EXCEEDED((54)),
   DEVICE_CREATION_ERROR(55),
+  DEVICE_DELETION_ERROR(56),
+  DEVICE_RETRIEVAL_ERROR(57),
   ;
 
   private int code;
