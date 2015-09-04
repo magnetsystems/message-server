@@ -28,7 +28,6 @@ public class UserRoleCache {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserRoleCache.class);
 
   private static final String CACHE_NAME = "mmx.user.roles";
-  private static  Cache<String, List<String>> userRoleCache;
 
   /**
    *
