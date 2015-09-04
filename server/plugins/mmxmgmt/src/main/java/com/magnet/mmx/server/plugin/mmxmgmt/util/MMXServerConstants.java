@@ -154,4 +154,6 @@ public final class MMXServerConstants {
    * Content is included in meta using the following key.
    */
   public static final String TEXT_CONTENT_KEY = "textContent";
+
+  public final static String TOPIC_ROLE_PUBLIC = "public";
 }

@@ -79,12 +79,12 @@ public class TopicQueryBuilder {
 //    return this.buildPaginationQueryWithOrder(query, appId, null, null);
 //  }
 
-  public QueryBuilderResult buildPaginationQuery(TopicQuery query, String appId, PaginationInfo paginationInfo) {
-    return this.buildPaginationQueryWithOrder(query, appId, paginationInfo, null);
+  public QueryBuilderResult buildPaginationQuery(TopicQuery query, String appId, PaginationInfo paginationInfo, List<String> userRoles ) {
+    return this.buildPaginationQueryWithOrder(query, appId, paginationInfo, null, userRoles);
   }
 
   public QueryBuilderResult buildPaginationQuery(TopicAction.TopicSearchRequest searchRequest, String appId,
-                                                 PaginationInfo paginationInfo, String userName) throws ResolutionException {
+                                                 PaginationInfo paginationInfo, String userName, List<String> userRoles) throws ResolutionException {
 
     com.magnet.mmx.protocol.SearchAction.Operator operator = searchRequest.getOperator();
     if (operator == null) {
@@ -133,6 +133,18 @@ public class TopicQueryBuilder {
         whereClauseBuilder.append(fragment);
       }
     }
+
+    if (userRoles != null && !userRoles.isEmpty()) {
+      String fragment =  processUserRoles(userRoles);
+      if (added) {
+        whereClauseBuilder.append(SPACE).append(AND).append(SPACE);
+        whereClauseBuilder.append(OPEN_BRACKET).append(fragment).append(CLOSE_BRACKET);
+      } else {
+        added = true;
+        whereClauseBuilder.append(fragment);
+      }
+    }
+
     String tableList = buildTableList();
     String appIdFragment = processAppId(appId, userName);
 
@@ -198,7 +210,7 @@ public class TopicQueryBuilder {
     return new QueryBuilderResult(queryBuilder.toString(), countQueryBuilder.toString(), paramList);
   }
 
-  public QueryBuilderResult buildPaginationQueryWithOrder(TopicQuery query, String appId, PaginationInfo info, SortInfo sortInfo) throws
+  public QueryBuilderResult buildPaginationQueryWithOrder(TopicQuery query, String appId, PaginationInfo info, SortInfo sortInfo, List<String> userRoles) throws
       ResolutionException {
     Operator operator = query.getOperator();
     if (operator == null) {
@@ -238,6 +250,16 @@ public class TopicQueryBuilder {
       String fragment = processTags(tags);
       if (added) {
         whereClauseBuilder.append(sqlOperator);
+        whereClauseBuilder.append(OPEN_BRACKET).append(fragment).append(CLOSE_BRACKET);
+      } else {
+        added = true;
+        whereClauseBuilder.append(fragment);
+      }
+    }
+    if (userRoles != null && !userRoles.isEmpty()) {
+      String fragment =  processUserRoles(userRoles);
+      if (added) {
+        whereClauseBuilder.append(SPACE).append(AND).append(SPACE);
         whereClauseBuilder.append(OPEN_BRACKET).append(fragment).append(CLOSE_BRACKET);
       } else {
         added = true;
@@ -427,6 +449,24 @@ public class TopicQueryBuilder {
     add stuff of the join table
      */
     tableList.add("mmxTag");
+    return fragmentBuilder.toString();
+  }
+
+  //EXISTS (SELECT * FROM mmxTopicRole tr WHERE tr.NodeID = ofPubSubNode.NodeID AND tr.role IN ('public', 'admin'));
+  protected String processUserRoles(List<String> roles) {
+    StringBuilder fragmentBuilder = new StringBuilder();
+    fragmentBuilder.append("EXISTS").append(SPACE).append(OPEN_BRACKET).append(SPACE);
+    fragmentBuilder.append("SELECT id from mmxTopicRole WHERE mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (");
+    String separator = ",";
+    for (String role : roles) {
+      fragmentBuilder.append(QUESTION);
+      fragmentBuilder.append(separator);
+      paramList.add(new QueryParam(Types.VARCHAR, role, true));
+    }
+    //strip the trailing or
+    fragmentBuilder.setLength(fragmentBuilder.length() - separator.length());
+    fragmentBuilder.append(SPACE).append(CLOSE_BRACKET);
+    fragmentBuilder.append(SPACE).append(CLOSE_BRACKET);
     return fragmentBuilder.toString();
   }
 }

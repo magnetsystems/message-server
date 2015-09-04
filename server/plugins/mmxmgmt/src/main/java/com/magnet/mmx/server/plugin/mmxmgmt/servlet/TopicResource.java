@@ -54,6 +54,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -220,7 +221,8 @@ public class TopicResource {
       PaginationInfo paginationInfo = PaginationInfo.build(size, offset);
 
       TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
-      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(query, appId, paginationInfo, null);
+      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(query, appId, paginationInfo, null,
+          Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
       SearchResult<TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), builtQuery, paginationInfo);
 

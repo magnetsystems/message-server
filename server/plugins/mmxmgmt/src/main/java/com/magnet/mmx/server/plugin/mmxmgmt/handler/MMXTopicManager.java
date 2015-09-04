@@ -39,6 +39,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicRoleDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicRoleDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
@@ -652,6 +654,17 @@ public class MMXTopicManager {
       
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
+      /**
+       * Add the mapping for the nodes.
+       */
+      TopicRoleDAO roleDAO = getTopicRoleDAO();
+      List<String> roles = rqt.getRoles();
+      if (roles == null) {
+        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+      }
+      roleDAO.addTopicRoles("pubsub", node.getNodeID(), roles);
+
+
     }
 //    LOGGER.trace("create node="+realTopic+" success");
 
@@ -924,7 +937,7 @@ public class MMXTopicManager {
   }
   
   public TopicAction.ListResponse listTopics(JID from, String appId,
-                  TopicAction.ListRequest rqt) throws MMXException {
+                  TopicAction.ListRequest rqt, List<String> userRoles) throws MMXException {
     TopicAction.ListResponse resp = new TopicAction.ListResponse();
     Integer maxLimit = rqt.getLimit();
     boolean recursive = rqt.isRecursive();
@@ -941,7 +954,7 @@ public class MMXTopicManager {
       }
       // Get its top level children nodes filtered by the search type.
       String userId = JIDUtil.getUserId(from);
-      limit = getTopChildNodes(recursive, node, resp, limit, type, userId);
+      limit = getTopChildNodes(recursive, node, resp, limit, type, userId, userRoles);
     } else {
       // Filter by the global topics.
       if (type == ListType.global || type == ListType.both) {
@@ -998,8 +1011,11 @@ public class MMXTopicManager {
   // Get all top level children nodes which are either global topics or user
   // topics.  Filter out the nodes by the search type.
   private int getTopChildNodes(boolean recursive, Node root, 
-      TopicAction.ListResponse resp, int limit, ListType type, String userId) {
+      TopicAction.ListResponse resp, int limit, ListType type, String userId, List<String> roles) {
     boolean globalOnly = (type == ListType.global);
+    if (roles == null || roles.isEmpty()) {
+      roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+    }
     for (Node child : root.getNodes()) {
       AppTopic topic = TopicHelper.parseTopic(child.getNodeID());
       if (topic == null) {
@@ -1016,7 +1032,19 @@ public class MMXTopicManager {
         if (--limit < 0) {
           return limit;
         }
-        resp.add(nodeToInfo(topic.getUserId(), topic.getName(), child));        
+        resp.add(nodeToInfo(topic.getUserId(), topic.getName(), child));
+        /**
+         * Add a check to see if the topic role mapping allows current user's roles
+         * to access this topic. The check should be done only for global topics
+         */
+        if (!topic.isUserTopic()) {
+          boolean userHasRole = isAllowed(child.getNodeID(), roles);
+          if (userHasRole) {
+            resp.add(nodeToInfo(topic.getUserId(), topic.getName(), child));
+          }
+        } else {
+          resp.add(nodeToInfo(topic.getUserId(), topic.getName(), child));
+        }
         if (recursive && child.isCollectionNode()) {
           limit = getChildNodes(recursive, child, resp, limit);
         }
@@ -1356,7 +1384,7 @@ public class MMXTopicManager {
   }
 
   public TopicAction.TopicQueryResponse searchTopic(JID from, String appId,
-                                                    TopicAction.TopicSearchRequest rqt) throws MMXException {
+                                                    TopicAction.TopicSearchRequest rqt, List<String> userRoles) throws MMXException {
     String userId = EXCLUDE_USER_TOPICS ? 
         TopicHelper.TOPIC_FOR_APP_STR : JIDUtil.getUserId(from);
     TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
@@ -1370,7 +1398,7 @@ public class MMXTopicManager {
       size = PubSubPersistenceManagerExt.MAX_ROWS_RETURN;
     }
     PaginationInfo pgInfo = PaginationInfo.build(size, offset);
-    QueryBuilderResult queryBuilderResult = queryBuilder.buildPaginationQuery(rqt, appId, pgInfo, userId);
+    QueryBuilderResult queryBuilderResult = queryBuilder.buildPaginationQuery(rqt, appId, pgInfo, userId, userRoles);
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> results = PubSubPersistenceManagerExt.
         getTopicWithPagination(new OpenFireDBConnectionProvider(), queryBuilderResult, pgInfo);
 
@@ -1846,6 +1874,31 @@ public class MMXTopicManager {
 
   public ConnectionProvider getConnectionProvider() {
     return new OpenFireDBConnectionProvider();
+  }
+
+  private TopicRoleDAO getTopicRoleDAO() {
+    return new TopicRoleDAOImpl(new OpenFireDBConnectionProvider());
+  }
+
+  /**
+   * Check if user with supplied roles has access to the topic identified by nodeId.
+   * This API shouldn't be called for personal topic. It works with global topics only.
+   * @param nodeId
+   * @param userRoles
+   * @return
+   */
+  private boolean isAllowed (String nodeId, List<String> userRoles) {
+    TopicRoleDAO roleDAO = getTopicRoleDAO();
+    List<String> topicRoles  = roleDAO.getTopicRoles("pubsub", nodeId);
+    boolean userHasRole = false;
+    Iterator<String> userRoleIterator = userRoles.iterator();
+
+    while (userRoleIterator.hasNext() && !userHasRole) {
+      String userRole = userRoleIterator.next();
+      int index = Collections.binarySearch(topicRoles, userRole);
+      userHasRole = index > -1;
+    }
+    return userHasRole;
   }
   
   /**

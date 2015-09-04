@@ -15,6 +15,7 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.magnet.mmx.protocol.Constants;
@@ -24,10 +25,12 @@ import com.magnet.mmx.protocol.TopicInfo;
 import com.magnet.mmx.protocol.SendLastPublishedItems;
 import com.magnet.mmx.protocol.TagSearch;
 import com.magnet.mmx.protocol.TopicAction;
+import com.magnet.mmx.sasl.UserRoleCache;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager.StatusCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 
 import org.dom4j.Element;
@@ -75,6 +78,10 @@ public class MMXPubSubHandler extends IQHandler {
           StatusCode.INVALID_COMMAND.getMessage()+commandId,
           StatusCode.INVALID_COMMAND.getCode());
     }
+    List<String> userRoles = UserRoleCache.getRoles(JIDUtil.getUserId(from));
+    if (userRoles == null || userRoles.isEmpty()) {
+      userRoles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+    }
 
     try {
       MMXStatus status;
@@ -90,7 +97,7 @@ public class MMXPubSubHandler extends IQHandler {
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(status));
       case listtopics:
         TopicAction.ListResponse lstresp = topicMgr.listTopics(from, appId,
-            TopicAction.ListRequest.fromJson(payload));
+            TopicAction.ListRequest.fromJson(payload), userRoles);
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(lstresp));
       case createtopic:
         status = topicMgr.createTopic(from, appId, 
@@ -154,7 +161,7 @@ public class MMXPubSubHandler extends IQHandler {
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(qryresp));
       case searchTopic:
         TopicAction.TopicQueryResponse srchresp = topicMgr.searchTopic(from, 
-            appId, TopicAction.TopicSearchRequest.fromJson(payload));
+            appId, TopicAction.TopicSearchRequest.fromJson(payload), userRoles);
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(srchresp));
       case fetch:
         TopicAction.FetchResponse fetchresp = topicMgr.fetchItems(from, appId, 
@@ -178,6 +185,9 @@ public class MMXPubSubHandler extends IQHandler {
       return IQUtils.createErrorIQ(iq, e.getMessage(), StatusCode.BAD_REQUEST.getCode());
     } catch (MMXException e) {
       return IQUtils.createErrorIQ(iq, e.getMessage(), e.getCode());
+    } catch (Throwable t) {
+      Log.info("Throwable in MMXPubSubHandler", t);
+      return IQUtils.createErrorIQ(iq, t.getMessage(), 500);
     }
     return IQUtils.createErrorIQ(iq,
         StatusCode.INVALID_COMMAND.getMessage() + commandId,
