@@ -170,10 +170,15 @@ public class IntegrationDeviceResource {
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity app = appDAO.getAppForAppKey(appId);
 
+    if (ownerJid == null || ownerJid.isEmpty()) {
+      return new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(),
+          DeviceHandler.DeviceOperationStatusCode.INVALID_OWNER_ID.getMessage());
+    }
+
     //String ownerJid = JIDUtil.getUserId(input.getFrom());
     if (app == null) {
       return new ErrorResponse(ErrorCode.DEVICE_CREATION_ERROR.getCode(),
-          DeviceHandler.DeviceOperationStatusCode.INVALID_API_KEY.getMessage());
+          DeviceHandler.DeviceOperationStatusCode.INVALID_APP_ID.getMessage());
     }
     String deviceId = deviceRequest.getDevId();
     if (deviceId == null || deviceId.isEmpty()) {
