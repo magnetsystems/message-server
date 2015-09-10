@@ -15,6 +15,48 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeAffiliate;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.NotAcceptableException;
+import org.jivesoftware.openfire.pubsub.PubSubService;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
+import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.forms.DataForm;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXAttribute;
 import com.magnet.mmx.protocol.MMXStatus;
@@ -53,45 +95,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppTopic;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeAffiliate;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.NotAcceptableException;
-import org.jivesoftware.openfire.pubsub.PubSubService;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
-import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
-import org.jivesoftware.openfire.pubsub.models.AccessModel;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.XMPPDateTimeFormat;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class MMXTopicManager {
 
@@ -763,7 +766,7 @@ public class MMXTopicManager {
     return status;
   }
   
-  public MMXStatus retractFromTopic(JID from, String appId, 
+  public Map<String, Integer> retractFromTopic(JID from, String appId, 
       TopicAction.RetractRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
@@ -779,7 +782,7 @@ public class MMXTopicManager {
     
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
-    if (itemIds == null) {
+    if (itemIds == null || itemIds.size() == 0) {
       throw new MMXException(StatusCode.BAD_REQUEST.getMessage("no item ID's"),
           StatusCode.BAD_REQUEST.getCode());
     }
@@ -790,29 +793,23 @@ public class MMXTopicManager {
     }
     
     List<PublishedItem> pubItems = new ArrayList<PublishedItem>(itemIds.size());
+    Map<String, Integer> results = new HashMap<String, Integer>(itemIds.size());
     for (String itemId : itemIds) {
       if (itemId == null) {
-        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"), 
-            StatusCode.BAD_REQUEST.getCode());
+        continue;
       }
       PublishedItem item = leafNode.getPublishedItem(itemId);
       if (item == null) {
-        throw new MMXException(StatusCode.ITEM_NOT_FOUND.getMessage(itemId), 
-            StatusCode.ITEM_NOT_FOUND.getCode());
+        results.put(itemId, StatusCode.ITEM_NOT_FOUND.getCode());
       }
       if (!item.canDelete(from)) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(itemId), 
-            StatusCode.FORBIDDEN.getCode());
+        results.put(itemId, StatusCode.FORBIDDEN.getCode());
       }
       pubItems.add(item);
+      results.put(itemId, StatusCode.SUCCESS.getCode());
     }
     leafNode.deleteItems(pubItems);
-    
-    int count = (pubItems == null) ? 0 : pubItems.size();
-    MMXStatus status = (new MMXStatus())
-        .setCode(StatusCode.SUCCESS.getCode())
-        .setMessage(count+" item"+((count==1)?" is":"s are")+" retracted");
-    return status;
+    return results;
   }
   
   public TopicAction.SubscribeResponse subscribeTopic(JID from, String appId, 

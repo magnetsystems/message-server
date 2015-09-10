@@ -16,6 +16,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
 import java.util.List;
+import java.util.Map;
 
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXStatus;
@@ -109,9 +110,9 @@ public class MMXPubSubHandler extends IQHandler {
 //            TopicOps.PublishRequest.fromJson(payload)));
 //        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(pubresp));
       case retract:
-        status = topicMgr.retractFromTopic(from, appId, 
+        Map<String, Integer> results = topicMgr.retractFromTopic(from, appId, 
             TopicAction.RetractRequest.fromJson(payload));
-        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(status));
+        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(results));
       case retractall:
         status = topicMgr.retractAllFromTopic(from, appId, 
             TopicAction.RetractAllRequest.fromJson(payload));
