@@ -11,7 +11,7 @@
 
   <groupId>com.magnet.mmx</groupId>
   <artifactId>mmx-root</artifactId>
-  <version>1.6.0-SNAPSHOT</version>
+  <version>1.7.1</version>
 
   <packaging>pom</packaging>
   <name>Magnet Messaging Root</name>
