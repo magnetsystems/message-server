@@ -21,7 +21,7 @@ if [ -v $DEBUG ]; then
     set -x
 fi
 
-export MMX_UNZIP_DIR='mmx-standalone-dist-1.7.3'
+export MMX_UNZIP_DIR='mmx-standalone-dist-1.7.4'
 export MMX_ZIPFILE="${MMX_UNZIP_DIR}.zip"
 
 if [ "$(ls -A payload)" ]; then
