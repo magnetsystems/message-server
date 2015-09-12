@@ -18,30 +18,29 @@ package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 import java.util.List;
 import java.util.Map;
 
-import com.magnet.mmx.protocol.Constants;
-import com.magnet.mmx.protocol.MMXStatus;
-import com.magnet.mmx.protocol.MMXTopicId;
-import com.magnet.mmx.protocol.TopicInfo;
-import com.magnet.mmx.protocol.SendLastPublishedItems;
-import com.magnet.mmx.protocol.TagSearch;
-import com.magnet.mmx.protocol.TopicAction;
-import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
-import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager.StatusCode;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.util.GsonData;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PublishedItem;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+
+import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.MMXStatus;
+import com.magnet.mmx.protocol.MMXTopicId;
+import com.magnet.mmx.protocol.SendLastPublishedItems;
+import com.magnet.mmx.protocol.TagSearch;
+import com.magnet.mmx.protocol.TopicAction;
+import com.magnet.mmx.protocol.TopicInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager.StatusCode;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.util.GsonData;
 
 /**
  * Handler for pubsub send_last_published_item.  Current implementation requires
@@ -105,6 +104,10 @@ public class MMXPubSubHandler extends IQHandler {
         TopicInfo info = topicMgr.getTopic(from, appId,
             MMXTopicId.fromJson(payload));
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(info));
+      case getTopics:
+        List<TopicInfo> infos = topicMgr.getTopics(from, appId,
+            TopicAction.GetTopicsRequest.fromJson(payload));
+        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(infos));
 //      case publish:
 //        TopicOps.PublishResponse pubresp = publishToTopic(from, appId,
 //            TopicOps.PublishRequest.fromJson(payload)));

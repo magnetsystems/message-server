@@ -736,7 +736,27 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic.getName()), 
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
+//    // A user can get the topic info if the topic is a global topic, or the owner
+//    // of a user topic, or a subscriber to a user topic.
+//    if (topic.isUserTopic() && !node.getOwners().contains(from.asBareJID()) &&
+//        node.getSubscriptions(from.asBareJID()).size() > 0) {
+//      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
+//          StatusCode.FORBIDDEN.getCode());
+//    }
     return nodeToInfo(topic.getUserId(), topic.getName(), node);
+  }
+  
+  public List<TopicInfo> getTopics(JID from, String appId, List<MMXTopicId> topics)
+                            throws MMXException {
+    List<TopicInfo> infos = new ArrayList<TopicInfo>(topics.size());
+    for (MMXTopicId topic : topics) {
+      try {
+        infos.add(getTopic(from, appId, topic));
+      } catch (Throwable e) {
+        infos.add(null);
+      }
+    }
+    return infos;
   }
   
   public MMXStatus retractAllFromTopic(JID from, String appId,
