@@ -32,7 +32,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-LIBS=../../../target/mmx-perf-driver-1.6.0-SNAPSHOT-shaded.jar
+LIBS=../../../target/mmx-perf-driver-1.8.1-shaded.jar
 
 #DEBUG=-agentlib:jdwp=transport=dt_socket,address=127.0.0.1:8888,server=y,suspend=n
 JAVAOPTS=-Xmx1024m
