@@ -59,7 +59,7 @@ import java.util.List;
 public class PubSubPersistenceManagerExt {
   private static Logger LOGGER = LoggerFactory.getLogger(PubSubPersistenceManagerExt.class);
   public static final int MAX_ROWS_RETURN = JiveGlobals.getIntProperty(
-      "mmx.topic.query.max", 5000);
+          "mmx.topic.query.max", 5000);
   private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty(
       "xmpp.pubsub.fetch.max", 2000);
   private static final String LOAD_ITEMS_PREDICATE = 
@@ -74,6 +74,7 @@ public class PubSubPersistenceManagerExt {
       + LOAD_ITEMS_BTWN_PREDICATE;
   private static final String LOAD_ITEMS_BTWN = "SELECT id,jid,creationDate,payload FROM ofPubsubItem "
       + LOAD_ITEMS_BTWN_PREDICATE;
+  private static final String LOAD_ITEMS_BTWN_WITH_OFFSET = LOAD_ITEMS_BTWN + " LIMIT ?, ? ";
   private static final String GET_ITEM_COUNT = "SELECT count(*) from ofPubsubItem WHERE nodeID=? AND serviceID=?";
   private static final String SEARCH_PROJECTION = 
       "nodeID,leaf,name,description,persistItems,maxItems,maxPayloadSize,publisherModel,creationDate,modificationDate,creator,subscriptionEnabled";
@@ -194,7 +195,7 @@ public class PubSubPersistenceManagerExt {
   }
 
   public static List<PublishedItem> getPublishedItems(LeafNode node,
-      int maxRows, Date since, Date until, boolean asc) {
+      int offset, int maxRows, Date since, Date until, boolean asc) {
 
 //    LOGGER.trace(
 //        "getPublishedItems : nodeId={}, maxRows={}, since={}, until={}", node,
@@ -224,14 +225,22 @@ public class PubSubPersistenceManagerExt {
     try {
       con = DbConnectionManager.getConnection();
       // Get published items of the specified node
-      pstmt = con.prepareStatement(LOAD_ITEMS_BTWN);
-      pstmt.setMaxRows(max);
+      if(offset > 0) {
+        pstmt = con.prepareStatement(LOAD_ITEMS_BTWN_WITH_OFFSET);
+      } else {
+        pstmt = con.prepareStatement(LOAD_ITEMS_BTWN);
+        pstmt.setMaxRows(max);
+      }
       pstmt.setString(1, node.getService().getServiceID());
       pstmt.setString(2, encodeNodeID(node.getNodeID()));
       String sinceString = StringUtils.dateToMillis(since);
       pstmt.setString(3, sinceString);
       String untilString = StringUtils.dateToMillis(until);
       pstmt.setString(4, untilString);
+      if(offset > 0) {
+        pstmt.setInt(5, offset);
+        pstmt.setInt(6, max);
+      }
       rs = pstmt.executeQuery();
       int counter = 0;
       // Rebuild loaded published items

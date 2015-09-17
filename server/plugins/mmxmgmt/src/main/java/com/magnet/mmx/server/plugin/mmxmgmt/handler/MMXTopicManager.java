@@ -1673,12 +1673,14 @@ public class MMXTopicManager {
     Date until = null;
     boolean ascending = false;
     int maxItems = 0;
+    int offset = 0;
     if (options != null) {
       subId = options.getSubId();
       since = options.getSince();
       until = options.getUntil();
       ascending = options.isAscending();
       maxItems = options.getMaxItems();
+      offset = options.getOffset();
     }
     // If not defined, default to system property ("xmpp.pubsub.fetch.max")
     if (maxItems <= 0) {
@@ -1731,7 +1733,7 @@ public class MMXTopicManager {
     }
 
     List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(
-        (LeafNode) node, maxItems, since, until, ascending);
+        (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
       MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
@@ -1841,17 +1843,24 @@ public class MMXTopicManager {
       }
     }
     List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
-    UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
-    int addedCount = 0; //for applying the limit
-    for (String username : subscriberUserNameSet) {
-      //TODO: Improve this
-      UserEntity userEntity = userDAO.getUser(username);
-      com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
-      if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
-        break;
+    if(count > rqt.getOffset()) {
+      UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
+      int addedCount = 0; //for applying the limit
+      int index = 0;
+      for (String username : subscriberUserNameSet) {
+        if(index++ < rqt.getOffset()) {
+          continue;
+        }
+
+        if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
+          break;
+        }
+        //TODO: Improve this
+        UserEntity userEntity = userDAO.getUser(username);
+        com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+        userInfoList.add(userInfo);
+        addedCount++;
       }
-      userInfoList.add(userInfo);
-      addedCount++;
     }
 
     TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()
