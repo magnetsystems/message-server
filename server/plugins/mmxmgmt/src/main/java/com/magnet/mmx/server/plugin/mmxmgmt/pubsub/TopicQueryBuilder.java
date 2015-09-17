@@ -326,7 +326,7 @@ public class TopicQueryBuilder {
     StringBuilder fragmentBuilder = new StringBuilder();
 
     if(null == listType) {
-      listType = TopicAction.ListType.both;
+      listType = TopicAction.ListType.global;
     }
     if(listType == TopicAction.ListType.global) {
       fragmentBuilder.append(APP_ID_CLAUSE);
