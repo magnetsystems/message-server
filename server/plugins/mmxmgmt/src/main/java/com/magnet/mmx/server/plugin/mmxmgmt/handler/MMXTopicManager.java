@@ -99,7 +99,6 @@ import com.magnet.mmx.util.Utils;
 public class MMXTopicManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class);
-  private static final boolean EXCLUDE_USER_TOPICS = true;
   private XMPPServer mServer = XMPPServer.getInstance();
   private PubSubService mPubSubModule = mServer.getPubSubModule();
 
@@ -1374,8 +1373,7 @@ public class MMXTopicManager {
 
   public TopicAction.TopicQueryResponse searchTopic(JID from, String appId,
                                                     TopicAction.TopicSearchRequest rqt) throws MMXException {
-    String userId = EXCLUDE_USER_TOPICS ? 
-        TopicHelper.TOPIC_FOR_APP_STR : JIDUtil.getUserId(from);
+    String userId = JIDUtil.getUserId(from);
     TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
     int offset = rqt.getOffset();
     int size = rqt.getLimit();
