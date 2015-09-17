@@ -74,7 +74,7 @@ public class PubSubPersistenceManagerExt {
       + LOAD_ITEMS_BTWN_PREDICATE;
   private static final String LOAD_ITEMS_BTWN = "SELECT id,jid,creationDate,payload FROM ofPubsubItem "
       + LOAD_ITEMS_BTWN_PREDICATE;
-  private static final String LOAD_ITEMS_BTWN_WITH_OFFSET = LOAD_ITEMS_BTWN + " LIMIT ?, ? ";
+  private static final String LOAD_ITEMS_BTWN_WITH_OFFSET = LOAD_ITEMS_BTWN + " LIMIT ? OFFSET ? ";
   private static final String GET_ITEM_COUNT = "SELECT count(*) from ofPubsubItem WHERE nodeID=? AND serviceID=?";
   private static final String SEARCH_PROJECTION = 
       "nodeID,leaf,name,description,persistItems,maxItems,maxPayloadSize,publisherModel,creationDate,modificationDate,creator,subscriptionEnabled";
@@ -238,8 +238,8 @@ public class PubSubPersistenceManagerExt {
       String untilString = StringUtils.dateToMillis(until);
       pstmt.setString(4, untilString);
       if(offset > 0) {
-        pstmt.setInt(5, offset);
-        pstmt.setInt(6, max);
+        pstmt.setInt(5, max);
+        pstmt.setInt(6, offset);
       }
       rs = pstmt.executeQuery();
       int counter = 0;
@@ -400,6 +400,9 @@ public class PubSubPersistenceManagerExt {
     } else {
       maxRows = Math.min(maxRows, MAX_ROWS_FETCH);
     }
+    if(offset > 0) {
+      query += " LIMIT ? OFFSET ?";
+    }
     // TODO: the pagination offset is not implemented, total is not available.
     int total = -1;
     List<TopicInfo> results = new ArrayList<TopicInfo>();
@@ -410,7 +413,12 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(2, XMPPServer.getInstance().getPubSubModule().getServiceID());
       pstmt.setString(3, globalPrefix);
       pstmt.setString(4, personalPrefix);
-      pstmt.setMaxRows(maxRows);
+      if(offset > 0) {
+        pstmt.setInt(5, maxRows);
+        pstmt.setInt(6, offset);
+      } else {
+        pstmt.setMaxRows(maxRows);
+      }
       rs = pstmt.executeQuery();
       while (rs.next()) {
         String nodeId = rs.getString(INDEX_SRCH_NODEID);
