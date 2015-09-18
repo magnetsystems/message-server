@@ -100,7 +100,7 @@ public class TopicQueryBuilderTest {
     TopicAction.TopicSearch search = new TopicAction.TopicSearch();
     int size = 10;
     int offset = 0;
-    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size);
+    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size, TopicAction.ListType.both);
     searchRequest.setDescription("fast food", SearchAction.Match.SUFFIX);
 
     String appId = "i1s3wtx3m0d";
@@ -125,7 +125,7 @@ public class TopicQueryBuilderTest {
     TopicAction.TopicSearch search = new TopicAction.TopicSearch();
     int size = 10;
     int offset = 0;
-    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size);
+    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size, TopicAction.ListType.both);
     searchRequest.setTopicName("food", SearchAction.Match.PREFIX);
 
     String appId = "i1s3wtx3m0d";
@@ -165,7 +165,7 @@ public class TopicQueryBuilderTest {
     TopicAction.TopicSearch search = new TopicAction.TopicSearch();
     int size = 10;
     int offset = 0;
-    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size);
+    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size, TopicAction.ListType.both);
     searchRequest.setTopicName("food", SearchAction.Match.SUFFIX);
 
     String appId = "i1s3wtx3m0d";
@@ -204,7 +204,7 @@ public class TopicQueryBuilderTest {
     TopicAction.TopicSearch search = new TopicAction.TopicSearch();
     int size = 10;
     int offset = 0;
-    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size);
+    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size, TopicAction.ListType.both);
     searchRequest.setTopicName("food", SearchAction.Match.EXACT);
 
     String appId = "i1s3wtx3m0d";
@@ -243,7 +243,7 @@ public class TopicQueryBuilderTest {
     TopicAction.TopicSearch search = new TopicAction.TopicSearch();
     int size = 10;
     int offset = 0;
-    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size);
+    TopicAction.TopicSearchRequest searchRequest = new TopicAction.TopicSearchRequest(SearchAction.Operator.OR, search,offset, size, TopicAction.ListType.both);
     searchRequest.setTopicName("food", null);
 
     String appId = "i1s3wtx3m0d";
