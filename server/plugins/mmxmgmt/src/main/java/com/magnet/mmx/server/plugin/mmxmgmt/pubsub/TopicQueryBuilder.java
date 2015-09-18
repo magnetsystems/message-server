@@ -344,7 +344,7 @@ public class TopicQueryBuilder {
   }
 
   protected String processAppId(String appId) {
-    return processAppId(appId, null, null);
+    return processAppId(appId, null, TopicAction.ListType.both);
   }
 
   protected String processDisplayName(String displayName) {
