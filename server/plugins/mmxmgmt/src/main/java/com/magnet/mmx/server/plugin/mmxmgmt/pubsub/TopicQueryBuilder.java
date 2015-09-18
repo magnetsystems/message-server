@@ -322,7 +322,7 @@ public class TopicQueryBuilder {
 
   protected String processAppId(String appId, String userId, TopicAction.ListType listType) {
     String globalPrefix = TopicHelper.makeTopic(appId, null, "/") + PERCENTAGE;
-    String personalPrefix = TopicHelper.makeTopic(appId, userId, "/") + PERCENTAGE;
+    String personalPrefix = TopicHelper.makeTopic(appId, null != userId ? userId : PERCENTAGE, "/") + PERCENTAGE;
     StringBuilder fragmentBuilder = new StringBuilder();
 
     if(null == listType) {
