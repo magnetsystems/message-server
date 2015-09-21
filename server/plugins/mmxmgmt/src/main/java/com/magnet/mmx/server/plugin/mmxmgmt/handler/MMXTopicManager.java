@@ -1458,9 +1458,6 @@ public class MMXTopicManager {
 
   public TopicAction.TopicQueryResponse searchTopic(JID from, String appId,
                                                     TopicAction.TopicSearchRequest rqt, List<String> userRoles) throws MMXException {
-    String userId = EXCLUDE_USER_TOPICS ? 
-        TopicHelper.TOPIC_FOR_APP_STR : JIDUtil.getUserId(from);
-                                                    TopicAction.TopicSearchRequest rqt) throws MMXException {
     String userId = JIDUtil.getUserId(from);
     TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
     int offset = rqt.getOffset();
