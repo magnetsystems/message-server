@@ -15,33 +15,14 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
-import com.magnet.mmx.protocol.Constants;
-import com.magnet.mmx.protocol.Constants.UserCommand;
-import com.magnet.mmx.protocol.Constants.UserCreateMode;
-import com.magnet.mmx.protocol.MMXAttribute;
-import com.magnet.mmx.protocol.MMXStatus;
-import com.magnet.mmx.protocol.SearchAction;
-import com.magnet.mmx.protocol.StatusCode;
-import com.magnet.mmx.protocol.TagSearch;
-import com.magnet.mmx.protocol.UserCreate;
-import com.magnet.mmx.protocol.UserId;
-import com.magnet.mmx.protocol.UserInfo;
-import com.magnet.mmx.protocol.UserQuery;
-import com.magnet.mmx.protocol.UserReset;
-import com.magnet.mmx.protocol.UserTags;
-import com.magnet.mmx.server.common.data.AppEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
-import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
-import com.magnet.mmx.server.plugin.mmxmgmt.search.UserEntityPostProcessor;
-import com.magnet.mmx.server.plugin.mmxmgmt.search.user.UserSearchOption;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
-import com.magnet.mmx.util.AppHelper;
-import com.magnet.mmx.util.GsonData;
-import com.magnet.mmx.util.Utils;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
@@ -58,8 +39,45 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
-import java.io.UnsupportedEncodingException;
-import java.util.*;
+import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.Constants.UserCommand;
+import com.magnet.mmx.protocol.Constants.UserCreateMode;
+import com.magnet.mmx.protocol.MMXAttribute;
+import com.magnet.mmx.protocol.MMXStatus;
+import com.magnet.mmx.protocol.SearchAction;
+import com.magnet.mmx.protocol.StatusCode;
+import com.magnet.mmx.protocol.TagSearch;
+import com.magnet.mmx.protocol.UserCreate;
+import com.magnet.mmx.protocol.UserId;
+import com.magnet.mmx.protocol.UserInfo;
+import com.magnet.mmx.protocol.UserQuery;
+import com.magnet.mmx.protocol.UserReset;
+import com.magnet.mmx.protocol.UserTags;
+import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TagEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserQueryBuilder;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserSearchResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.search.UserEntityPostProcessor;
+import com.magnet.mmx.server.plugin.mmxmgmt.search.user.UserSearchOption;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
+import com.magnet.mmx.util.AppHelper;
+import com.magnet.mmx.util.GsonData;
+import com.magnet.mmx.util.Utils;
 
 /**
  * IQHandler that creates an user account.
@@ -785,7 +803,7 @@ public class MMXUserHandler extends IQHandler {
     INVALID_PRI_KEY (400, "Invalid privilege key"),
     INVALID_USER_ID_KEY (500, "Invalid userId"),
     INVALID_USER_ID_TOO_LONG (500, "userId too long"),
-    INVALID_USER_ID_TAKEN (500, "userId is taken"),
+    INVALID_USER_ID_TAKEN (409, "userId is taken"),
     INVALID_EMAIL (400, "email is invalid"),
     INVALID_REQUEST (400, "Invalid request"),
     INVALID_QUERY_CRITERION (400, "Invalid query criterion"),

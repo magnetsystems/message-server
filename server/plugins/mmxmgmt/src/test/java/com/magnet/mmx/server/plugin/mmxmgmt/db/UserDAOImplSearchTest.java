@@ -348,4 +348,47 @@ public class UserDAOImplSearchTest {
     int size = userList.getResults().size();
     assertEquals("Non matching user list size", 0, size);
   }
+
+  @Test
+  public void testSearchUsingDisplayNameWithPagination() {
+    com.magnet.mmx.protocol.UserQuery.Search search = new com.magnet.mmx.protocol.UserQuery.Search();
+    com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
+    searchRequest.setDisplayName("rpp_msg_app");
+
+    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+
+    String appId = "i0sq7ddvi17";
+
+    PaginationInfo pinfo = PaginationInfo.build(10, 0);
+    UserQueryBuilder builder = new UserQueryBuilder();
+    QueryBuilderResult query = builder.buildQuery(searchRequest, appId, pinfo);
+    SearchResult<UserEntity> userList = userDAO.getUsersWithPagination(query, pinfo);
+    assertNotNull(userList);
+    int size = userList.getResults().size();
+    assertEquals("Non matching user list size", 2, size);
+
+    pinfo = PaginationInfo.build(1, 1);
+    builder = new UserQueryBuilder();
+    query = builder.buildQuery(searchRequest, appId, pinfo);
+    userList = userDAO.getUsersWithPagination(query, pinfo);
+    assertNotNull(userList);
+    size = userList.getResults().size();
+    assertEquals("Non matching user list size", 1, size);
+
+    pinfo = PaginationInfo.build(1, 2);
+    builder = new UserQueryBuilder();
+    query = builder.buildQuery(searchRequest, appId, pinfo);
+    userList = userDAO.getUsersWithPagination(query, pinfo);
+    assertNotNull(userList);
+    size = userList.getResults().size();
+    assertEquals("Non matching user list size", 0, size);
+
+    pinfo = PaginationInfo.build(1, 3);
+    builder = new UserQueryBuilder();
+    query = builder.buildQuery(searchRequest, appId, pinfo);
+    userList = userDAO.getUsersWithPagination(query, pinfo);
+    assertNotNull(userList);
+    size = userList.getResults().size();
+    assertEquals("Non matching user list size", 0, size);
+  }
 }

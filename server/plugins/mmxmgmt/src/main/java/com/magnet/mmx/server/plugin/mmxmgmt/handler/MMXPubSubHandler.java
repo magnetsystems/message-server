@@ -17,6 +17,18 @@ package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXStatus;
@@ -115,14 +127,18 @@ public class MMXPubSubHandler extends IQHandler {
         TopicInfo info = topicMgr.getTopic(from, appId,
             MMXTopicId.fromJson(payload));
         return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(info));
+      case getTopics:
+        List<TopicInfo> infos = topicMgr.getTopics(from, appId,
+            TopicAction.GetTopicsRequest.fromJson(payload));
+        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(infos));
 //      case publish:
 //        TopicOps.PublishResponse pubresp = publishToTopic(from, appId,
 //            TopicOps.PublishRequest.fromJson(payload)));
 //        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(pubresp));
       case retract:
-        status = topicMgr.retractFromTopic(from, appId, 
+        Map<String, Integer> results = topicMgr.retractFromTopic(from, appId, 
             TopicAction.RetractRequest.fromJson(payload));
-        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(status));
+        return IQUtils.createResultIQ(iq, GsonData.getGson().toJson(results));
       case retractall:
         status = topicMgr.retractAllFromTopic(from, appId, 
             TopicAction.RetractAllRequest.fromJson(payload));

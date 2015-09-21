@@ -14,6 +14,18 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.interceptor;
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.MMXError;
 import com.magnet.mmx.protocol.StatusCode;
@@ -39,17 +51,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-
-import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXMessageHandlingRule.class);
@@ -255,9 +256,10 @@ public class MMXMessageHandlingRule {
       LOGGER.warn("message={} addressed to user={} is dropped because the user has no active devices. Sending an error message back to originator.", message, userId);
       //TODO: return a message to the sender using the error stanza
       //use the thread pool to send the error message.
-      MMXError error = new MMXError(StatusCode.BAD_REQUEST)
+      MMXError error = new MMXError(StatusCode.NOT_FOUND)
           .setMessage(PacketError.Condition.recipient_unavailable.toString())
-          .setSeverity(MMXError.Severity.TRIVIAL);
+          .setSeverity(MMXError.Severity.TRIVIAL)
+          .setParams(JIDUtil.getReadableUserId(message.getTo()));
       Message errorMessage = new ErrorMessageBuilder(message)
           .setError(error)
           .build();
