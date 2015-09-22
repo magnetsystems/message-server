@@ -14,17 +14,18 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
-import com.google.common.base.Strings;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.magnet.mmx.protocol.Constants;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
+
+import com.google.common.base.Strings;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.magnet.mmx.protocol.Constants;
 
 /**
  */
@@ -116,7 +117,10 @@ public class MMXMessageUtil {
     return message.getExtension(Constants.XMPP_RECEIVED, Constants.XMPP_NS_RECEIPTS) != null;
   }
 
-
+  public static boolean isMMXMulticastMessage(Message message) {
+    // MMX Multicast Message
+    return Constants.MMX_MULTICAST.equalsIgnoreCase(message.getTo().getNode());
+  }
   /**
    * Check if the message is a server ack message.
    * @param message

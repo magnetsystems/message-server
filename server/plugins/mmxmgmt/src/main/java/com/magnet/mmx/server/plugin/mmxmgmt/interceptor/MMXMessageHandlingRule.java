@@ -94,7 +94,11 @@ public class MMXMessageHandlingRule {
       LOGGER.trace("handle : processing bareJID input={}", input);
       if(input.isIncoming() && !input.isReceipt()) {
         LOGGER.trace("handle : handling incoming non-receipt message with bareJID input={}", input);
-        handleBareJID(input.getMessage());
+        if (input.isMMXMulticast()) {
+          handleMulticast(input.getMessage());
+        } else {
+          handleBareJID(input.getMessage());
+        }
       }
       LOGGER.trace("handle : done processing bareJID, stop further processing input={}", input);
       throw new PacketRejectedException("Stopping processing for the message addressed to bareJID=" + input.getMessage().getTo());
@@ -217,7 +221,11 @@ public class MMXMessageHandlingRule {
     messageEntity.setDeviceId( message.getTo().getResource());
     return messageEntity;
   }
-
+  
+  private void handleMulticast(Message message) {
+    
+  }
+  
   private void handleBareJID(Message message) {
     if (message.getTo().getNode() == null) {
       LOGGER.trace("handleBareJID: ignoring a multicast message={}", message);

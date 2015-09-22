@@ -17,6 +17,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.interceptor;
 import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Message;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
+
 /**
  */
 public class MMXMsgRuleInput {
@@ -58,6 +60,10 @@ public class MMXMsgRuleInput {
 
   public boolean isBareJID() {
     return isBareJID;
+  }
+  
+  public boolean isMMXMulticast() {
+    return MMXMessageUtil.isMMXMulticastMessage(message);
   }
 
   @Override
