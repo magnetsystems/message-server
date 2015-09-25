@@ -1152,7 +1152,7 @@ public class MMXTopicManager {
           break;
         }
         String argList = SQLHelper.generateArgList(topics.length);
-        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.nodeId "+
+        String sql = "SELECT ofPubsubNode.maxItems,count(*),max(ofPubsubItem.creationDate),ofPubsubNode.nodeId, ofPubsubNode.name "+
                      "FROM ofPubsubItem, ofPubsubNode " +
                      "WHERE ofPubsubItem.serviceID=? AND " +
                      "      ofPubsubItem.nodeID = ofPubsubNode.nodeId AND " +
@@ -1169,7 +1169,9 @@ public class MMXTopicManager {
           Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
           String nodeId = rs.getString(4);
           MMXTopicId topicId = TopicHelper.parseNode(nodeId);
-          resp.add(new TopicSummary(topicId)
+          String topicName = rs.getString(5);
+          MMXTopicId topicIdWithOriginalName = new MMXTopicId(topicId.getUserId(), topicName);
+          resp.add(new TopicSummary(topicIdWithOriginalName)
             .setCount((maxItems < 0) ? count : Math.min(maxItems, count))
             .setLastPubTime(creationDate));
           // This topic has published items; remove it from the collection.
