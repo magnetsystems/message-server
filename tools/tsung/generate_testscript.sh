@@ -69,7 +69,7 @@ fi
 
 # now generate the load test script
 
-GEN_SCRIPT_JAR="tooljar/mmx-tools-tsung-1.6.0-SNAPSHOT-shaded.jar"
+GEN_SCRIPT_JAR="tooljar/mmx-tools-tsung-1.10.0-SNAPSHOT-shaded.jar"
 if [ ! -e ${GEN_SCRIPT_JAR} ]; then
     buildCommand="mvn clean install"
     eval "$buildCommand"
