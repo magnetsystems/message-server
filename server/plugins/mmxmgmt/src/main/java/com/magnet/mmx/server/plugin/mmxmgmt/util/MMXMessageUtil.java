@@ -119,7 +119,7 @@ public class MMXMessageUtil {
 
   public static boolean isMMXMulticastMessage(Message message) {
     // MMX Multicast Message
-    return Constants.MMX_MULTICAST.equalsIgnoreCase(message.getTo().getNode());
+    return Constants.MMX_MULTICAST.equalsIgnoreCase(JIDUtil.getUserId(message.getTo()));
   }
   /**
    * Check if the message is a server ack message.
