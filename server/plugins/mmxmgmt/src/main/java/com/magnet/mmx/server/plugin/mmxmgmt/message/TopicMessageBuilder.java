@@ -16,14 +16,17 @@ package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.TimeUtil;
 import org.dom4j.Element;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  */
@@ -36,11 +39,11 @@ public class TopicMessageBuilder {
   private String topicId;
   private String appId;
 
-  private static final String PUBSUB_NS = "http://jabber.org/protocol/pubsub";
-  private static final String PUBSUB_NAME = "pubsub";
-  private static final String PUBLISH_NAME = "publish";
-  private static final String ATTRIBUTE_NODE = "node";
-  private static final String ITEM_NAME = "item";
+  static final String PUBSUB_NS = "http://jabber.org/protocol/pubsub";
+  static final String PUBSUB_NAME = "pubsub";
+  static final String PUBLISH_NAME = "publish";
+  static final String ATTRIBUTE_NODE = "node";
+  static final String ITEM_NAME = "item";
 
 
   public TopicMessageBuilder setRequest(TopicPostMessageRequest request) {
@@ -112,6 +115,7 @@ public class TopicMessageBuilder {
 
     String id = idGenerator.generateTopicMessageId(appId, topicId);
     String toAddress = "pubsub." + domain;
+    String serverUser = appEntity.getServerUserId();
     JID from = buildFromJID(appEntity, domain);
 
     message.setType(IQ.Type.set);
@@ -127,13 +131,22 @@ public class TopicMessageBuilder {
     itemElement.addAttribute(Constants.XMPP_ATTR_ID, idGenerator.generateItemIdentifier(topicId));
     Element mmxElement = itemElement.addElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
 
+    Map<String, String> meta = request.getContent();
+    String metaJSON = GsonData.getGson().toJson(meta);
+    Element metaElement = mmxElement.addElement(Constants.MMX_META);
+    metaElement.setText(metaJSON);
+
+    Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
+    String mmxMetaJSON = MMXMetaBuilder.buildFrom(JIDUtil.getUserId(serverUser), null);
+    mmxMetaElement.setText(mmxMetaJSON);
+
     Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
     payloadElement.addAttribute(Constants.MMX_ATTR_CTYPE, request.getContentType());
     payloadElement.addAttribute(Constants.MMX_ATTR_MTYPE, request.getMessageType());
 
     String formattedDateTime = TimeUtil.toString(new Date(utcTime));
     payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
-    String text = request.getContent();
+    String text = ""; //empty
     payloadElement.setText(text);
     payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, MessageBuilder.buildChunkAttributeValue(text));
 

@@ -15,6 +15,48 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeAffiliate;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.NotAcceptableException;
+import org.jivesoftware.openfire.pubsub.PubSubService;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
+import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.forms.DataForm;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXAttribute;
 import com.magnet.mmx.protocol.MMXStatus;
@@ -53,50 +95,10 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppTopic;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeAffiliate;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.NotAcceptableException;
-import org.jivesoftware.openfire.pubsub.PubSubService;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
-import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
-import org.jivesoftware.openfire.pubsub.models.AccessModel;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.XMPPDateTimeFormat;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class MMXTopicManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class);
-  private static final boolean EXCLUDE_USER_TOPICS = true;
   private XMPPServer mServer = XMPPServer.getInstance();
   private PubSubService mPubSubModule = mServer.getPubSubModule();
 
@@ -733,7 +735,27 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic.getName()), 
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
+//    // A user can get the topic info if the topic is a global topic, or the owner
+//    // of a user topic, or a subscriber to a user topic.
+//    if (topic.isUserTopic() && !node.getOwners().contains(from.asBareJID()) &&
+//        node.getSubscriptions(from.asBareJID()).size() > 0) {
+//      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
+//          StatusCode.FORBIDDEN.getCode());
+//    }
     return nodeToInfo(topic.getUserId(), topic.getName(), node);
+  }
+  
+  public List<TopicInfo> getTopics(JID from, String appId, List<MMXTopicId> topics)
+                            throws MMXException {
+    List<TopicInfo> infos = new ArrayList<TopicInfo>(topics.size());
+    for (MMXTopicId topic : topics) {
+      try {
+        infos.add(getTopic(from, appId, topic));
+      } catch (Throwable e) {
+        infos.add(null);
+      }
+    }
+    return infos;
   }
   
   public MMXStatus retractAllFromTopic(JID from, String appId,
@@ -763,7 +785,7 @@ public class MMXTopicManager {
     return status;
   }
   
-  public MMXStatus retractFromTopic(JID from, String appId, 
+  public Map<String, Integer> retractFromTopic(JID from, String appId, 
       TopicAction.RetractRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
@@ -779,7 +801,7 @@ public class MMXTopicManager {
     
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
-    if (itemIds == null) {
+    if (itemIds == null || itemIds.size() == 0) {
       throw new MMXException(StatusCode.BAD_REQUEST.getMessage("no item ID's"),
           StatusCode.BAD_REQUEST.getCode());
     }
@@ -790,29 +812,23 @@ public class MMXTopicManager {
     }
     
     List<PublishedItem> pubItems = new ArrayList<PublishedItem>(itemIds.size());
+    Map<String, Integer> results = new HashMap<String, Integer>(itemIds.size());
     for (String itemId : itemIds) {
       if (itemId == null) {
-        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"), 
-            StatusCode.BAD_REQUEST.getCode());
+        continue;
       }
       PublishedItem item = leafNode.getPublishedItem(itemId);
       if (item == null) {
-        throw new MMXException(StatusCode.ITEM_NOT_FOUND.getMessage(itemId), 
-            StatusCode.ITEM_NOT_FOUND.getCode());
+        results.put(itemId, StatusCode.ITEM_NOT_FOUND.getCode());
       }
       if (!item.canDelete(from)) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(itemId), 
-            StatusCode.FORBIDDEN.getCode());
+        results.put(itemId, StatusCode.FORBIDDEN.getCode());
       }
       pubItems.add(item);
+      results.put(itemId, StatusCode.SUCCESS.getCode());
     }
     leafNode.deleteItems(pubItems);
-    
-    int count = (pubItems == null) ? 0 : pubItems.size();
-    MMXStatus status = (new MMXStatus())
-        .setCode(StatusCode.SUCCESS.getCode())
-        .setMessage(count+" item"+((count==1)?" is":"s are")+" retracted");
-    return status;
+    return results;
   }
   
   public TopicAction.SubscribeResponse subscribeTopic(JID from, String appId, 
@@ -1357,8 +1373,7 @@ public class MMXTopicManager {
 
   public TopicAction.TopicQueryResponse searchTopic(JID from, String appId,
                                                     TopicAction.TopicSearchRequest rqt) throws MMXException {
-    String userId = EXCLUDE_USER_TOPICS ? 
-        TopicHelper.TOPIC_FOR_APP_STR : JIDUtil.getUserId(from);
+    String userId = JIDUtil.getUserId(from);
     TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
     int offset = rqt.getOffset();
     int size = rqt.getLimit();
@@ -1656,12 +1671,14 @@ public class MMXTopicManager {
     Date until = null;
     boolean ascending = false;
     int maxItems = 0;
+    int offset = 0;
     if (options != null) {
       subId = options.getSubId();
       since = options.getSince();
       until = options.getUntil();
       ascending = options.isAscending();
       maxItems = options.getMaxItems();
+      offset = options.getOffset();
     }
     // If not defined, default to system property ("xmpp.pubsub.fetch.max")
     if (maxItems <= 0) {
@@ -1714,7 +1731,7 @@ public class MMXTopicManager {
     }
 
     List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(
-        (LeafNode) node, maxItems, since, until, ascending);
+        (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
       MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
@@ -1824,17 +1841,24 @@ public class MMXTopicManager {
       }
     }
     List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
-    UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
-    int addedCount = 0; //for applying the limit
-    for (String username : subscriberUserNameSet) {
-      //TODO: Improve this
-      UserEntity userEntity = userDAO.getUser(username);
-      com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
-      if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
-        break;
+    if(count > rqt.getOffset()) {
+      UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
+      int addedCount = 0; //for applying the limit
+      int index = 0;
+      for (String username : subscriberUserNameSet) {
+        if(index++ < rqt.getOffset()) {
+          continue;
+        }
+
+        if (rqt.getLimit() > 0 && addedCount >= rqt.getLimit()) {
+          break;
+        }
+        //TODO: Improve this
+        UserEntity userEntity = userDAO.getUser(username);
+        com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+        userInfoList.add(userInfo);
+        addedCount++;
       }
-      userInfoList.add(userInfo);
-      addedCount++;
     }
 
     TopicAction.SubscribersResponse resp = new TopicAction.SubscribersResponse()

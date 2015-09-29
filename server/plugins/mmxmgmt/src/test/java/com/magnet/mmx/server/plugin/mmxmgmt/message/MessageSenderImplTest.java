@@ -42,7 +42,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -96,12 +98,15 @@ public class MessageSenderImplTest {
     SendMessageRequest request = new SendMessageRequest();
     request.setRecipientUsernames(Collections.singletonList("unknown"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
-    request.setContent(message);
+    HashMap<String,String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+    request.setContent(contentMap);
 
     String appId = "i0sq7ddvi17";
 
     MessageSenderImpl sender = new StubMessageSenderImpl();
     SendMessageResult result = sender.send(appId, request);
+    assertFalse("Send result is error", result.isError());
     assertNotNull("message result is null", result);
     Count count = result.getCount();
     assertNotNull("Count object is null", count);
@@ -118,7 +123,9 @@ public class MessageSenderImplTest {
     SendMessageRequest request = new SendMessageRequest();
     request.setRecipientUsernames(Collections.singletonList("login3"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
-    request.setContent(message);
+    HashMap<String,String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+    request.setContent(contentMap);
 
     String appId = "i0sq7ddvi17";
 
@@ -134,10 +141,12 @@ public class MessageSenderImplTest {
     SendMessageRequest request = new SendMessageRequest();
     request.setRecipientUsernames(Collections.singletonList("importantuser"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
-    request.setContent(message);
     request.setReceipt(true);
 
     String appId = "unknown";
+    HashMap<String,String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+    request.setContent(contentMap);
 
     MessageSenderImpl sender = new StubMessageSenderImpl();
     SendMessageResult result = sender.send(appId, request);
@@ -153,11 +162,16 @@ public class MessageSenderImplTest {
     SendMessageRequest request = new SendMessageRequest();
     request.setDeviceId("12345678987654322");
     String message = "Simple Message";
-    request.setContent(message);
     request.setReceipt(true);
     request.setReplyTo("login3");
 
+    Map<String, String> content = new HashMap<String, String>();
+    content.put("textContent", message);
+    request.setContent(content);
+
+
     String appId = "AAABSNIBKOstQST7";
+
 
     MessageSenderImpl sender = new MessageReturningStubMessageSenderImpl();
     SendMessageResult result = sender.send(appId, request);

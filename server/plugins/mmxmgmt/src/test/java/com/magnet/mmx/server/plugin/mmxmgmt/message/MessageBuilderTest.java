@@ -14,16 +14,25 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import com.magnet.mmx.server.plugin.mmxmgmt.web.SendMessageRequest;
 import org.dom4j.Element;
 import org.junit.Test;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -34,10 +43,17 @@ public class MessageBuilderTest {
   @Test
   public void test1Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setClientId("importantuser");
-    request.setContent("This is a very important message");
-    request.setContentType("text");
-    request.setRequestAck(true);
+    request.setRecipientUsernames(Collections.singletonList("importantuser"));
+
+
+
+    String appId = "i0sq7ddvi17";
+
+    String message = "This is a very important message";
+    HashMap<String,String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+
+    request.setReceipt(true);
 
     AppEntity app = new AppEntity();
     app.setAppId("testapp");
@@ -46,16 +62,15 @@ public class MessageBuilderTest {
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);
     builder.setDomain("localhost");
-    builder.setUserId(request.getClientId());
+    builder.setUserId(request.getRecipientUsernames().get(0));
     builder.setUtcTime(System.currentTimeMillis());
-    builder.setMessageContent(request.getContent());
+    builder.setMetadata(request.getContent());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
     Message m = builder.build();
     /**
      * Simply assert the the message object is not null.
      */
     assertNotNull("Message shouldn't be null", m);
-    //TODO add more assertions
   }
 
   /**
@@ -65,11 +80,13 @@ public class MessageBuilderTest {
   @Test
   public void test2Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setClientId("test");
+    request.setRecipientUsernames(Collections.singletonList("test"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
-    request.setContent(message);
-    request.setContentType("text");
-    request.setRequestAck(true);
+
+    Map<String, String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+    contentMap.put("contentType", "text");
+    request.setReceipt(true);
 
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
@@ -78,10 +95,10 @@ public class MessageBuilderTest {
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);
     builder.setDomain("localhost");
-    builder.setMessageContent(request.getContent());
+    builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
-    builder.setUserId(request.getClientId());
+    builder.setUserId(request.getRecipientUsernames().get(0));
     Message m = builder.build();
     assertNotNull("Message shouldn't be null", m);
     Element mmx = m.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
@@ -90,7 +107,7 @@ public class MessageBuilderTest {
     assertNotNull("payload element is null", payload);
     String content = payload.getText();
     assertNotNull("payload content is null", content);
-    assertEquals("Non matching content", message, content);
+    assertEquals("Non matching content", "", content);
 
     JID from = m.getFrom();
     assertEquals ("Non matching from jid", "admin%i1cglsw8dsa@localhost", from.toString());
@@ -102,13 +119,17 @@ public class MessageBuilderTest {
   @Test
   public void test3BuildWithNameAndValue() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setClientId("test");
+    request.setRecipientUsernames(Collections.singletonList("test"));
     String message = "Simple Test";
-    request.setContent(message);
-    request.setContentType("text");
-    request.setRequestAck(true);
-    request.addMeta("apple", "washington");
-    request.addMeta("avocado", "california");
+    Map<String, String> contentMap = new HashMap<String, String>();
+    contentMap.put("content", message);
+    contentMap.put("contentType", "text");
+    contentMap.put("apple", "washington");
+    contentMap.put("avocado", "california");
+
+    request.setContent(contentMap);
+
+    request.setReceipt(true);
 
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
@@ -117,12 +138,42 @@ public class MessageBuilderTest {
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);
     builder.setDomain("localhost");
-    builder.setUserId(request.getClientId());
-    builder.setMessageContent(request.getContent());
+    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
     Message m = builder.build();
 
     assertNotNull("Message shouldn't be null", m);
+
+    Element mmx = m.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+    assertNotNull("mmx element is null", mmx);
+
+    Element meta = mmx.element(Constants.MMX_META);
+    assertNotNull("meta element is null", meta);
+    String json = meta.getText();
+    assertNotNull("meta json is null", json);
+
+    JsonParser parser = new JsonParser();
+    JsonObject jsonObject = null;
+    try {
+      jsonObject =  parser.parse(json).getAsJsonObject();
+    } catch (JsonSyntaxException e) {
+      fail("JsonSyntax exception");
+    }
+
+    for (String key : contentMap.keySet()) {
+      JsonElement entry = jsonObject.get(key);
+      assertNotNull("No entry found for key:" + key, entry);
+      String value = entry.getAsString();
+      assertEquals("Non match value for key:"+key, contentMap.get(key), value);
+    }
+
+    Element payload = mmx.element(Constants.MMX_PAYLOAD);
+    assertNotNull("payload element is null", payload);
+    String content = payload.getText();
+    assertNotNull("payload content is null", content);
+    assertEquals("Non matching content", "", content);
+
   }
 }

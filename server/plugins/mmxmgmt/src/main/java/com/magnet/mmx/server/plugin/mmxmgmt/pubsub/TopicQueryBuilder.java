@@ -56,16 +56,17 @@ import static com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderConstants.WHER
  */
 public class TopicQueryBuilder {
   private static Logger LOGGER = LoggerFactory.getLogger(TopicQueryBuilder.class);
-  private final String BASE_TABLE_NAME = "ofPubsubNode";
-  private final String COL_DISPLAY_NAME = "name";
-  private final String COL_DESCRIPTION = "description";
-  private final String COL_NODE_ID = "nodeID";
+  private static final String BASE_TABLE_NAME = "ofPubsubNode";
+  private static final String COL_DISPLAY_NAME = "name";
+  private static final String COL_DESCRIPTION = "description";
+  private static final String COL_NODE_ID = "nodeID";
   private List<String> tableList = new LinkedList<String>();
   private StringBuilder queryBuilder = new StringBuilder();
   private StringBuilder countQueryBuilder = new StringBuilder();
   private StringBuilder whereClauseBuilder = new StringBuilder(100);
   private static final String SUBSCRIPTION_COUNT_FRAGMENT = ", (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount'";
   private static final String COUNT_FRAGMENT = "COUNT(DISTINCT ofPubsubNode.nodeID, ofPubsubNode.serviceId)";
+  private static final String APP_ID_CLAUSE = new StringBuilder().append(BASE_TABLE_NAME).append(DOT).append(COL_NODE_ID).append(SPACE).append(LIKE).append(SPACE).append(QUESTION).toString();
 
   private List<QueryParam> paramList = new LinkedList<QueryParam>();
 
@@ -134,7 +135,7 @@ public class TopicQueryBuilder {
       }
     }
     String tableList = buildTableList();
-    String appIdFragment = processAppId(appId, userName);
+    String appIdFragment = processAppId(appId, userName, searchRequest.getType());
 
     queryBuilder.append(SELECT)
         .append(SPACE)
@@ -319,24 +320,31 @@ public class TopicQueryBuilder {
     return builder.toString();
   }
 
-  protected String processAppId(String appId, String userId) {
-    StringBuilder fragmentBuilder = new StringBuilder();
-    fragmentBuilder.append(BASE_TABLE_NAME).append(DOT).append(COL_NODE_ID).append(SPACE).append(LIKE).append(SPACE);
-    fragmentBuilder.append(QUESTION).append(SPACE).append(OR).append(SPACE).append(BASE_TABLE_NAME)
-        .append(DOT).append(COL_NODE_ID).append(SPACE).append(LIKE).append(SPACE);
-    fragmentBuilder.append(QUESTION);
+  protected String processAppId(String appId, String userId, TopicAction.ListType listType) {
     String globalPrefix = TopicHelper.makeTopic(appId, null, "/") + PERCENTAGE;
-    if (userId == null) {
-      userId = PERCENTAGE;
+    String personalPrefix = TopicHelper.makeTopic(appId, null != userId ? userId : PERCENTAGE, "/") + PERCENTAGE;
+    StringBuilder fragmentBuilder = new StringBuilder();
+
+    if(null == listType) {
+      listType = TopicAction.ListType.global;
     }
-    String personalPrefix = TopicHelper.makeTopic(appId, userId, "/") + PERCENTAGE;
-    paramList.add(new QueryParam(Types.VARCHAR, globalPrefix, true));
-    paramList.add(new QueryParam(Types.VARCHAR, personalPrefix, true));
+    if(listType == TopicAction.ListType.global) {
+      fragmentBuilder.append(APP_ID_CLAUSE);
+      paramList.add(new QueryParam(Types.VARCHAR, globalPrefix, true));
+    } else if(listType == TopicAction.ListType.personal) {
+      fragmentBuilder.append(APP_ID_CLAUSE);
+      paramList.add(new QueryParam(Types.VARCHAR, personalPrefix, true));
+    } else {
+      fragmentBuilder.append(APP_ID_CLAUSE).append(SPACE).append(OR).append(SPACE).append(APP_ID_CLAUSE);
+      paramList.add(new QueryParam(Types.VARCHAR, globalPrefix, true));
+      paramList.add(new QueryParam(Types.VARCHAR, personalPrefix, true));
+    }
+
     return fragmentBuilder.toString();
   }
 
   protected String processAppId(String appId) {
-    return processAppId(appId, null);
+    return processAppId(appId, null, TopicAction.ListType.both);
   }
 
   protected String processDisplayName(String displayName) {
