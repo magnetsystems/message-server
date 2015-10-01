@@ -69,10 +69,9 @@ public class MessageDAOImpl implements MessageDAO {
   private static final String ME_QUERY_BY_MESSAGE_ID_AND_APP_ID = "SELECT id, messageId, deviceId, fromJID, toJID, dateQueuedUTC, state, " +
       "appId, dateAcknowledgedUTC, sourceMessageId, messageType FROM mmxMessage WHERE appId = ? AND messageId = ? ORDER BY deviceId";
 
-  private static final String ME_UPDATE_STATE_AFTER_TOKEN_INVALIDATION_QUERY = " UPDATE mmxMessage m, mmxWakeupQueue w " +
-      "SET m.state = ? WHERE m.messageId = w.messageId AND m.deviceId = w.deviceId AND " +
-      "(m.state = 'WAKEUP_REQUIRED' OR m.state = 'WAKEUP_SENT') AND w.appId = ? AND  w.tokenType = ? AND " +
-      "w.clientToken = ?";
+  private static final String ME_UPDATE_STATE_AFTER_TOKEN_INVALIDATION_QUERY = " UPDATE mmxMessage " +
+      "SET state = ? WHERE (state = 'WAKEUP_REQUIRED' OR state = 'WAKEUP_SENT') AND " +
+      " messageId in (SELECT messageId FROM mmxWakeupQueue WHERE appId = ? AND  tokenType = ? AND clientToken = ?)";
 
   private static final String ME_UPDATE_STATE_FOR_BAD_API_KEY_QUERY = " UPDATE mmxMessage m " +
       "SET m.state = ? WHERE m.appId = ? AND m.messageId = ? AND m.deviceId = ? AND " +
@@ -574,6 +573,13 @@ public class MessageDAOImpl implements MessageDAO {
           paramList.add(start);
         }
       }
+
+      StringBuilder countQueryBuilder = new StringBuilder();
+      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Count query:" + countQueryBuilder.toString());
+      }
+
       /**
        * now the ordering by
        */
@@ -591,17 +597,8 @@ public class MessageDAOImpl implements MessageDAO {
         queryBuilder.append(" ORDER BY state ");
       }
 
-
       if (sort == SortOrder.DESCENDING) {
         queryBuilder.append(" DESC ");
-      }
-
-      StringBuilder countQueryBuilder = new StringBuilder();
-      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
-
-
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Count query:" + countQueryBuilder.toString());
       }
 
       StringBuilder resultQueryBuilder = new StringBuilder();

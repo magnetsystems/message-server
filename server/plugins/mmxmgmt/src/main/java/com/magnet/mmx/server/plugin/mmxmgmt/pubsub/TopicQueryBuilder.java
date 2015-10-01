@@ -64,7 +64,7 @@ public class TopicQueryBuilder {
   private StringBuilder queryBuilder = new StringBuilder();
   private StringBuilder countQueryBuilder = new StringBuilder();
   private StringBuilder whereClauseBuilder = new StringBuilder(100);
-  private static final String SUBSCRIPTION_COUNT_FRAGMENT = ", (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount'";
+  private static final String SUBSCRIPTION_COUNT_FRAGMENT = ", (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount";
   private static final String COUNT_FRAGMENT = "COUNT(DISTINCT ofPubsubNode.nodeID, ofPubsubNode.serviceId)";
   private static final String APP_ID_CLAUSE = new StringBuilder().append(BASE_TABLE_NAME).append(DOT).append(COL_NODE_ID).append(SPACE).append(LIKE).append(SPACE).append(QUESTION).toString();
 

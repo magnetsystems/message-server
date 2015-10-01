@@ -27,30 +27,28 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider;
 import com.magnet.mmx.util.TopicHelper;
 import mockit.Mock;
 import mockit.MockUp;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.Level;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  *
@@ -58,7 +56,7 @@ import static org.junit.Assert.assertTrue;
 public class MMXTopicTagsResourceTest extends BaseJAXRSTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXTopicTagsResourceTest.class);
   private static String baseUri = "http://localhost:8086/mmxmgmt/api/v1/topics";
-  private static BasicDataSource ds;
+  private static DataSource ds;
   private static AppEntity appEntity;
   private static List<TopicEntity> appTopicEntityList = new ArrayList<TopicEntity>();
   private static List<TopicEntity> personalTopicEntityList = new ArrayList<TopicEntity>();
@@ -73,27 +71,10 @@ public class MMXTopicTagsResourceTest extends BaseJAXRSTest {
     java.util.logging.Logger.getLogger("com.google.inject").setLevel(java.util.logging.Level.SEVERE);
     org.apache.log4j.Logger.getLogger("org.apache.http").setLevel(org.apache.log4j.Level.DEBUG);
     org.apache.log4j.Logger.getLogger("org.jboss.resteasy").setLevel(Level.OFF);
-    InputStream inputStream = MMXTopicTagsResourceTest.class.getResourceAsStream("/test.properties");
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
+    ds = new TestOpenfireConnectionProvider().getDataSource();
 
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    DBTestUtil.setDataSource(ds);
     new MockUp<AppDAOImpl>() {
       @Mock
       protected String getEncrypted(String value) {

@@ -16,59 +16,28 @@ package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DateRange;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.PushMessageQuery;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.PushIdGenerator;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.PushIdGeneratorImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.SortInfo;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  */
 public class PushMessageDAOImplTest {
-  private static BasicDataSource ds;
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.PUSH_MESSAGE_DATA_1);
 
-  @BeforeClass
-  public static void setUp() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/pushmessage-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testAdd() throws Exception {
@@ -84,7 +53,7 @@ public class PushMessageDAOImplTest {
     message.setState(PushMessageEntity.PushMessageState.PUSHED);
     message.setType(PushMessageEntity.PushMessageType.CONSOLEPING);
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     try {
       dao.add(message);
     } catch (DbInteractionException e) {
@@ -96,7 +65,7 @@ public class PushMessageDAOImplTest {
   public void testGetUsingId() throws Exception {
     String messageId = "4427076bbd5d71f9d902f49991009b02";
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     try {
       PushMessageEntity entity = dao.getPushMessage(messageId);
       assertNotNull("Push Message entity is null", entity);
@@ -111,7 +80,7 @@ public class PushMessageDAOImplTest {
   public void testAcknowledgePushMessage() throws Exception {
     String messageId = "4427076bbd5d71f9d902f49991009b02";
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     try {
       int count = dao.acknowledgePushMessage(messageId, new Date());
       PushMessageEntity entity = dao.getPushMessage(messageId);
@@ -131,7 +100,7 @@ public class PushMessageDAOImplTest {
   public void testGetUsingAppIdAndDeviceId() throws Exception {
     String appId = "i0sq7ddvi17";
     String deviceId = "8933536df7038e1b7";
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     try {
       List<PushMessageEntity> entityList = dao.getPushMessages(appId, deviceId);
       assertNotNull("Push Message entity is null", entityList);
@@ -157,7 +126,7 @@ public class PushMessageDAOImplTest {
 
     QueryBuilderResult qResult = builder.buildPaginationQueryWithOrder(pushMessageQuery, appId, paginationInfo, sortInfo);
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     SearchResult<PushMessageEntity> results = dao.getPushMessagesWithPagination(qResult, paginationInfo);
     assertNotNull(results);
 
@@ -186,7 +155,7 @@ public class PushMessageDAOImplTest {
 
     QueryBuilderResult qResult = builder.buildPaginationQueryWithOrder(pushMessageQuery, appId, paginationInfo, sortInfo);
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     SearchResult<PushMessageEntity> results = dao.getPushMessagesWithPagination(qResult, paginationInfo);
     assertNotNull(results);
 
@@ -213,7 +182,7 @@ public class PushMessageDAOImplTest {
 
     QueryBuilderResult qResult = builder.buildPaginationQueryWithOrder(pushMessageQuery, appId, paginationInfo, sortInfo);
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     SearchResult<PushMessageEntity> results = dao.getPushMessagesWithPagination(qResult, paginationInfo);
     assertNotNull(results);
 
@@ -240,7 +209,7 @@ public class PushMessageDAOImplTest {
 
     QueryBuilderResult qResult = builder.buildPaginationQueryWithOrder(pushMessageQuery, appId, paginationInfo, sortInfo);
 
-    PushMessageDAO dao = new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    PushMessageDAO dao = new PushMessageDAOImpl(connectionProvider);
     SearchResult<PushMessageEntity> results = dao.getPushMessagesWithPagination(qResult, paginationInfo);
     assertNotNull(results);
 

@@ -17,14 +17,13 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api;
 import com.google.gson.Gson;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXTopicTagsResourceTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider;
 import mockit.Mock;
 import mockit.MockUp;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.log4j.Level;
 import org.junit.BeforeClass;
@@ -32,11 +31,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import java.io.InputStream;
-import java.util.Properties;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -46,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 public class MMXVersionResourceTest extends BaseJAXRSTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXVersionResourceTest.class);
   private static final String baseUri = "http://localhost:8086/mmxmgmt/api/v1/mmx/version";
-  private static BasicDataSource ds;
+  private static DataSource ds;
   private static AppEntity appEntity;
   public MMXVersionResourceTest() {
     super(baseUri);
@@ -57,27 +55,10 @@ public class MMXVersionResourceTest extends BaseJAXRSTest {
     java.util.logging.Logger.getLogger("com.google.inject").setLevel(java.util.logging.Level.SEVERE);
     org.apache.log4j.Logger.getLogger("org.apache.http").setLevel(org.apache.log4j.Level.DEBUG);
     org.apache.log4j.Logger.getLogger("org.jboss.resteasy").setLevel(Level.OFF);
-    InputStream inputStream = MMXTopicTagsResourceTest.class.getResourceAsStream("/test.properties");
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
+    ds = new TestOpenfireConnectionProvider().getDataSource();
 
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    DBTestUtil.setDataSource(ds);
     new MockUp<AppDAOImpl>() {
       @Mock
       protected String getEncrypted(String value) {

@@ -33,7 +33,15 @@ public interface AppConfigurationEntityDAO {
   public List<AppConfigurationEntity> getConfigurations(String appId);
 
   /**
-   * Either insert or update a configuration.
+   * Create a configuration.
+   * @param appId
+   * @param key
+   * @param value
+   */
+  public void createConfiguration(String appId, String key, String value);
+
+  /**
+   * Update a configuration.
    * @param appId
    * @param key
    * @param value

@@ -18,20 +18,14 @@ import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DeviceQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.Operator;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,36 +36,22 @@ import static junit.framework.TestCase.assertNotNull;
  */
 public class DeviceTargetResolverTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(new Runnable() {
+            @Override
+            public void run() {
+              DBTestUtil.cleanTables(new String[] {"mmxTag"}, connectionProvider);
+            }
+          },
+          new Runnable() {
+            @Override
+            public void run() {
+              DBTestUtil.cleanTables(new String[] {"mmxTag"}, connectionProvider);
+            }
+          },
+          TestDataSource.TAG_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    DBTestUtil.cleanTables(new String[] {"mmxTag"}, new BasicDataSourceConnectionProvider(ds));
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/tag-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      //delete stuff from tag so that other test that recreate device data don't run into issues
-      DBTestUtil.cleanTables(new String[]{"mmxTag"}, new BasicDataSourceConnectionProvider(ds));
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
-
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testResolveUsingOsType() throws Exception {
@@ -83,7 +63,7 @@ public class DeviceTargetResolverTest {
     DeviceTargetResolver resolver = new DeviceTargetResolver() {
       @Override
       protected ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
 
@@ -104,7 +84,7 @@ public class DeviceTargetResolverTest {
     DeviceTargetResolver resolver = new DeviceTargetResolver() {
       @Override
       protected ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
 
@@ -127,7 +107,7 @@ public class DeviceTargetResolverTest {
     DeviceTargetResolver resolver = new DeviceTargetResolver() {
       @Override
       protected ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
     List<DeviceEntity> entityList = resolver.resolve(appId, target);
@@ -148,7 +128,7 @@ public class DeviceTargetResolverTest {
     DeviceTargetResolver resolver = new DeviceTargetResolver() {
       @Override
       protected ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
 
@@ -171,7 +151,7 @@ public class DeviceTargetResolverTest {
     DeviceTargetResolver resolver = new DeviceTargetResolver() {
       @Override
       protected ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
 

@@ -16,24 +16,28 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
 import com.magnet.mmx.server.api.v1.DevicesResourceValidationTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DeviceQuery;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.operation.DatabaseOperation;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
@@ -54,10 +58,14 @@ public class PushMessageFunctionResourceTest extends BaseJAXRSTest {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PushMessageFunctionResourceTest.class);
   private static String baseUri = "http://localhost:8086/mmxmgmt/api/v1/send_push";
-  private static BasicDataSource ds;
   private static List<DeviceEntity> deviceEntityList = new ArrayList<DeviceEntity>();
   private static String appId = "7wmi73wxin9";
   private static String apiKey = "4111f18a-9fcc-4e84-8cb9-aad6ea7bf024";
+
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
 
   public PushMessageFunctionResourceTest() {
@@ -66,30 +74,8 @@ public class PushMessageFunctionResourceTest extends BaseJAXRSTest {
 
   @BeforeClass
   public static void staticSetup() throws Exception {
-    setupDatabase();
-  }
-
-
-  public static void setupDatabase() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    DBTestUtil.setBasicDataSource(ds);
     DBTestUtil.setupMockDBUtil();
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DevicesResourceValidationTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DevicesResourceValidationTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
   }
-
 
   @Test
   public void testSendPushMessage() throws Exception {

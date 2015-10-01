@@ -14,92 +14,33 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.SortOrder;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.MessageSearchOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.MessageSortOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConfig;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  */
 //TODO: Fix the failing tests.
-public class MessageDAOImplSearchTest {
-  private static BasicDataSource ds;
+public class MessageDAOImplSearchTest extends BaseDbTest {
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.MESSAGE_DATA_1, TestDataSource.WAKEUP_QUEUE_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    DatabaseConfig dbConfig = con.getConfig();
-    dbConfig.setProperty(DatabaseConfig.PROPERTY_DATATYPE_FACTORY, new MessageDAOImplTest.CustomDataTypeFactory());
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/message-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/wakeup-queue-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testSearch1() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.TARGET_DEVICE_ID;
@@ -124,7 +65,7 @@ public class MessageDAOImplSearchTest {
    */
   @Test
   public void testSearch2() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.TARGET_DEVICE_ID;
@@ -146,7 +87,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch3ByState() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.TARGET_DEVICE_ID;
@@ -168,7 +109,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch3ByDateSent() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.DATE_SENT;
@@ -212,7 +153,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch3ByDateAck() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.DATE_ACKNOWLEDGED;
@@ -255,7 +196,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
    public void testSearch5BySingleMessageId() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.MESSAGE_ID;
@@ -282,7 +223,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch4ByMessageIdList() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = MessageSearchOption.MESSAGE_ID;
@@ -310,7 +251,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch4SortByTargetDeviceId() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = null;
@@ -337,7 +278,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch4SortByState() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = null;
@@ -364,7 +305,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testSearch4SortByMessageId() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "PrivateApp1";
     MessageSearchOption searchOption = null;
@@ -391,7 +332,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testFilteringOutReceiptMessages() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "i26u1lmv7uc";
     MessageSearchOption searchOption = null;
@@ -416,7 +357,7 @@ public class MessageDAOImplSearchTest {
 
   @Test
   public void testIncludingReceiptMessages() {
-    MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO messageDAO = new MessageDAOImpl(connectionProvider);
 
     String appId = "i26u1lmv7uc";
     MessageSearchOption searchOption = null;

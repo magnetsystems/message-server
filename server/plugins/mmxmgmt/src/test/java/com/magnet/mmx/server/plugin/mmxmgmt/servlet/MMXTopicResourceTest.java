@@ -16,7 +16,11 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.google.gson.Gson;
 import com.magnet.mmx.server.api.v1.protocol.TopicSubscription;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubItem;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubPayload;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicNode;
@@ -28,15 +32,10 @@ import com.magnet.mmx.util.TopicHelper;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -48,8 +47,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -59,10 +56,15 @@ import static org.junit.Assert.assertNotNull;
 */
 @RunWith(JMockit.class)
 public class MMXTopicResourceTest extends BaseJAXRSTest {
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.PUBSUB_NODE_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
+
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXTopicResourceTest.class);
   //http://localhost:5220/mmxmgmt/api/v1/send_message
   private static final String baseUri = "http://localhost:8086/mmxmgmt/api/v1/topics";
-  private static BasicDataSource ds;
   private static String appId = "7wmi73wxin9";
   private static String apiKey = "4111f18a-9fcc-4e84-8cb9-aad6ea7bf024";
 
@@ -102,7 +104,7 @@ public class MMXTopicResourceTest extends BaseJAXRSTest {
     new MockUp<TopicResource>() {
       @Mock
       public ConnectionProvider getConnectionProvider() {
-        return new BasicDataSourceConnectionProvider(ds);
+        return connectionProvider;
       }
     };
   }
@@ -113,30 +115,12 @@ public class MMXTopicResourceTest extends BaseJAXRSTest {
 
   @BeforeClass
   public static void setup() throws Exception{
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/pubsub-node-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
     setupMocks();
   }
 
   @AfterClass
   public static void cleanup() throws Exception {
-    DBTestUtil.cleanTables(new String[] {"mmxTag"}, new BasicDataSourceConnectionProvider(ds));
-    ds.close();
+    DBTestUtil.cleanTables(new String[]{"mmxTag"}, connectionProvider);
   }
 
 

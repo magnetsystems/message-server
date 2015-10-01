@@ -18,44 +18,28 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.util.OFPropertyDAO;
 import mockit.Mock;
 import mockit.MockUp;
-import org.apache.commons.dbcp2.BasicDataSource;
 
-import java.io.InputStream;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Properties;
 
 /**
  */
 
 public class DBTestUtil {
-  private static BasicDataSource ds;
+  private static DataSource ds;
 
-  public static void setBasicDataSource(BasicDataSource ds) {
+  public static void setDataSource(DataSource ds) {
     DBTestUtil.ds = ds;
   }
 
   public static void setDataSourceFromPropertyFile() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
+    if(null == ds) {
+      ds = UnitTestDSProvider.getDataSource();
+    } else {
+      System.out.println("------ds is already initialized");
+    }
   }
 
   public static DeviceDAO getDeviceDAO() {
@@ -63,28 +47,39 @@ public class DBTestUtil {
   }
 
   public static AppDAO getAppDAO() {
+    assertDataSource();
     return new AppDAOImpl(new BasicDataSourceConnectionProvider(ds));
   }
 
   public static MessageDAO getMessageDAO() {
+    assertDataSource();
     return new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
   }
 
   public static PushMessageDAO getPushMessageDAO() {
+    assertDataSource();
     return new PushMessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
   }
 
   public static WakeupEntityDAO getWakeupEntityDAO() {
+    assertDataSource();
     return new WakeupEntityDAOImpl(new BasicDataSourceConnectionProvider(ds));
   }
 
   public static TagDAO getTagDAO() {
+    assertDataSource();
     return new TagDAOImpl(new BasicDataSourceConnectionProvider(ds));
   }
 
-  public static TopicDAO getTopicDAO() { return new TopicDAOImpl(new BasicDataSourceConnectionProvider(ds));}
+  public static TopicDAO getTopicDAO() {
+    assertDataSource();
+    return new TopicDAOImpl(new BasicDataSourceConnectionProvider(ds));
+  }
 
-  public static TopicItemDAO getTopicItemDAO() { return new TopicItemDAOImpl(new BasicDataSourceConnectionProvider(ds));}
+  public static TopicItemDAO getTopicItemDAO() {
+    assertDataSource();
+    return new TopicItemDAOImpl(new BasicDataSourceConnectionProvider(ds));
+  }
   /**
    * Delete all records from the tables specified in tables array. The deletes are executed in
    * the same order as the entries in the tables array.
@@ -95,7 +90,7 @@ public class DBTestUtil {
    * @param tables
    * @param ds
    */
-  public static void cleanTables (String[] tables, BasicDataSourceConnectionProvider ds) {
+  public static void cleanTables (String[] tables, ConnectionProvider ds) {
     String template = "DELETE FROM %s";
     try {
       Connection connection = ds.getConnection();
@@ -119,6 +114,11 @@ public class DBTestUtil {
 
   public static OFPropertyDAO getOfPropDao() {
     return new OFPropertyDAO(new BasicDataSourceConnectionProvider(ds));
+  }
+
+  private static void assertDataSource() {
+    assert(null != ds);
+    System.out.println("----------------DBTestUtil.ds : " + ds);
   }
 
   public static void setupMockDBUtil() {

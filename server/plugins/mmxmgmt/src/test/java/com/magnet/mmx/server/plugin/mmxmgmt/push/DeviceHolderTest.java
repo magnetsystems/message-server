@@ -15,24 +15,12 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push;
 
 import com.magnet.mmx.protocol.PushType;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.Before;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,32 +30,16 @@ import static org.junit.Assert.assertTrue;
 /**
  */
 public class DeviceHolderTest {
-  private static BasicDataSource ds;
-  @Before
-  public void setUp() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testHasDevices() {
     String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "12345678987654321"};
 
-    DeviceDAO deviceDAO = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO deviceDAO = new DeviceDAOImpl(connectionProvider);
     String appId = "AAABSNIBKOstQST7";
 
     List<DeviceEntity> deviceEntityList = deviceDAO.getDevices(appId, Arrays.asList(deviceIds), DeviceStatus.ACTIVE);
@@ -81,7 +53,7 @@ public class DeviceHolderTest {
   public void testGetDevicesofType() {
     String [] deviceIds = {"7215B73D-5325-49E1-806A-2E4A5B3F7020", "398668AF-2395-4B64-B300-60F0ABC7459F", "12345678987654321"};
 
-    DeviceDAO deviceDAO = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO deviceDAO = new DeviceDAOImpl(connectionProvider);
     String appId = "AAABSNIBKOstQST7";
 
     List<DeviceEntity> deviceEntityList = deviceDAO.getDevices(appId, Arrays.asList(deviceIds), DeviceStatus.ACTIVE);

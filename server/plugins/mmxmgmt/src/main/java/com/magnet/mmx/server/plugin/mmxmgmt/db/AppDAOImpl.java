@@ -85,7 +85,7 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(1, appId);
 
       rs = pstmt.executeQuery();
-      if (rs.first()) {
+      if (rs.next()) {
         rv = new AppEntity.AppEntityBuilder().build(rs);
       } else {
         return null;
@@ -114,7 +114,7 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(1, apiKey);
 
       rs = pstmt.executeQuery();
-      if (rs.first()) {
+      if (rs.next()) {
         rv = new AppEntity.AppEntityBuilder().build(rs);
       } else {
         return null;
@@ -307,7 +307,7 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(1, appName.toUpperCase());
       pstmt.setString(2, ownerId);
       rs = pstmt.executeQuery();
-      if (rs.first()) {
+      if (rs.next()) {
         rv = new AppEntity.AppEntityBuilder().build(rs);
       }
       rs.close();

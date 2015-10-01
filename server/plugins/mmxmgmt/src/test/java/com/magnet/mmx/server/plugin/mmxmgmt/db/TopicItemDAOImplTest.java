@@ -14,10 +14,10 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.jivesoftware.util.StringUtils;
 import org.joda.time.DateTime;
@@ -28,13 +28,12 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -42,9 +41,9 @@ import static org.junit.Assert.assertEquals;
 /**
  */
 @RunWith(JMockit.class)
-public class TopicItemDAOImplTest {
+public class TopicItemDAOImplTest extends BaseDbTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopicItemDAOImplTest.class);
-  private static BasicDataSource ds;
+  private static DataSource ds;
   private static String SERVICE_ID = "pubsub" + RandomStringUtils.randomAlphabetic(5);
   private static String NODE_ID = "/aaaaaaa/bbbbbbb/cccccccc" + RandomStringUtils.randomAlphabetic(5);
   private static String JID = "user1%aaaaaaa@localhost/testdevice";
@@ -52,27 +51,8 @@ public class TopicItemDAOImplTest {
 
   @BeforeClass
   public static void setupDatabase() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    ds = UnitTestDSProvider.getDataSource();
+    DBTestUtil.setDataSource(ds);
     generatePubsubItems();
   }
 
@@ -320,5 +300,7 @@ public class TopicItemDAOImplTest {
     } finally {
       CloseUtil.close(LOGGER, pstmt, conn);
     }
+
+    closeDataSource(ds);
   }
 }

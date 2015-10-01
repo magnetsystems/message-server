@@ -18,7 +18,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.IDataSet;
@@ -27,6 +26,7 @@ import org.dbunit.operation.DatabaseOperation;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.sql.DataSource;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.util.Arrays;
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class MMXAppAPNSFeedbackProcessorTest {
 
-  private static BasicDataSource ds;
+  private static DataSource ds;
 
   @BeforeClass
   public static void setup() throws Exception {

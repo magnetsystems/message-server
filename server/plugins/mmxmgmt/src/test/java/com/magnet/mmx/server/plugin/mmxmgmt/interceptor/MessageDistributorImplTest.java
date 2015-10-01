@@ -15,76 +15,29 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.interceptor;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
 import org.jivesoftware.openfire.PacketRouter;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  */
 public class MessageDistributorImplTest {
-  private static BasicDataSource ds;
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testDistribute1() throws InterruptedException {
@@ -164,7 +117,7 @@ public class MessageDistributorImplTest {
 
     @Override
     protected DeviceDAO getDeviceDAO() {
-      return new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+      return new DeviceDAOImpl(connectionProvider);
     }
 
     public void setPacketRouter(PacketRouter router) {

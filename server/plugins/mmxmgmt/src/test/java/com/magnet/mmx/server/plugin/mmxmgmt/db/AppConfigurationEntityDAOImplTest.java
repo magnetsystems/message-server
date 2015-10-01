@@ -14,54 +14,24 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
-public class AppConfigurationEntityDAOImplTest {
-  private static BasicDataSource ds;
+public class AppConfigurationEntityDAOImplTest extends BaseDbTest {
 
-  @BeforeClass
-  public static void setupDB() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1);
 
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testUpdateConfiguration() throws Exception {
@@ -69,8 +39,8 @@ public class AppConfigurationEntityDAOImplTest {
     String key = "wakeup.mute.period.minutes";
     String value = "25";
 
-    AppConfigurationEntityDAO dao = new AppConfigurationEntityDAOImpl(new BasicDataSourceConnectionProvider(ds));
-    dao.updateConfiguration(appId, key, value);
+    AppConfigurationEntityDAO dao = new AppConfigurationEntityDAOImpl(connectionProvider);
+    dao.createConfiguration(appId, key, value);
 
     List<AppConfigurationEntity> list = dao.getConfigurations(appId);
     Map<String, String> configMap = new HashMap<String, String>(list.size());
@@ -87,12 +57,12 @@ public class AppConfigurationEntityDAOImplTest {
   @Test
   public void testUpdateConfigurationWithMultipleValues() throws Exception {
     String appId = "7wmi73wxin9";
-    AppConfigurationEntityDAO dao = new AppConfigurationEntityDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppConfigurationEntityDAO dao = new AppConfigurationEntityDAOImpl(connectionProvider);
     String[] keys = {"wakeup.mute.period.minutes", "max.message.rate.sec", "max.push.rate.sec"};
     String[] values = {"25", "70", "200"};
 
     for (int i = 0; i < keys.length; i++) {
-      dao.updateConfiguration(appId, keys[i], values[i]);
+      dao.createConfiguration(appId, keys[i], values[i]);
     }
 
     List<AppConfigurationEntity> list = dao.getConfigurations(appId);

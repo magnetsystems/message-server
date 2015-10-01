@@ -20,15 +20,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.common.utils.DefaultOpenfireEncryptor;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.CloseUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TestUserDao;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -38,20 +41,18 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
 */
@@ -61,7 +62,7 @@ public class MMXUserTagsResourceTest extends BaseJAXRSTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXUserTagsResourceTest.class);
   private static String baseUri = "http://localhost:8086/mmxmgmt/api/v1/users";
 
-  private static BasicDataSource ds;
+  private static DataSource ds;
   private static AppEntity appEntity;
   private static List<TestUserDao.UserEntity> userEntityList = new ArrayList<TestUserDao.UserEntity>();
 
@@ -100,27 +101,9 @@ public class MMXUserTagsResourceTest extends BaseJAXRSTest {
   }
 
   public static void setupDatabase() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
+    ds = new TestOpenfireConnectionProvider().getDataSource();
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    DBTestUtil.setDataSource(ds);
     new MockUp<AppDAOImpl>() {
       @Mock
       protected String getEncrypted(String value) {

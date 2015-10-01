@@ -18,13 +18,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXTopicTagsResourceTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.ConfigServlet;
 import com.magnet.mmx.util.JiveGlobalsMock;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
@@ -43,11 +43,10 @@ import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.*;
 import javax.servlet.http.HttpServletRequest;
-import java.io.InputStream;
+import javax.sql.DataSource;
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
@@ -57,8 +56,8 @@ import static org.junit.Assert.assertEquals;
 /**
 */
 @RunWith(JMockit.class)
-public class MMXConfigurationTest {
-  private static BasicDataSource ds;
+public class MMXConfigurationTest extends BaseDbTest {
+  private static DataSource ds;
 
   private final Triple<String, String, String>[] mbeanAttributes = new Triple[]{
           new ImmutableTriple<String, String, String>("WakeupInitialWait", MMXConfigKeys.WAKEUP_INITIAL_WAIT_KEY, "int"),
@@ -91,26 +90,12 @@ public class MMXConfigurationTest {
 
   @BeforeClass
   public static void setupDatabase() throws Exception {
-    InputStream inputStream = MMXTopicTagsResourceTest.class.getResourceAsStream("/test.properties");
+    ds = UnitTestDSProvider.getDataSource();
+  }
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
+  @AfterClass
+  public static void close() {
+    closeDataSource(ds);
   }
 
   @Before

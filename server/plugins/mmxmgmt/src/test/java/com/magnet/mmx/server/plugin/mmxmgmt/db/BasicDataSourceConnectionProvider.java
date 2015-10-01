@@ -25,6 +25,9 @@ public class BasicDataSourceConnectionProvider implements ConnectionProvider {
   private DataSource ds;
 
   public BasicDataSourceConnectionProvider(DataSource ds) {
+    if(null == ds) {
+      throw new IllegalArgumentException("Datasource can't be null");
+    }
     this.ds = ds;
   }
 

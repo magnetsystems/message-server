@@ -22,31 +22,16 @@ import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceTargetResolver;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.DeviceHolder;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushGCMPayloadBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushHeader;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,40 +42,14 @@ import static org.junit.Assert.assertNotNull;
  */
 public class GCMPushMessageSenderTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
+
 
   private static String BAD_TOKEN_DEVICE_ID = "12345678987654300";
   private static String VALID_IOS_DEVICE_ID = "7215B73D-5325-49E1-806A-2E4A5B3F7020";
-
-  @BeforeClass
-  public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
 
   @Test
   public void testSendPushBadDeviceToken() throws Exception {
@@ -101,7 +60,7 @@ public class GCMPushMessageSenderTest {
     target.setDeviceIds(Arrays.asList(deviceIds));
     DeviceHolder holder = DeviceHolder.build(resolver.resolve(appId, target));
     List<DeviceEntity> iosDevices = holder.getDevices(PushType.GCM);
-    AppDAO appDAO = new AppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO appDAO = new AppDAOImpl(connectionProvider);
     GCMPushMessageSender sender = new GCMPushMessageSender(appDAO.getAppForAppKey(appId));
 
     MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
@@ -127,7 +86,7 @@ public class GCMPushMessageSenderTest {
     target.setDeviceIds(Arrays.asList(deviceIds));
     DeviceHolder holder = DeviceHolder.build(resolver.resolve(appId, target));
     List<DeviceEntity> iosDevices = holder.getDevices(PushType.GCM);
-    AppDAO appDAO = new AppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO appDAO = new AppDAOImpl(connectionProvider);
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     appEntity.setGoogleAPIKey(null);
     GCMPushMessageSender sender = new GCMPushMessageSender(appDAO.getAppForAppKey(appId));
@@ -148,7 +107,7 @@ public class GCMPushMessageSenderTest {
 
   static class StubTargetResolver extends DeviceTargetResolver {
     protected ConnectionProvider getConnectionProvider() {
-      return new BasicDataSourceConnectionProvider(ds);
+      return connectionProvider;
     }
   }
 

@@ -15,77 +15,41 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.device.DeviceSearchOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.device.DeviceSortOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit test for the DeviceDAOImpl
  */
-public class DeviceDAOImplSearchTest {
+public class DeviceDAOImplSearchTest extends BaseDbTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
 
   @Test
   public void testConnection() throws Exception {
-    Connection conn = ds.getConnection();
+    Connection conn = dataSourceRule.getDataSource().getConnection();
     assertNotNull(conn);
   }
 
   @Test
   public void testSearch1() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     String appId = "AAABSNIBKOstQST7";
     DeviceSearchOption searchOption = DeviceSearchOption.USERNAME;
@@ -114,7 +78,7 @@ public class DeviceDAOImplSearchTest {
 
   @Test
   public void testSearch2() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     String appId = "AAABSNIBKOstQST7";
     DeviceSearchOption searchOption = DeviceSearchOption.USERNAME;
@@ -144,7 +108,7 @@ public class DeviceDAOImplSearchTest {
 
   @Test
   public void testListDevicesUsingDeviceIdList() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     String appId = "AAABSNIBKOstQST7";
     List<String> deviceIds = new ArrayList<String>(10);

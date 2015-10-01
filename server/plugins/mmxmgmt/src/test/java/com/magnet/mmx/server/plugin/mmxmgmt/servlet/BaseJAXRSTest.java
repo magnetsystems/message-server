@@ -16,6 +16,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXAdminAPIServer;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXPublicAPIServer;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.util.JiveGlobalsMock;
@@ -35,7 +36,7 @@ import java.net.URI;
 
 /**
 */
-public class BaseJAXRSTest {
+public class BaseJAXRSTest extends BaseDbTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(BaseJAXRSTest.class);
 
   private URI baseUri;
@@ -54,6 +55,7 @@ public class BaseJAXRSTest {
    */
   @BeforeClass
   public static void startServer() throws Exception {
+    System.out.println("");
     DBTestUtil.setDataSourceFromPropertyFile();
     JiveGlobalsMock.setup();
     JiveGlobals.setProperty(MMXConfigKeys.REST_ENABLE_HTTPS, "false");

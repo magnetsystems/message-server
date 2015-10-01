@@ -17,75 +17,45 @@ package com.magnet.mmx.server.plugin.mmxmgmt.db;
 import com.magnet.mmx.protocol.SearchAction;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.Operator;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.UserQuery;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.user.UserSearchOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.user.UserSortOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  */
-public class UserDAOImplSearchTest {
-  private static BasicDataSource ds;
+public class UserDAOImplSearchTest extends BaseDbTest {
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(new Runnable() {
+            @Override
+            public void run() {
+              DBTestUtil.cleanTables(new String[] {"mmxTag"}, connectionProvider);
+            }
+          },
+          new Runnable() {
+            @Override
+            public void run() {
+              DBTestUtil.cleanTables(new String[] {"mmxTag"}, connectionProvider);
+            }
+          },
+          TestDataSource.USER_DATA_1, TestDataSource.DEVICE_DATA_1, TestDataSource.USER_TAG_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    DBTestUtil.cleanTables(new String[] {"mmxTag"}, new BasicDataSourceConnectionProvider(ds));
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/user-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/user-tags-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testSearch1() {
-    UserDAO messageDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO messageDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     UserSearchOption option = UserSearchOption.NAME;
@@ -108,7 +78,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearch2() {
-    UserDAO messageDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO messageDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "app1";
     UserSearchOption option = UserSearchOption.EMAIL;
@@ -131,7 +101,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearch3() {
-    UserDAO messageDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO messageDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "AAABSNIBKOstQST7";
     UserSearchOption option = UserSearchOption.PHONE;
@@ -160,7 +130,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearch4() {
-    UserDAO messageDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO messageDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     UserSearchOption option = UserSearchOption.USERNAME;
@@ -190,7 +160,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearchUsingTags() {
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     UserQuery userQuery = new UserQuery();
     userQuery.setTags(Arrays.asList("student"));
@@ -205,7 +175,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearchUsingNameOrTags() {
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     UserQuery userQuery = new UserQuery();
     userQuery.setOperator(Operator.OR);
@@ -222,7 +192,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearchUsingEmail() {
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     UserQuery userQuery = new UserQuery();
     userQuery.setEmail("m@magnet.com");
@@ -240,7 +210,7 @@ public class UserDAOImplSearchTest {
 
   @Test
   public void testSearchUsingEmailWithPagination() {
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     UserQuery userQuery = new UserQuery();
     userQuery.setEmail("m@magnet.com");
@@ -263,7 +233,7 @@ public class UserDAOImplSearchTest {
     com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
     searchRequest.setEmail("net.com", SearchAction.Match.SUFFIX);
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     PaginationInfo pinfo = PaginationInfo.build(10, 0);
@@ -281,7 +251,7 @@ public class UserDAOImplSearchTest {
     com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
     searchRequest.setDisplayName("login3");
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     PaginationInfo pinfo = PaginationInfo.build(10, 0);
@@ -299,7 +269,7 @@ public class UserDAOImplSearchTest {
     com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
     searchRequest.setEmail("login3", SearchAction.Match.PREFIX);
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     PaginationInfo pinfo = PaginationInfo.build(10, 0);
@@ -318,7 +288,7 @@ public class UserDAOImplSearchTest {
     searchRequest.setEmail("login3", SearchAction.Match.PREFIX);
     searchRequest.setTags(Arrays.asList("student", "admin"));
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     PaginationInfo pinfo = PaginationInfo.build(10, 0);
@@ -337,7 +307,7 @@ public class UserDAOImplSearchTest {
     com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
     searchRequest.setPhone("4086366678");
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
     PaginationInfo pinfo = PaginationInfo.build(10, 0);
@@ -355,7 +325,7 @@ public class UserDAOImplSearchTest {
     com.magnet.mmx.protocol.UserQuery.SearchRequest searchRequest = new com.magnet.mmx.protocol.UserQuery.SearchRequest(SearchAction.Operator.OR, search, 0, 10);
     searchRequest.setDisplayName("rpp_msg_app");
 
-    UserDAO userDAO = new UserDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    UserDAO userDAO = new UserDAOImpl(connectionProvider);
 
     String appId = "i0sq7ddvi17";
 

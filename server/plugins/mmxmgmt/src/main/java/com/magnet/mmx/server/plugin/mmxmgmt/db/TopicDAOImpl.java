@@ -45,12 +45,14 @@ public class TopicDAOImpl implements TopicDAO {
             "persistItems, maxItems, notifyConfigChanges, notifyDelete, notifyRetract, " +
             "presenceBased, sendItemSubscribe, publisherModel, subscriptionEnabled, " +
             "configSubscription, accessModel, payloadType, bodyXSLT, dataformXSLT, creator, description, language, name, " +
-            "replyPolicy, associationPolicy, maxLeafNodes )" + SqlUtil.getValueListUnboundedStr(29)  + " " +
-            " ON DUPLICATE KEY UPDATE leaf=?,creationDate=?, modificationDate=?, parent=?, deliverPayloads=?, maxPayloadSize=?," +
-            "persistItems=?, maxItems=?, notifyConfigChanges=?, notifyDelete=?, notifyRetract=?,"  +
-            "presenceBased=?, sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?," +
-            "configSubscription=?, accessModel=?, payloadType=?, bodyXSLT=?, dataformXSLT=?, creator=?, description=?, language=?, name=?," +
-            "replyPolicy=?, associationPolicy=?, maxLeafNodes=?";
+            "replyPolicy, associationPolicy, maxLeafNodes )" + SqlUtil.getValueListUnboundedStr(29);
+    //
+//            + " " +
+//            " ON DUPLICATE KEY UPDATE leaf=?,creationDate=?, modificationDate=?, parent=?, deliverPayloads=?, maxPayloadSize=?," +
+//            "persistItems=?, maxItems=?, notifyConfigChanges=?, notifyDelete=?, notifyRetract=?,"  +
+//            "presenceBased=?, sendItemSubscribe=?, publisherModel=?, subscriptionEnabled=?," +
+//            "configSubscription=?, accessModel=?, payloadType=?, bodyXSLT=?, dataformXSLT=?, creator=?, description=?, language=?, name=?," +
+//            "replyPolicy=?, associationPolicy=?, maxLeafNodes=?";
 
     Connection conn = null;
     PreparedStatement pstmt = null;
@@ -88,39 +90,12 @@ public class TopicDAOImpl implements TopicDAO {
       pstmt.setString(27, entity.getReplyPolicy());
       pstmt.setString(28, entity.getAssociationPolicy());
       pstmt.setInt(29, entity.getMaxItems());
-      pstmt.setBoolean(30, entity.isLeaf());
-      pstmt.setString(31, StringUtils.dateToMillis(entity.getCreationDate()));
-      pstmt.setString(32, StringUtils.dateToMillis(entity.getModificationDate()));
-      pstmt.setString(33, entity.getParent());
-      pstmt.setBoolean(34, entity.isDeliverPayloads());
-      pstmt.setInt(35, entity.getMaxPayloadSize());
-      pstmt.setBoolean(36, entity.isPersistItems());
-      pstmt.setInt(37, entity.getMaxItems());
-      pstmt.setBoolean(38, entity.isNotifyConfigChanges());
-      pstmt.setBoolean(39, entity.isNotifyDelete());
-      pstmt.setBoolean(40, entity.isNotifyRetract());
-      pstmt.setBoolean(41, entity.isPresenceBased());
-      pstmt.setBoolean(42, entity.isSendItemSubscribe());
-      pstmt.setString(43, entity.getPublisherModel());
-      pstmt.setBoolean(44, entity.isSubscriptionEnabled());
-      pstmt.setBoolean(45, entity.isConfigSubscription());
-      pstmt.setString(46, entity.getAccessModel());
-      pstmt.setString(47, entity.getPayloadType());
-      pstmt.setString(48, entity.getBodyXSLT());
-      pstmt.setString(49, entity.getDataformXSLT());
-      pstmt.setString(50, entity.getCreator());
-      pstmt.setString(51, entity.getDescription());
-      pstmt.setString(52, entity.getLanguage());
-      pstmt.setString(53, entity.getName());
-      pstmt.setString(54, entity.getReplyPolicy());
-      pstmt.setString(55, entity.getAssociationPolicy());
-      pstmt.setInt(56, entity.getMaxItems());
-
 
       LOGGER.trace("persist : statement={}", pstmt);
       pstmt.executeUpdate();
 
     } catch (SQLException e) {
+      e.printStackTrace();
       LOGGER.error("persist : caught exception persisting topic = {}", entity, e);
       throw new DbInteractionException("Unable to persist topic");
     } finally {

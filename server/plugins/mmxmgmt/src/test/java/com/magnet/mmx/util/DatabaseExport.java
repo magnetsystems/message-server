@@ -15,16 +15,15 @@
 
 package com.magnet.mmx.util;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.database.QueryDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 
-import java.io.InputStream;
+import javax.sql.DataSource;
 import java.sql.Connection;
-import java.util.Properties;
 import java.util.TreeMap;
 
 /**
@@ -36,25 +35,7 @@ public class DatabaseExport {
 
 
   public static void main(String[] args) throws Exception {
-    InputStream inputStream =  DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    BasicDataSource ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
+    DataSource ds = UnitTestDSProvider.getDataSource();
     TreeMap<String, String> map = new TreeMap<String, String>();
     map.put("mmxTag", "SELECT * FROM mmxTag ");
     doWork(ds.getConnection(), map);

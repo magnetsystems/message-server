@@ -14,31 +14,20 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConfig;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.datatype.AbstractDataType;
 import org.dbunit.dataset.datatype.DataType;
 import org.dbunit.dataset.datatype.DataTypeException;
 import org.dbunit.dataset.datatype.TypeCastException;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.ext.mysql.MySqlDataTypeFactory;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.xmpp.packet.JID;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -52,39 +41,10 @@ import static org.junit.Assert.assertTrue;
 /**
  */
 public class MessageDAOImplTest {
-  private static BasicDataSource ds;
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.MESSAGE_DATA_1, TestDataSource.WAKEUP_QUEUE_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    //IDatabaseConnection con = new DatabaseConnection(setup);
-    DatabaseConnection con = new DatabaseConnection(setup);
-    DatabaseConfig dbConfig = con.getConfig();
-    dbConfig.setProperty(DatabaseConfig.PROPERTY_DATATYPE_FACTORY, new CustomDataTypeFactory());
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/message-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/wakeup-queue-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @Test
   public void testInsert1() {
@@ -102,7 +62,7 @@ public class MessageDAOImplTest {
     me.setFrom(from.toString());
     me.setDeviceId(targetDeviceId);
     me.setState(MessageEntity.MessageState.DELIVERY_ATTEMPTED);
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
 
     dao.persist(me);
 
@@ -114,7 +74,7 @@ public class MessageDAOImplTest {
   public void testUpdateState() {
     String messageId = "1396563a44077708";
     String targetDeviceId = "device2";
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
     dao.updateMessageState(messageId, targetDeviceId, MessageEntity.MessageState.WAKEUP_SENT);
     //next query for messages with state set to  wakeup required
     MessageEntity entity = dao.get(messageId, targetDeviceId);
@@ -126,7 +86,7 @@ public class MessageDAOImplTest {
 
     long currentUTCTime = 1411605900L; // September 24, 2014 at 5:45:00 PM PDT
    // long currentUTCTime = 1411666200L;  // September 25, 2014 at 10:30:00 AM PDT
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
 
     //elapsedTime in seconds
     int elapsedTime = 30 * 60;
@@ -143,7 +103,7 @@ public class MessageDAOImplTest {
 
     long currentUTCTime = 1411605900L; // September 24, 2014 at 5:45:00 PM PDT
     // long currentUTCTime = 1411666200L;  // September 25, 2014 at 10:30:00 AM PDT
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
 
     //elapsedTime in seconds
     int elapsedTime = 30 * 60;
@@ -158,7 +118,7 @@ public class MessageDAOImplTest {
 
     long currentUTCTime = 1411605900L; // September 24, 2014 at 5:45:00 PM PDT
     // long currentUTCTime = 1411666200L;  // September 25, 2014 at 10:30:00 AM PDT
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
 
     //timeoutperiod in minutes (300 minutes)
     int timeoutperiod = 300;
@@ -175,7 +135,7 @@ public class MessageDAOImplTest {
     String messageId = "zWoNarzoTGOZEL0UTwDB2w-6";
     String appId = "i26u1lmv7uc";
     String deviceId = "8D2F9E5595E9989FEF3D1D3A5BA0FBE0BB318ED0";
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
     int count = dao.messageDelivered(appId, deviceId, messageId);
     assertEquals("Non matching message count", 1, count);
   }
@@ -184,7 +144,7 @@ public class MessageDAOImplTest {
   public void testMessageWakeupSent() {
     String messageId = "c126eb1ebb61126042f252b25c593c0b";
     String deviceId = "17BCE336-FBBD-44D5-AB69-D773900990B1";
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
     dao.wakeupSent(messageId, deviceId);
     MessageEntity entity = dao.get(messageId, deviceId);
     MessageEntity.MessageState state = entity.getState();
@@ -198,7 +158,7 @@ public class MessageDAOImplTest {
   public void testMessageWakeupSent2() {
     String messageId = "e4c86b2e16b64c64c953de1789fdaf6d";
     String deviceId = "8D2F9E5595E9989FEF3D1D3A5BA0FBE0BB318ED0";
-    MessageDAO dao = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    MessageDAO dao = new MessageDAOImpl(connectionProvider);
     dao.wakeupSent(messageId, deviceId);
     MessageEntity entity = dao.get(messageId, deviceId);
     MessageEntity.MessageState state = entity.getState();

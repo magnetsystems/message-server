@@ -15,79 +15,46 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
-import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.*;
 import com.magnet.mmx.protocol.Constants.UserCreateMode;
-import com.magnet.mmx.protocol.MMXAttribute;
-import com.magnet.mmx.protocol.MMXStatus;
-import com.magnet.mmx.protocol.UserCreate;
-import com.magnet.mmx.protocol.UserInfo;
-import com.magnet.mmx.protocol.UserQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplTest;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXUserHandler.UserOperationStatusCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.User;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  */
 public class MMXUserHandlerTest {
-  private static BasicDataSource ds;
   private static String sAppID = "i0sq7ddvi17";
   private static JID sFrom = new JID("login3%"+sAppID+"@localhost",true);
 
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.USER_DATA_1, TestDataSource.DEVICE_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
+
+
   @BeforeClass
   public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    DBTestUtil.cleanTables(new String[] {"mmxTag"}, new BasicDataSourceConnectionProvider(ds));
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    builder.setColumnSensing(true);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/user-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
+    DBTestUtil.cleanTables(new String[] {"mmxTag"}, connectionProvider);
   }
+
   @Test
   public void testAddingUserWithNonExistingApp() throws UnauthorizedException {
     UserCreate request = new UserCreate();
@@ -505,7 +472,7 @@ public class MMXUserHandlerTest {
 
     @Override
     protected ConnectionProvider getConnectionProvider() {
-      return new BasicDataSourceConnectionProvider(ds);
+      return connectionProvider;
     }
   }
 

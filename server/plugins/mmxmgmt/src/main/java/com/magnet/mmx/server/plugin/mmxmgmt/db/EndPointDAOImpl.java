@@ -120,18 +120,19 @@ public class EndPointDAOImpl implements EndPointDAO {
    */
   public static class QueryBuilder {
 
-    private static final String BASE_QUERY = "SELECT d.id 'd.id', d.name 'd.name', d.ownerJid 'd.ownerJid', " +
-        "d.deviceId 'd.deviceId', d.tokenType 'd.tokenType' , d.clientToken 'd.clientToken', d.versionInfo 'd.versionInfo'," +
-        "d.modelInfo 'd.modelInfo', d.status 'd.status', d.dateCreated 'd.dateCreated', d.dateUpdated 'd.dateUpdated', " +
-        "phoneNumber 'd.phoneNumber', carrierInfo 'd.carrierInfo', d.osType 'd.osType', d.appId 'd.appId',d.protocolVersionMajor,d.protocolVersionMinor," +
+    private static final String BASE_QUERY = "SELECT d.id, d.name, d.ownerJid, " +
+        "d.deviceId, d.tokenType, d.clientToken, d.versionInfo," +
+        "d.modelInfo, d.status, d.dateCreated, d.dateUpdated, " +
+        "phoneNumber, carrierInfo, d.osType, d.appId, d.protocolVersionMajor,d.protocolVersionMinor," +
         "d.pushStatus," +
-        "u.username 'u.username', u.name 'u.name', " +
-        "u.email 'u.email', u.creationDate 'u.creationDate', u.modificationDate 'u.modificationDate' FROM " +
-        "ofUser u, mmxDevice d where d.ownerJid = SUBSTRING(u.username,1,(LOCATE(?,u.username)-2)) and d.appId = ?";
+        "u.username, u.name, " +
+        "u.email, u.creationDate, u.modificationDate FROM " +
+        "ofUser u, mmxDevice d where u.username = CONCAT(d.ownerJid,'%',?) and d.appId = ?";
 
+//    private static final String BASE_COUNT_QUERY = "SELECT count(1) FROM " +
+//        "ofUser u, mmxDevice d where d.ownerJid = SUBSTRING(u.username,1,(LOCATE(?,u.username)-2)) and d.appId = ?";
     private static final String BASE_COUNT_QUERY = "SELECT count(1) FROM " +
-        "ofUser u, mmxDevice d where d.ownerJid = SUBSTRING(u.username,1,(LOCATE(?,u.username)-2)) and d.appId = ?";
-
+        "ofUser u, mmxDevice d where u.username = CONCAT(d.ownerJid,'%',?) and d.appId = ?";
 
     public QueryHolder buildQuery(Connection conn, EndPointSearchOption searchOption, ValueHolder searchValue, EndPointSortOption sortOption, PaginationInfo info, String appId) throws
         SQLException {
@@ -165,6 +166,13 @@ public class EndPointDAOImpl implements EndPointDAO {
         paramList.add(start);
         paramList.add(end);
       }
+
+      StringBuilder countQueryBuilder = new StringBuilder();
+      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Count query:" + countQueryBuilder.toString());
+      }
+
       /**
        * now the ordering by
        */
@@ -183,24 +191,10 @@ public class EndPointDAOImpl implements EndPointDAO {
         queryBuilder.append(" ORDER BY d.status ");
       } else if (column == EndPointSearchOption.ENDPOINT_OSTYPE) {
         queryBuilder.append(" ORDER BY d.osType ");
-      } else if (column == EndPointSearchOption.ENDPOINT_DATE_CREATED) {
-        //we have start and end values
-        queryBuilder.append((" AND (UNIX_TIMESTAMP(d.dateCreated) >= ? AND UNIX_TIMESTAMP(d.dateCreated) < ?) "));
-        QueryParam start = new QueryParam(Types.BIGINT, Long.parseLong(searchValue.getValue1()), true);
-        QueryParam end = new QueryParam(Types.BIGINT, Long.parseLong(searchValue.getValue2()), true);
-        paramList.add(start);
-        paramList.add(end);
       }
-
 
       if (sort == SortOrder.DESCENDING) {
         queryBuilder.append(" DESC ");
-      }
-
-      StringBuilder countQueryBuilder = new StringBuilder();
-      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Count query:" + countQueryBuilder.toString());
       }
 
       StringBuilder resultQueryBuilder = new StringBuilder();

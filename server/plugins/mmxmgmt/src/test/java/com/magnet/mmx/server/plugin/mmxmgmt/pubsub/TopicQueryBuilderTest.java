@@ -46,7 +46,7 @@ public class TopicQueryBuilderTest {
     String expected =
         "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where " +
         "s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) " +
-        "as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? " +
+        "as subcount FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
     assertEquals("Non matching generated query", expected, resultQuery);
@@ -65,7 +65,7 @@ public class TopicQueryBuilderTest {
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
-    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
@@ -85,7 +85,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = " +
-        "ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode,mmxTag WHERE (( ( mmxTag.tagname = ? OR mmxTag.tagname = ? OR mmxTag.tagname = ? ) AND " +
         "mmxTag.serviceID=ofPubsubNode.serviceID AND mmxTag.nodeID=ofPubsubNode.nodeID )) AND " +
         "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
@@ -111,7 +111,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
@@ -136,7 +136,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
@@ -176,7 +176,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
@@ -215,7 +215,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode WHERE (ofPubsubNode.name=? ) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
@@ -254,7 +254,7 @@ public class TopicQueryBuilderTest {
 
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+          "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as subcount FROM " +
         "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
         "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 

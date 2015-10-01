@@ -197,7 +197,7 @@ public class TagDAOImpl implements TagDAO {
   public int createUsernameTag(String tagname, String appId, String username) throws Exception {
     TagUtil.validateTag(tagname);
 
-    final String statementStr = "INSERT IGNORE INTO mmxTag (tagname, appId, creationDate, username) VALUES (?,?,?,?)";
+    final String statementStr = "INSERT INTO mmxTag (tagname, appId, creationDate, username) VALUES (?,?,?,?)";
     Connection conn = null;
     PreparedStatement pstmt = null;
     try {
@@ -302,7 +302,7 @@ public class TagDAOImpl implements TagDAO {
   public int createDeviceTag(String tagname, String appId, String deviceId) throws Exception {
     TagUtil.validateTag(tagname);
     
-    final String statementStr = "INSERT IGNORE INTO mmxTag (tagname, appId, creationDate, deviceId) VALUES (?,?,?,(select id from mmxDevice where deviceId=? AND appId=?))";
+    final String statementStr = "INSERT INTO mmxTag (tagname, appId, creationDate, deviceId) VALUES (?,?,?,(select id from mmxDevice where deviceId=? AND appId=?))";
 
     Connection conn = null;
     PreparedStatement pstmt = null;
@@ -327,7 +327,7 @@ public class TagDAOImpl implements TagDAO {
 
   @Override
   public int createDeviceTag(String tagname, String appId, int deviceIdFK) throws DbInteractionException {
-    final String statementStr = "INSERT IGNORE INTO mmxTag (tagname, appId, creationDate, deviceId) VALUES (?,?,?,?)";
+    final String statementStr = "INSERT INTO mmxTag (tagname, appId, creationDate, deviceId) VALUES (?,?,?,?)";
     Connection conn = null;
     PreparedStatement pstmt = null;
 
@@ -377,7 +377,7 @@ public class TagDAOImpl implements TagDAO {
   public int createTopicTag(String tagname, String appId, String serviceId, String nodeId) throws DbInteractionException {
     TagUtil.validateTag(tagname);
     
-    final String statementStr = "INSERT IGNORE INTO mmxTag (tagname, appId, creationDate, serviceID, nodeID) VALUES (?,?,?,?,?)";
+    final String statementStr = "INSERT INTO mmxTag (tagname, appId, creationDate, serviceID, nodeID) VALUES (?,?,?,?,?)";
     LOGGER.trace("createTopicTag : tagname={}, appId={}, serviceId={}, nodeId={}", new Object[]{tagname, appId, serviceId, nodeId});
 
     Connection conn = null;

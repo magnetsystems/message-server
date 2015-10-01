@@ -129,7 +129,7 @@ public class AppResource {
        * create default configuration for the mute period.
        */
       AppConfigurationEntityDAO configurationDAO = new AppConfigurationEntityDAOImpl(new OpenFireDBConnectionProvider());
-      configurationDAO.updateConfiguration(appEntity.getAppId(), MMXConfigKeys.WAKEUP_MUTE_PERIOD_MINUTES,
+      configurationDAO.createConfiguration(appEntity.getAppId(), MMXConfigKeys.WAKEUP_MUTE_PERIOD_MINUTES,
           Integer.toString(MMXServerConstants.WAKEUP_MUTE_PERIOD_MINUTES_DEFAULT));
 
       // If we just created a bot enabled app, we want to create the bots for the app.

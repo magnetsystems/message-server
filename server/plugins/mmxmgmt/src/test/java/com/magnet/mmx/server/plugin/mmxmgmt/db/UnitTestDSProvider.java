@@ -14,62 +14,33 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import org.apache.commons.dbcp2.BasicDataSource;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import javax.sql.DataSource;
+
+import static org.junit.Assert.fail;
 
 /**
  */
 public class UnitTestDSProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(UnitTestDSProvider.class);
 
-  private static DSConfig dsConfig = null;
-
-  static {
-    try {
-      InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-      Properties testProperties = new Properties();
-      testProperties.load(inputStream);
-
-      String host = testProperties.getProperty("db.host");
-      String port = testProperties.getProperty("db.port");
-      String user = testProperties.getProperty("db.user");
-      String password = testProperties.getProperty("db.password");
-      String driver = testProperties.getProperty("db.driver");
-      String schema = testProperties.getProperty("db.schema");
-
-      String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-      dsConfig = new DSConfig();
-      dsConfig.setHost(host);
-      dsConfig.setPort(port);
-      dsConfig.setUser(user);
-      dsConfig.setPassword(password);
-      dsConfig.setDriver(driver);
-      dsConfig.setSchema(schema);
-      dsConfig.setUrl(url);
-
-
-    } catch (IOException e) {
-      LOGGER.warn("Initialization problems. Unit test will fail", e);
-      throw new RuntimeException(e);
-    }
-  }
+  private static DataSource ds;
 
   /**
    * Get unit test datasource
    * @return
    */
-  public static BasicDataSource getDataSource() {
-    BasicDataSource ds = new BasicDataSource();
-    ds.setDriverClassName(dsConfig.getDriver());
-    ds.setUsername(dsConfig.getUser());
-    ds.setPassword(dsConfig.getPassword());
-    ds.setUrl(dsConfig.getUrl());
+  public static DataSource getDataSource() {
+    DataSource ds = null;
+    try {
+      ds = new TestOpenfireConnectionProvider().getDataSource();
+    } catch (Exception e) {
+      fail(e.getMessage());
+    }
+
     return ds;
   }
 

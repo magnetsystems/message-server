@@ -16,66 +16,38 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AppIDGenerator;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.util.Base64;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-public class AppTest {
+public class AppTest extends BaseDbTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
   @BeforeClass
   public static void setupDB() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
     // load test encryptor class
     Class.forName(EncryptorForTest.class.getName());
   }
 
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
-
   @Test
   public void sanityTest() {
-    AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
     AppEntity entity = null;
     String appID = AppIDGenerator.generate();
     String serverUserId = "serveruserid";
@@ -139,7 +111,7 @@ public class AppTest {
    */
   @Test
   public void testDuplicateAppName() {
-    AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
     String appID = AppIDGenerator.generate();
     String serverUserId = "serveruserid";
     String guestSecret = "guestsecret";
@@ -168,7 +140,7 @@ public class AppTest {
    */
   @Test
   public void testGetAppUsingName() {
-    AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
     AppEntity entity = null;
     String appName = "login3_test_app";
     String ownerId = "admin@login3s-macbook-pro.local";
@@ -193,7 +165,7 @@ public class AppTest {
         outputStream.write(buffer, 0, read);
       }
       byte[] certificate = outputStream.toByteArray();
-      AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+      AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
       dao.updateAPNsCertificate(appId, certificate);
 
       AppEntity revised = dao.getAppForAppKey(appId);
@@ -215,7 +187,7 @@ public class AppTest {
   @Test
   public void testCreateAndUpdateTest() {
     try {
-      AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+      AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
       AppEntity entity = null;
       String appID = AppIDGenerator.generate();
       String serverUserId = "supercool";
@@ -260,7 +232,7 @@ public class AppTest {
   @Test
   public void testFetchingAppsForOwner() {
     String ownerId = "admin@login3s-macbook-pro.local";
-    AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
 
     List<AppEntity> list = dao.getAppsForOwner(ownerId);
 
@@ -272,7 +244,7 @@ public class AppTest {
   @Ignore
   @Test
   public void testFetchingAllApps() {
-    AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
 
     List<AppEntity> list = dao.getAllApps();
 
@@ -294,7 +266,7 @@ public class AppTest {
         outputStream.write(buffer, 0, read);
       }
       byte[] certificate = outputStream.toByteArray();
-      AppDAO dao = new NonEncryptingAppDAOImpl(new BasicDataSourceConnectionProvider(ds));
+      AppDAO dao = new NonEncryptingAppDAOImpl(connectionProvider);
       String password = "testing";
       dao.updateAPNsCertificateAndPassword(appId, certificate, password);
 

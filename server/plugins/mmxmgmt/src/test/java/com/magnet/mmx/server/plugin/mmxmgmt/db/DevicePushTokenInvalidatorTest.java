@@ -15,74 +15,28 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.magnet.mmx.protocol.PushType;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.sql.DataSource;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  */
-public class DevicePushTokenInvalidatorTest {
+public class DevicePushTokenInvalidatorTest extends BaseDbTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1, TestDataSource.MESSAGE_DATA_1, TestDataSource.WAKEUP_QUEUE_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
-
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/message-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/wakeup-queue-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
 
   @Test
   public void testInvalidateToken() throws Exception {
     String appId = "i26u1lmv7uc";
     String token = "bogustoken";
-    DevicePushTokenInvalidator invalidator = new StubDevicePushTokenInvalidator(ds);
+    DevicePushTokenInvalidator invalidator = new StubDevicePushTokenInvalidator(dataSourceRule.getDataSource());
     invalidator.invalidateToken(appId, PushType.APNS, token);
     //WakeupEntityDAO
 

@@ -31,9 +31,10 @@ public class AppConfigurationEntityDAOImpl implements AppConfigurationEntityDAO 
   private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigurationEntityDAOImpl.class);
   private ConnectionProvider provider;
 
-  private final String INSERT_UPDATE_SQL = "INSERT INTO mmxAppConfiguration (appId,configKey,configValue) " +
-      " VALUES (?,?,?) " +
-      " ON DUPLICATE KEY UPDATE configValue=? ";
+  private final String INSERT_SQL = "INSERT INTO mmxAppConfiguration (appId,configKey,configValue) " +
+      " VALUES (?,?,?) ";
+
+  private final String UPDATE_SQL = "UPDATE mmxAppConfiguration SET configValue=? WHERE appId=? AND configKey=? ";
 
   private final String SELECT_SQL = "SELECT id, appId, configKey, configValue FROM mmxAppConfiguration WHERE appId = ? ORDER BY configKey ";
 
@@ -109,16 +110,38 @@ public class AppConfigurationEntityDAOImpl implements AppConfigurationEntityDAO 
   }
 
   @Override
+  public void createConfiguration(String appId, String key, String value) {
+    Connection connection = null;
+    PreparedStatement pstmt = null;
+    try {
+      connection = provider.getConnection();
+      pstmt = connection.prepareStatement(INSERT_SQL);
+      pstmt.setString(1, appId);
+      pstmt.setString(2, key);
+      pstmt.setString(3, value);
+      pstmt.executeUpdate();
+      pstmt.close();
+      connection.close();
+      pstmt = null;
+      connection = null;
+    } catch (SQLException sqle) {
+      LOGGER.warn("SQL Exception when updating configuration for appId:{} key:{} value:{}", appId, key, value, sqle);
+      throw new DbInteractionException(sqle);
+    } finally {
+      CloseUtil.close(LOGGER, pstmt, connection);
+    }
+  }
+
+  @Override
   public void updateConfiguration(String appId, String key, String value) {
     Connection connection = null;
     PreparedStatement pstmt = null;
     try {
       connection = provider.getConnection();
-      pstmt = connection.prepareStatement(INSERT_UPDATE_SQL);
-      pstmt.setString(1, appId);
-      pstmt.setString(2, key);
-      pstmt.setString(3, value);
-      pstmt.setString(4, value);
+      pstmt = connection.prepareStatement(UPDATE_SQL);
+      pstmt.setString(1, value);
+      pstmt.setString(2, appId);
+      pstmt.setString(3, key);
       pstmt.executeUpdate();
       pstmt.close();
       connection.close();

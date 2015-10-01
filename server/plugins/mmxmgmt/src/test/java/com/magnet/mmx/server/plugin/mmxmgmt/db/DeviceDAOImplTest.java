@@ -19,76 +19,39 @@ import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.DevReg;
 import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.protocol.PushType;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Unit test for the DeviceDAOImpl
  */
-public class DeviceDAOImplTest {
+public class DeviceDAOImplTest extends BaseDbTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static DataSourceResource dataSourceRule = new DataSourceResource(TestDataSource.APP_DATA_1, TestDataSource.DEVICE_DATA_1);
 
-  @BeforeClass
-  public static void setup() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
 
-    ds = UnitTestDSProvider.getDataSource();
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/device-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
 
   @Test
   public void testConnection() throws Exception {
-    Connection conn = ds.getConnection();
+    Connection conn = connectionProvider.getConnection();
     assertNotNull(conn);
   }
 
   @Test
   public void testAddDevice() {
 
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     DevReg request = new DevReg();
     request.setDevId("433536df7038e1b7");
@@ -113,7 +76,7 @@ public class DeviceDAOImplTest {
   @Test
   public void testAddDeviceWithDifferentAppId() throws DeviceNotFoundException {
 
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     DevReg request = new DevReg();
     String deviceId = "433536df7038e1b7";
@@ -144,7 +107,7 @@ public class DeviceDAOImplTest {
 
   @Test
   public void testRetrieveDevice1() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
     String deviceId = "8933536df7038e1b7";
     OSType android = OSType.ANDROID;
     String appId = "AAABSNIBKOstQST7";
@@ -164,7 +127,7 @@ public class DeviceDAOImplTest {
 
   @Test
   public void testUpdateDevice1() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
     
     String deviceId = "10101010101";
     String appId = "AAABSNIBKOstQST7";
@@ -202,7 +165,7 @@ public class DeviceDAOImplTest {
 
   @Test
   public void testDeactivateDevice() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
 
     String deviceId = "mydeviceid" + new Random().nextLong();
     String appId = "AAABSNIBKOstQST7";
@@ -233,7 +196,7 @@ public class DeviceDAOImplTest {
   public void testListingDevicesForAppkeyAndUser() {
     String userId = "magnet.way";
     String appKey = "AAABSNIBKOstQST7";
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
     List<DeviceEntity> devices = dao.getDevices(appKey, userId, DeviceStatus.ACTIVE);
 
     assertTrue("devices list is empty", !devices.isEmpty());
@@ -242,7 +205,7 @@ public class DeviceDAOImplTest {
 
   @Test
   public void testInvalidateToken() {
-    DeviceDAO dao = new DeviceDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    DeviceDAO dao = new DeviceDAOImpl(connectionProvider);
     String deviceId = "mydeviceid" + new Random().nextLong();
     String appId = "AAABSNIBKOstQST7";
     String ownerId = "superUser";

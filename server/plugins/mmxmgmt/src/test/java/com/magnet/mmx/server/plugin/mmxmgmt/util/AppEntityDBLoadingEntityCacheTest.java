@@ -16,46 +16,30 @@ package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 /**
  */
 public class AppEntityDBLoadingEntityCacheTest {
-  private static BasicDataSource ds;
+
   private static AppEntityDBLoadingEntityCache appCache;
+
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.APP_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
+
+
   @BeforeClass
   public static void setup() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplSearchTest.class.getResourceAsStream("/data/app-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-
-    AppEntityDBLoadingEntityCache.AppEntityDBLoader loader = new AppEntityDBLoadingEntityCache.AppEntityDBLoader(new BasicDataSourceConnectionProvider(ds));
+    AppEntityDBLoadingEntityCache.AppEntityDBLoader loader = new AppEntityDBLoadingEntityCache.AppEntityDBLoader(connectionProvider);
     appCache = new AppEntityDBLoadingEntityCache(10, loader);
-
   }
 
 

@@ -906,6 +906,13 @@ public class DeviceDAOImpl implements DeviceDAO {
         QueryParam param = new QueryParam(Types.VARCHAR, PERCENTAGE + searchValue.getValue1() + PERCENTAGE, true);
         paramList.add(param);
       }
+
+      StringBuilder countQueryBuilder = new StringBuilder();
+      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.debug("Count query:" + countQueryBuilder.toString());
+      }
+
       /**
        * now the ordering by
        */
@@ -923,12 +930,6 @@ public class DeviceDAOImpl implements DeviceDAO {
 
       if (sort == SortOrder.DESCENDING) {
         queryBuilder.append(" DESC ");
-      }
-
-      StringBuilder countQueryBuilder = new StringBuilder();
-      countQueryBuilder.append(BASE_COUNT_QUERY).append(queryBuilder.toString());
-      if (LOGGER.isDebugEnabled()) {
-        LOGGER.debug("Count query:" + countQueryBuilder.toString());
       }
 
       StringBuilder resultQueryBuilder = new StringBuilder();

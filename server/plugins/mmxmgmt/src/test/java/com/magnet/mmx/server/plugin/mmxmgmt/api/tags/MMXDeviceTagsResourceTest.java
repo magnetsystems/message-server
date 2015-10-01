@@ -25,10 +25,10 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.TestOpenfireConnectionProvider;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.AfterClass;
@@ -39,20 +39,18 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 /**
@@ -61,7 +59,7 @@ import static org.junit.Assert.assertTrue;
 public class MMXDeviceTagsResourceTest extends BaseJAXRSTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXDeviceTagsResourceTest.class);
   private static String baseUri = "http://localhost:8086/mmxmgmt/api/v1/devices";
-  private static BasicDataSource ds;
+  private static DataSource ds;
   private static AppEntity appEntity;
   private static List<DeviceEntity> deviceEntityList = new ArrayList<DeviceEntity>();
   private Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -76,27 +74,9 @@ public class MMXDeviceTagsResourceTest extends BaseJAXRSTest {
   }
 
   public static void setupDatabase() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
+    ds = new TestOpenfireConnectionProvider().getDataSource();
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    DBTestUtil.setDataSource(ds);
     new MockUp<AppDAOImpl>() {
       @Mock
       protected String getEncrypted(String value) {

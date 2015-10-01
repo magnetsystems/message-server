@@ -16,11 +16,11 @@ package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.AfterClass;
@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -43,7 +43,7 @@ import static org.junit.Assert.assertTrue;
  */
 
 @RunWith(JMockit.class)
-public class TagDAOImplTest {
+public class TagDAOImplTest extends BaseDbTest {
   private final static int NUM_APPS = 2;
   private final static int NUM_DEVICES_PER_APP = 60;
   private final static int COMMON_DEVICES = 30;
@@ -65,32 +65,14 @@ public class TagDAOImplTest {
 
   private final String innerJointTemplate = " INNER JOIN (SELECT DISTINCT deviceId FROM mmxTag WHERE tagname='%s' and appId='%s') as temp%d USING (deviceId) " ;
 
-  private static BasicDataSource ds;
+  private static DataSource ds;
 
 
   @BeforeClass
   public static void setupDatabase() throws Exception {
-    InputStream inputStream = DeviceDAOImplTest.class.getResourceAsStream("/test.properties");
+    ds = UnitTestDSProvider.getDataSource();
 
-    Properties testProperties = new Properties();
-    testProperties.load(inputStream);
-
-    String host = testProperties.getProperty("db.host");
-    String port = testProperties.getProperty("db.port");
-    String user = testProperties.getProperty("db.user");
-    String password = testProperties.getProperty("db.password");
-    String driver = testProperties.getProperty("db.driver");
-    String schema = testProperties.getProperty("db.schema");
-
-    String url = "jdbc:mysql://" + host + ":" + port + "/" + schema;
-
-    ds = new BasicDataSource();
-    ds.setDriverClassName(driver);
-    ds.setUsername(user);
-    ds.setPassword(password);
-    ds.setUrl(url);
-
-    DBTestUtil.setBasicDataSource(ds);
+    DBTestUtil.setDataSource(ds);
 
     setupMocks();
     generateAppData();
@@ -203,7 +185,11 @@ public class TagDAOImplTest {
       entity.setParent(appId);
       entity.setName(name);
       entity.setDescription("this is a test topic" + i);
-      topicList.add(entity);
+      try {
+        topicList.add(entity);
+      } catch (Exception e) {
+
+      }
       DBTestUtil.getTopicDAO().persist(entity);
     }
   }
@@ -427,5 +413,7 @@ public class TagDAOImplTest {
        CloseUtil.close(LOGGER, pstmt4);
        CloseUtil.close(LOGGER, pstmt5);
     }
+
+    closeDataSource(ds);
   }
 }

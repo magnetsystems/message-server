@@ -18,24 +18,15 @@ import com.magnet.mmx.protocol.SearchAction;
 import com.magnet.mmx.protocol.TopicAction;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.TopicQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.BaseDbTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.utils.TestDataSource;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
-import org.dbunit.operation.DatabaseOperation;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -46,38 +37,13 @@ import static org.junit.Assert.assertNotNull;
  */
 public class PubSubPersistenceManagerExtTest {
 
-  private static BasicDataSource ds;
+  @ClassRule
+  public static BaseDbTest.DataSourceResource dataSourceRule = new BaseDbTest.DataSourceResource(TestDataSource.PUBSUB_NODE_DATA_1, TestDataSource.PUBSUB_TAG_DATA_1);
+
+  private static ConnectionProvider connectionProvider = new BasicDataSourceConnectionProvider(dataSourceRule.getDataSource());
+
+
   private QueryBuilderResult builtQueries;
-
-  @BeforeClass
-  public static void setUp() throws Exception {
-    ds = UnitTestDSProvider.getDataSource();
-
-    //clean any existing records and load some records into the database.
-    FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-    builder.setColumnSensing(true);
-    Connection setup = ds.getConnection();
-    IDatabaseConnection con = new DatabaseConnection(setup);
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/pubsub-node-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-    {
-      InputStream xmlInput = DeviceDAOImplTest.class.getResourceAsStream("/data/pubsub-tag-data-1.xml");
-      IDataSet dataSet = builder.build(xmlInput);
-      DatabaseOperation.CLEAN_INSERT.execute(con, dataSet);
-    }
-  }
-
-  @AfterClass
-  public static void teardown() {
-    try {
-      ds.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
 
   @Test
   public void testSearchTopic() throws Exception {
@@ -90,7 +56,7 @@ public class PubSubPersistenceManagerExtTest {
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
     QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
 
-    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
+    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(connectionProvider, builtQueries, paginationInfo);
 
     assertNotNull(topicList);
 
@@ -118,7 +84,7 @@ public class PubSubPersistenceManagerExtTest {
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
     QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
 
-    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
+    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(connectionProvider, builtQueries, paginationInfo);
 
     assertNotNull(topicList);
 
@@ -146,7 +112,7 @@ public class PubSubPersistenceManagerExtTest {
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
     QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
 
-    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
+    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(connectionProvider, builtQueries, paginationInfo);
 
     assertNotNull(topicList);
 
@@ -174,7 +140,7 @@ public class PubSubPersistenceManagerExtTest {
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
     QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
 
-    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
+    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(connectionProvider, builtQueries, paginationInfo);
 
     assertNotNull(topicList);
 
@@ -208,7 +174,7 @@ public class PubSubPersistenceManagerExtTest {
     PaginationInfo paginationInfo = PaginationInfo.build(expectedSize, 0);
     QueryBuilderResult builtQueries = builder.buildPaginationQuery(searchRequest, appId, paginationInfo, null);
 
-    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
+    SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(connectionProvider, builtQueries, paginationInfo);
 
     assertNotNull(topicList);
 
