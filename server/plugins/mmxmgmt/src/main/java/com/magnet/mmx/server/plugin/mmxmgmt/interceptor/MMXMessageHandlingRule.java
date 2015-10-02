@@ -16,18 +16,25 @@ package com.magnet.mmx.server.plugin.mmxmgmt.interceptor;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+import org.xmpp.packet.PacketExtension;
 
 import com.google.common.base.Strings;
+import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXError;
+import com.magnet.mmx.protocol.MMXid;
+import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.protocol.StatusCode;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
@@ -51,6 +58,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
+import com.magnet.mmx.util.GsonData;
 
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXMessageHandlingRule.class);
@@ -218,6 +226,59 @@ public class MMXMessageHandlingRule {
     return messageEntity;
   }
 
+  public void handleMMXMulticast(MMXMsgRuleInput input) throws PacketRejectedException {
+    Message message = input.getMessage();
+    JID mcastJid = message.getTo();
+    String appId = JIDUtil.getAppId(mcastJid);
+    PacketExtension payload = message.getExtension(Constants.MMX,
+        Constants.MMX_NS_MSG_PAYLOAD);
+    if (payload == null) {
+      // TODO: not an MMX msg.  We should send an error instead of drop it.
+      LOGGER.warn("Dropping a malformed MMX multicast message.");
+      throw new PacketRejectedException("Stop processing for malformed multicast message");
+    }
+
+    MMXid[] recipients = getRecipients(payload);
+    if (recipients == null || recipients.length == 0) {
+      LOGGER.warn("No recipients found in MMX multicast message");
+    } else {
+      PacketRouter pktRouter = XMPPServer.getInstance().getPacketRouter();
+      for (MMXid recipient : recipients) {
+        JID jid = new JID(JIDUtil.makeNode(recipient.getUserId(), appId),
+                            mcastJid.getDomain(), recipient.getDeviceId(), true);
+        // TODO: payload has a DOM parent; do a deep copy.  Need a cheaper way.
+        Message unicastMsg = message.createCopy();
+        unicastMsg.setTo(jid);
+        pktRouter.route(unicastMsg);
+      }
+    }
+    throw new PacketRejectedException("MMX multicast message is processed");
+  }
+
+  private MMXid[] getRecipients(PacketExtension payload) {
+    Element mmxElement = payload.getElement();
+    if (mmxElement == null) {
+      return null;
+    }
+    Element element = mmxElement.element(Constants.MMX_MMXMETA);
+    if (element == null) {
+      return null;
+    }
+    MmxHeaders mmxMeta = GsonData.getGson().fromJson(element.getText(),
+        MmxHeaders.class);
+    List<Map<String, String>> list = (List<Map<String, String>>) mmxMeta.getHeader(
+        MmxHeaders.TO, null);
+    if (list == null) {
+      return null;
+    }
+    int i = 0;
+    MMXid[] recipients = new MMXid[list.size()];
+    for (Map<String, String> map : list) {
+      recipients[i++] = MMXid.fromMap(map);
+    }
+    return recipients;
+  }
+  
   private void handleBareJID(Message message) {
     if (message.getTo().getNode() == null) {
       LOGGER.trace("handleBareJID: ignoring a multicast message={}", message);

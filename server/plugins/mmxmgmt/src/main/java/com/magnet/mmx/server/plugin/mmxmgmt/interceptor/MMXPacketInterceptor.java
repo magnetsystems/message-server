@@ -14,10 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.interceptor;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.context.ContextDispatcherFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.context.GeoEventDispatcher;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
 import org.apache.commons.lang.RandomStringUtils;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
@@ -27,6 +23,11 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+
+import com.magnet.mmx.server.plugin.mmxmgmt.context.ContextDispatcherFactory;
+import com.magnet.mmx.server.plugin.mmxmgmt.context.GeoEventDispatcher;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.IQUtils;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
 
 /**
  * MMX Packet interceptor
@@ -70,6 +71,13 @@ public class MMXPacketInterceptor implements PacketInterceptor {
 
     Message mmxMessage = (Message) packet;
 
-    messageHandlingRule.handle(new MMXMsgRuleInput(mmxMessage, session, incoming, processed, MMXMessageUtil.isConfirmationMessage(mmxMessage), (mmxMessage.getTo().getResource() == null)));
+    if (MMXMessageUtil.isMMXMulticastMessage(mmxMessage)) {
+      messageHandlingRule.handleMMXMulticast(new MMXMsgRuleInput(mmxMessage,
+          session, incoming, processed, false, false));
+    } else {
+      messageHandlingRule.handle(new MMXMsgRuleInput(mmxMessage, session,
+          incoming, processed, MMXMessageUtil.isConfirmationMessage(mmxMessage),
+          (mmxMessage.getTo().getResource() == null)));
+    }
   }
 }
