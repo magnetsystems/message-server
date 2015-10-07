@@ -14,13 +14,11 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
-import com.magnet.mmx.protocol.Constants;
-import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import com.magnet.mmx.util.GsonData;
-import com.magnet.mmx.util.JSONifiable;
-import com.magnet.mmx.util.Utils;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
@@ -28,28 +26,51 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.util.GsonData;
+import com.magnet.mmx.util.JSONifiable;
+import com.magnet.mmx.util.Utils;
 
 /**
- * Builder that builds the server ack message.
+ * Builder that builds the server ack message for unicast message (NO_BATCH),
+ * multicast message (BATCH_BEGIN and BATCH_END.)
  */
 public class ServerAckMessageBuilder {
 
+  public static enum Type {
+    ONE_TIME(Constants.SERVER_ACK_KEY),
+    BATCH_BEGIN(Constants.BEGIN_ACK_KEY),
+    BATCH_END(Constants.END_ACK_KEY);
+    
+    private final String mValue;
+
+    Type(String value) {
+      mValue = value;
+    }
+    
+    String getValue() {
+      return mValue;
+    }
+  }
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerAckMessageBuilder.class);
   private Message originalMessage;
   private String appId;
+  private Type type;
 
   /**
    * Constructor
    * @param originalMessage
    * @param appId
+   * @param type
    */
-  public ServerAckMessageBuilder(Message originalMessage, String appId) {
+  public ServerAckMessageBuilder(Message originalMessage, String appId, Type type) {
     this.originalMessage = originalMessage;
     this.appId = appId;
+    this.type = type;
   }
 
   /**
@@ -76,9 +97,11 @@ public class ServerAckMessageBuilder {
     Map<String, ServerAckMmxMeta> mmxMetaMap = new HashMap<String, ServerAckMmxMeta>();
     ServerAckMmxMeta meta = new ServerAckMmxMeta();
     meta.setAckForMsgId(originalMessage.getID());
-    meta.setReceiver(receiverUserId, receiverDeviceId);
+    if (type == Type.ONE_TIME) {
+      meta.setReceiver(receiverUserId, receiverDeviceId);
+    }
     meta.setSender(senderUserId, senderDeviceId);
-    mmxMetaMap.put(MMXServerConstants.SERVER_ACK_KEY, meta);
+    mmxMetaMap.put(type.getValue(), meta);
 
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMetaMap);
     mmxMetaElement.setText(mmxMetaJSON);
@@ -97,6 +120,8 @@ public class ServerAckMessageBuilder {
 
   /**
    * Class for modeling the server ack mmx meta data.
+   * The server ack should not contain the receiver because it
+   * is meant for server receiving the send request successfully.
    */
   static class ServerAckMmxMeta extends JSONifiable {
     private String ackForMsgId;

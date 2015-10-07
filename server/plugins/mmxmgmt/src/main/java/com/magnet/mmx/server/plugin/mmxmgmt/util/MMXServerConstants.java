@@ -149,7 +149,7 @@ public final class MMXServerConstants {
   public final static String RPSLS_APP = "rpsls";
 
   public final static String DISTRIBUTED_KEY = "mmxdistributed";
-  public final static String SERVER_ACK_KEY = "serverack";
+  
   /**
    * Content is included in meta using the following key.
    */
