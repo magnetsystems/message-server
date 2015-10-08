@@ -65,6 +65,7 @@ import com.magnet.mmx.util.GsonData;
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(MMXMessageHandlingRule.class);
+  private static final boolean SERVER_ACK_ON_SUCCESS = false; // false: always send
   private static final String SERVER_USER = "serveruser";
   private static final String SERVER_ACK_SENDER_POOL = "ServerAckSenderPool";
   private Map<String, Counter> mMulticastMsgs = new Hashtable<String, Counter>();
@@ -256,7 +257,7 @@ public class MMXMessageHandlingRule {
       if (!isDistributed) {
         if (isMMXMulticastMessage(mmxMessage)) {
           sendEndAckMessageOnce(mmxMessage, appEntity.getAppId());
-        } else {
+        } else if (SERVER_ACK_ON_SUCCESS) {
           sendServerAckMessage(mmxMessage, appEntity.getAppId());
         }
       }
@@ -446,8 +447,8 @@ public class MMXMessageHandlingRule {
     if (isMMXMulticastMessage(message)) {
       // Send end-ack for the last recipient in the multicast message.
       sendEndAckMessageOnce(message, appEntity.getAppId());
-    } else if (!result.noDevices()) {
-      // Send server ack for unicast message if no error was sent.
+    } else if (!SERVER_ACK_ON_SUCCESS || !result.noDevices()) {
+      // Send server ack for unicast message (if no error was sent or always send)
       sendServerAckMessage(message, appEntity.getAppId());
     }
   }
