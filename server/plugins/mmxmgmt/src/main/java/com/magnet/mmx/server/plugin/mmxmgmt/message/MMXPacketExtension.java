@@ -25,9 +25,8 @@ import org.xmpp.packet.PacketExtension;
 
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.Headers;
+import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.protocol.Payload;
-import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXMessageHandlingRule;
-import com.magnet.mmx.util.DisposableBinFile;
 import com.magnet.mmx.util.DisposableFile;
 import com.magnet.mmx.util.FileUtil;
 import com.magnet.mmx.util.GsonData;
@@ -46,11 +45,20 @@ import com.magnet.mmx.util.Utils;
  */
 public class MMXPacketExtension extends PacketExtension {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXPacketExtension.class);
+  private MmxHeaders mMmxMeta;
   private Headers mHeaders;
   private Payload mPayload;
   
   public MMXPacketExtension(Map<String, String> headers, Payload payload) {
+    this(null, headers, payload);
+  }
+  
+  public MMXPacketExtension(MmxHeaders mmxMeta, Map<String, String> headers, Payload payload) {
     super(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+    if (mmxMeta != null ) {
+      mMmxMeta = new MmxHeaders();
+      mMmxMeta.putAll(mmxMeta);
+    }
     if (headers != null) {
       mHeaders = new Headers();
       mHeaders.putAll(headers);
@@ -64,6 +72,10 @@ public class MMXPacketExtension extends PacketExtension {
         mHeaders.setContentEncoding(Constants.BASE64);
     }
     fillElement();
+  }
+  
+  public Map<String, Object> getMmxMeta() {
+    return mMmxMeta;
   }
   
   public Map<String, String> getHeaders() {
@@ -80,6 +92,11 @@ public class MMXPacketExtension extends PacketExtension {
     Date sentTime = new Date();
     mPayload.setSentTime(sentTime);
     
+    if (mMmxMeta != null) {
+      // No need to do XML escape for the MMX meta because GSON is XML safe.
+      Element mmxMetaElement = this.element.addElement(Constants.MMX_MMXMETA);
+      mmxMetaElement.setText(GsonData.getGson().toJson(mMmxMeta));
+    }
     if (mHeaders != null) {
       Element metaElement = this.element.addElement(Constants.MMX_META);
       // No need to do XML escape for the headers because GSON is XML safe.
