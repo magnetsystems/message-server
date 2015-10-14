@@ -14,6 +14,21 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
@@ -43,20 +58,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
 import com.magnet.mmx.util.TopicHelper;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 /**
  */
@@ -253,7 +254,7 @@ public class MessageSenderImpl implements MessageSender {
   }
 
   /**
-   * Post errorMessage
+   * Post/publish a message to a topic
    *
    * @param request
    * @return SendMessageResult
@@ -286,7 +287,7 @@ public class MessageSenderImpl implements MessageSender {
         return result;
       }
 
-      // TODO: hack for MOB-2516 that user topic is shown as "userID/topicName"
+      // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName"
       MMXTopicId tid = TopicResource.nameToId(topicName);
       String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
       //ok validated.

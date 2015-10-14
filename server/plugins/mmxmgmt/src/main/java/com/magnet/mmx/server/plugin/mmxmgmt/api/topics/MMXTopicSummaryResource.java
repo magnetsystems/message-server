@@ -14,6 +14,23 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.topics;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.TopicAction;
@@ -25,18 +42,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXTopicSummary;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXTopicSummaryResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  */
@@ -71,8 +78,9 @@ public class MMXTopicSummaryResource {
     List<MMXTopicId> topicList = new ArrayList<MMXTopicId>();
 
     for(String name : topicNames) {
-      if(!Strings.isNullOrEmpty(name))
-        topicList.add(new MMXTopicId(name));
+      if(!Strings.isNullOrEmpty(name)) {
+        topicList.add(TopicResource.nameToId(name));
+      }
     }
 
     if(topicList.isEmpty()) {
@@ -87,8 +95,9 @@ public class MMXTopicSummaryResource {
     for(TopicSummary s : response) {
       int count = s.getCount();
       Date lastPublishedDate = s.getLastPubTime();
+      String userId = s.getTopicNode().getUserId();
       String topicName = s.getTopicNode().getName();
-      MMXTopicSummary mts = new MMXTopicSummary(topicName, count, lastPublishedDate);
+      MMXTopicSummary mts = new MMXTopicSummary(userId, topicName, count, lastPublishedDate);
       summaryList.add(mts);
     }
     MMXTopicSummaryResult summaryResult = new MMXTopicSummaryResult(appId,summaryList);

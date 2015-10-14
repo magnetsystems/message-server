@@ -14,16 +14,17 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.util.SqlUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.plugin.mmxmgmt.util.SqlUtil;
 
 /**
  */
@@ -62,24 +63,39 @@ public class TopicItemDAOImpl implements TopicItemDAO {
   }
 
   @Override
-  public int getCount(String serviceId, String nodeId) {
-    final String unboundStatementStr = "SELECT COUNT(*) FROM ofPubsubItem WHERE serviceID=? AND nodeID=?";
+  public int getCount(String serviceId, String nodeId, String since, String until) {
+    StringBuilder unboundStatementStr = new StringBuilder(
+        "SELECT COUNT(*) FROM ofPubsubItem WHERE serviceID=? AND nodeID=? ");
     Connection conn = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
 
+    if (since != null) {
+      unboundStatementStr.append("AND creationDate >= ? ");
+    }
+    if (until != null) {
+      unboundStatementStr.append("AND creationDate <= ? ");
+    }
     try {
+      int index = 0;
       conn = provider.getConnection();
-      pstmt = conn.prepareStatement(unboundStatementStr);
-      pstmt.setString(1, serviceId);
-      pstmt.setString(2, nodeId);
+      pstmt = conn.prepareStatement(unboundStatementStr.toString());
+      pstmt.setString(++index, serviceId);
+      pstmt.setString(++index, nodeId);
+      if (since != null) {
+        pstmt.setString(++index, since);
+      }
+      if (until != null) {
+        pstmt.setString(++index, until);
+      }
       LOGGER.trace("getCount : executing pstmt={}", pstmt);
       rs = pstmt.executeQuery();
       if(rs.next()) {
         return rs.getInt(1);
       }
     } catch (SQLException e) {
-      LOGGER.error("getCount : caught exception serviceId={}, nodeId={}", serviceId, nodeId);
+      LOGGER.error("getCount : caught exception serviceId={}, nodeId={}, since={}, until={}", 
+          new Object[]{serviceId, nodeId, since, until});
     } finally {
       CloseUtil.close(LOGGER, rs, pstmt, conn);
     }

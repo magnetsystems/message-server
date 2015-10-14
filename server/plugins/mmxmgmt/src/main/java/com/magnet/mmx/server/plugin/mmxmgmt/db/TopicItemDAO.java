@@ -20,8 +20,8 @@ import java.util.List;
  */
 public interface TopicItemDAO {
   public void persist(TopicItemEntity entity);
-
-  public int getCount(String serviceId, String nodeId);
+  
+  public int getCount(String serviceId, String nodeId, String since, String until);
 
   public List<TopicItemEntity> getItems(String serviceId, String nodeId, int maxItems, String order);
 
