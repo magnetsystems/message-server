@@ -14,14 +14,15 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import java.util.Date;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Date;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 /**
  */
@@ -29,10 +30,19 @@ import java.util.Date;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder = {"topicName", "publishedItemCount", "lastPublishedTime"})
 public class MMXTopicSummary {
+  private String userId;
   private String topicName;
   private int publishedItemCount;
   private String lastPublishedTime;
 
+  public MMXTopicSummary(String userId, String topicName, int publishedItemCount, Date lastPublishedItem) {
+    this.userId = userId;
+    this.topicName = topicName;
+    this.publishedItemCount = publishedItemCount;
+    DateTime d = new DateTime(lastPublishedItem, DateTimeZone.UTC);
+    this.lastPublishedTime = d.toString();
+  }
+  
   public MMXTopicSummary(String topicName, int publishedItemCount, Date lastPublishedItem) {
     this.topicName = topicName;
     this.publishedItemCount = publishedItemCount;
@@ -40,6 +50,14 @@ public class MMXTopicSummary {
     this.lastPublishedTime = d.toString();
   }
 
+  public String getUserId() {
+    return userId;
+  }
+  
+  public void setUserId(String userId) {
+    this.userId = userId;
+  }
+  
   public String getTopicName() {
     return topicName;
   }
@@ -67,7 +85,8 @@ public class MMXTopicSummary {
   @Override
   public String toString() {
     return "MMXTopicSummary{" +
-            "topicName='" + topicName + '\'' +
+            "userId='" + userId + '\'' +
+            ", topicName='" + topicName + '\'' +
             ", publishedItemCount=" + publishedItemCount +
             ", lastPublishedTime=" + lastPublishedTime +
             '}';

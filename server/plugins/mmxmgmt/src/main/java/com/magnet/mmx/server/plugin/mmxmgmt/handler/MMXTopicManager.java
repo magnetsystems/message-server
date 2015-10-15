@@ -1827,8 +1827,10 @@ public class MMXTopicManager {
           pubItem.getPayloadXML());
       mmxItems.add(mmxItem);
     }
+    int total = PubSubPersistenceManagerExt.getPublishedItemCount(
+        (LeafNode) node, since, until);
     TopicAction.FetchResponse resp = new TopicAction.FetchResponse(
-        rqt.getUserId(), topic, mmxItems);
+        rqt.getUserId(), topic, total, mmxItems);
     return resp;
   }
   
@@ -1885,7 +1887,7 @@ public class MMXTopicManager {
       mmxItems.add(mmxItem);
     }
     TopicAction.FetchResponse resp = new TopicAction.FetchResponse(
-        rqt.getUserId(), topic, mmxItems);
+        rqt.getUserId(), topic, mmxItems.size(), mmxItems);
     return resp;
   }
   

@@ -14,14 +14,14 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MultivaluedMap;
+
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
 
 /**
  */
@@ -69,7 +69,21 @@ public class AbstractBaseResource {
         MMXServerConstants.HTTP_HEADER_APP_ID, MMXServerConstants.HTTP_HEADER_REST_API_KEY));
   }
 
-
+//  protected ErrorResponse isAuthenticatedUser(HttpHeaders headers, UserEntityHolder holder) {
+//    MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
+//    String authToken = requestHeaders.getFirst(MMXServerConstants.HTTP_HEADER_AUTH_TOKEN);
+//    if (authToken == null || authToken.isEmpty()) {
+//      return buildAuthFailure(ErrorCode.AUTH_MISSING);
+//    }
+//    
+//    UserEntity userEntity = null;
+//    if (userEntity == null) {
+//      return buildAuthFailure(ErrorCode.AUTH_BAD_TOKEN);
+//    }
+//    holder.setUserEntity(userEntity);
+//    return null;
+//  }
+  
   public static interface AppEntityHolder {
 
     public AppEntity getAppEntity();
@@ -93,6 +107,26 @@ public class AbstractBaseResource {
     }
   }
 
+//  public static interface UserEntityHolder {
+//    public UserEntity getUserEntity();
+//    
+//    public void setUserEntity(UserEntity userEntity);
+//  }
+//  
+//  public static class UserEntityHolderImpl implements UserEntityHolder {
+//    private UserEntity userEntity;
+//    
+//    @Override
+//    public UserEntity getUserEntity() {
+//      return userEntity;
+//    }
+//
+//    @Override
+//    public void setUserEntity(UserEntity userEntity) {
+//      this.userEntity = userEntity;
+//    }
+//  }
+  
   /**
    * Exception to invalid validation problem
    */
