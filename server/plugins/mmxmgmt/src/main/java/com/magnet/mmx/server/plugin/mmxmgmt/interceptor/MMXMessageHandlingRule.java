@@ -65,7 +65,6 @@ import com.magnet.mmx.util.GsonData;
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(MMXMessageHandlingRule.class);
-  private static final boolean SERVER_ACK_ON_SUCCESS = false; // false: always send
   private static final String SERVER_USER = "serveruser";
   private static final String SERVER_ACK_SENDER_POOL = "ServerAckSenderPool";
   private Map<String, Counter> mMulticastMsgs = new Hashtable<String, Counter>();
@@ -175,13 +174,14 @@ public class MMXMessageHandlingRule {
           "handle : handling unprocessed, incoming, non-receipt message with fullJID messageId={}",
           input.getMessage().getID());
 
-      String appId = JIDUtil.getAppId(input.getMessage().getTo());
+      String appId = JIDUtil.getAppId(input.getMessage().getFrom());
+
       int rate = MMXConfiguration.getConfiguration()
           .getInt(MMXConfigKeys.MAX_XMPP_RATE,
               MMXServerConstants.DEFAULT_MAX_XMPP_RATE);
       RateLimiterDescriptor descriptor = new RateLimiterDescriptor(
           MMXServerConstants.XMPP_RATE_TYPE, appId, rate);
-      LOGGER.trace("handle : checking rate limite for descriptor={}",
+      LOGGER.trace("handle : checking rate limit for descriptor={}",
           descriptor);
       if (!RateLimiterService.isAllowed(descriptor)) {
         LOGGER.error("handle : Max xmpp message rate reached : {}, appId : {}",
@@ -189,6 +189,15 @@ public class MMXMessageHandlingRule {
         AlertEventsManager.post(new MMXXmppRateExceededEvent(appId, AlertsUtil
             .getMaxXmppRate()));
         throw new PacketRejectedException("Max message rate has been reached");
+      }
+
+      // send a server ack message if the unicast message is direct message to
+      // a full JID and not a distributed message
+      Message mmxMessage = input.getMessage();
+      MessageAnnotator annotator = new MessageDistributedAnnotator();
+      boolean isDistributed = annotator.isAnnotated(mmxMessage);
+      if (!isDistributed && !isMMXMulticastMessage(mmxMessage)) {
+        sendServerAckMessage(mmxMessage, appId);
       }
 
       String deviceId = input.getMessage().getTo().getResource();
@@ -222,8 +231,6 @@ public class MMXMessageHandlingRule {
       MessageEntity messageEntity = getMessageEntity(input.getMessage());
       MMXPresenceFinder presenceFinder = new MMXPresenceFinderImpl();
       boolean isOnline = presenceFinder.isOnline(input.getMessage().getTo());
-      AppDAO appDAO = DBUtil.getAppDAO();
-      AppEntity appEntity = appDAO.getAppForAppKey(appId);
       if (!isOnline) {
         MMXOfflineStorageUtil.storeMessage(input.getMessage());
         /**
@@ -232,6 +239,8 @@ public class MMXMessageHandlingRule {
          */
         boolean wakeupPossible = canBeWokenUp(deviceEntity);
         if (wakeupPossible) {
+          AppDAO appDAO = DBUtil.getAppDAO();
+          AppEntity appEntity = appDAO.getAppForAppKey(appId);
           messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
           WakeupUtil.queueWakeup(appEntity, deviceEntity,
               messageEntity.getMessageId());
@@ -249,17 +258,10 @@ public class MMXMessageHandlingRule {
         DBUtil.getMessageDAO().persist(messageEntity);
       }
 
-      // send a server ack message or end-ack message if the message is direct
-      // message to a full JID and not a distributed message
-      Message mmxMessage = input.getMessage();
-      MessageAnnotator annotator = new MessageDistributedAnnotator();
-      boolean isDistributed = annotator.isAnnotated(mmxMessage);
-      if (!isDistributed) {
-        if (isMMXMulticastMessage(mmxMessage)) {
-          sendEndAckMessageOnce(mmxMessage, appEntity.getAppId());
-        } else if (SERVER_ACK_ON_SUCCESS) {
-          sendServerAckMessage(mmxMessage, appEntity.getAppId());
-        }
+      // send an end-ack message for last recipient if the multicast message is
+      // direct message to a full JID and not a distributed message
+      if (!isDistributed && isMMXMulticastMessage(mmxMessage)) {
+        sendEndAckMessageOnce(mmxMessage, appId);
       }
 
       if (!isOnline) {
@@ -428,6 +430,11 @@ public class MMXMessageHandlingRule {
       DBUtil.getMessageDAO().persist(messageEntity);
     }
 
+    if (!isMMXMulticastMessage(message)) {
+      // Send server ack for unicast message (if always send)
+      sendServerAckMessage(message, appEntity.getAppId());
+    }
+
     if (result.noDevices()) {
       LOGGER.warn(
               "message={} addressed to user={} is dropped because the user has no active devices. Sending an error message back to originator.",
@@ -447,9 +454,6 @@ public class MMXMessageHandlingRule {
     if (isMMXMulticastMessage(message)) {
       // Send end-ack for the last recipient in the multicast message.
       sendEndAckMessageOnce(message, appEntity.getAppId());
-    } else if (!SERVER_ACK_ON_SUCCESS || !result.noDevices()) {
-      // Send server ack for unicast message (if no error was sent or always send)
-      sendServerAckMessage(message, appEntity.getAppId());
     }
   }
 
@@ -491,9 +495,9 @@ public class MMXMessageHandlingRule {
   }
 
   private void sendDeviceNotFoundErrorMsg(Message mmxMessage) {
-    MMXError error = new MMXError(StatusCode.BAD_REQUEST).setMessage(
-        PacketError.Condition.item_not_found.toString()).setSeverity(
-        MMXError.Severity.TRIVIAL);
+    MMXError error = new MMXError(StatusCode.NOT_FOUND)
+      .setMessage("device_not_found").setSeverity(MMXError.Severity.TRIVIAL)
+      .setParams(JIDUtil.getReadableUserId(mmxMessage.getTo())+"/"+mmxMessage.getTo().getResource());
     Message errorMessage = new ErrorMessageBuilder(mmxMessage).setError(error)
         .build();
     XMPPServer.getInstance().getRoutingTable()
