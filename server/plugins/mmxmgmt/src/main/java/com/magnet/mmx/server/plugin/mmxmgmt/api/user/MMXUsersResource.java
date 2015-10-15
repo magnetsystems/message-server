@@ -14,6 +14,29 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.user;
 
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.api.v1.RestUtils;
@@ -42,27 +65,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXUserInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.ServerNotInitializedException;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.UserManagerService;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
 
 /**
  */
@@ -237,7 +239,7 @@ public class MMXUsersResource extends AbstractBaseResource {
       throw new WebApplicationException(e, Response.Status.INTERNAL_SERVER_ERROR);
     } catch (UserNotFoundException e) {
       LOGGER.error("createOrReplace : exception caught userCreationInfo={}", userCreationInfo, e);
-      throw new WebApplicationException(e, Response.Status.BAD_REQUEST);
+      throw new WebApplicationException(e, Response.Status.NOT_FOUND);
     } catch (IllegalArgumentException e) {
       LOGGER.error("createOrReplace : exception caught userCreationInfo={}", userCreationInfo, e);
       throw new WebApplicationException(e, Response.Status.BAD_REQUEST);
@@ -261,7 +263,7 @@ public class MMXUsersResource extends AbstractBaseResource {
       UserManagerService.deleteUser(appId, userInfo);
     } catch (UserNotFoundException e) {
       LOGGER.error("deleteUser : exception caught userInfo={}", userInfo, e);
-      throw new WebApplicationException(e, Response.Status.BAD_REQUEST);
+      throw new WebApplicationException(e, Response.Status.NOT_FOUND);
     } catch (ServerNotInitializedException e) {
       LOGGER.error("deleteUser : exception caught userInfo={}", userInfo, e);
       throw new WebApplicationException(e, Response.Status.INTERNAL_SERVER_ERROR);
