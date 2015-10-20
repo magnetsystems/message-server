@@ -14,34 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.magnet.mmx.protocol.AppCreate;
 import com.magnet.mmx.server.api.v1.protocol.AppConfig;
 import com.magnet.mmx.server.common.data.AppEntity;
@@ -68,6 +40,34 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppHelper;
 import com.magnet.mmx.util.Utils;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * AppResource. Provides API for App related CRUD.
@@ -154,7 +154,7 @@ public class AppResource {
       LOGGER.warn("MaxAppLimitExceededException", e);
       throw buildForBadRequest(AppErrorCode.APP_LIMIT_EXCEEDED.name(), APP_LIMIT_REACHED);
     } catch (AppManagementException e) {
-      throw build(AppErrorCode.UNKNOWN_APP_EXCEPTION.name(), e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+      throw build(AppErrorCode.UNKNOWN_APP_EXCEPTION.name(), APP_CREATION_FAILED, Response.Status.INTERNAL_SERVER_ERROR);
     } catch (GCMAPIKeyValidator.GCMAPIKeyValidationException e) {
       LOGGER.warn("Google API key validation failed", e);
       throw buildForBadRequest(AppErrorCode.INVALID_GOOGLE_API_KEY.name(), INVALID_GOOGLE_API_KEY_MSG);
