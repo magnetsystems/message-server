@@ -98,6 +98,10 @@ public class MMXAdminAPIServer {
      */
     String[] resourceClasses = AdminRESTResourceListing.getResources();
     String resources = StringUtils.join(resourceClasses, ",");
+
+    String[] providerClasses = AdminRESTResourceListing.getProviders();
+    String providers = StringUtils.join(providerClasses, ",");
+
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Resource classes:{}", resources);
     }
@@ -106,7 +110,7 @@ public class MMXAdminAPIServer {
         MMXServerConstants.ADMIN_API_SERVLET_MAPPING_PREFIX);
 
     holder.setInitParameter(MMXServerConstants.RESTEASY_RESOURCES_KEY, resources);
-    holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, JacksonJSONObjectMapperProvider.class.getName());
+    holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, providers);
 
 
     context.addServlet(holder, MMXServerConstants.ADMIN_API_REST_MAPPING);
@@ -157,5 +161,8 @@ public class MMXAdminAPIServer {
     }
     return sslConnector;
   }
+
+
+
 
 }

@@ -12,7 +12,7 @@
   <minServerVersion>3.3.0</minServerVersion>
   <licenseType>Apache 2.0</licenseType>
   <databaseKey>mmxappmgmt</databaseKey>
-  <databaseVersion>4</databaseVersion>
+  <databaseVersion>5</databaseVersion>
   <!-- Admin console entries -->
   <adminconsole>
     <!-- More on this below -->

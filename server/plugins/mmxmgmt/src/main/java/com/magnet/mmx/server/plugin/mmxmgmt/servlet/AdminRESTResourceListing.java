@@ -14,6 +14,11 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
+import com.magnet.mmx.server.api.v1.MMXAppIdFilter;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationAppResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationUserResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationDeviceResource;
+
 /**
  */
 public final class AdminRESTResourceListing {
@@ -25,7 +30,10 @@ public final class AdminRESTResourceListing {
       MMXAppStatsResource.class.getName(),
       EndPointResource.class.getName(),
       MMXSetupStatusResource.class.getName(),
-      AppResource.class.getName()
+      AppResource.class.getName(),
+      IntegrationAppResource.class.getName(),
+      IntegrationUserResource.class.getName(),
+      IntegrationDeviceResource.class.getName()
   };
 
 
@@ -33,5 +41,11 @@ public final class AdminRESTResourceListing {
     return resourceClasses;
   }
 
+  private static final String[] providers = {
+      MMXAppIdFilter.class.getName(),
+      JacksonJSONObjectMapperProvider.class.getName()
+  };
+
+  public static String[] getProviders() { return providers;}
 
 }

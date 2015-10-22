@@ -18,6 +18,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api;
  * Enum for the error codes.
  */
 public enum ErrorCode {
+  NO_ERROR(0),
   SEND_MESSAGE_ISE (10),
   AUTH_BAD_APP_ID (11),
   AUTH_APPID_APIKEY_MISMATCH(12),
@@ -62,7 +63,13 @@ public enum ErrorCode {
   APNS_PASSWORD_MISSING(51),
   TOPIC_PUBLISH_FORBIDDEN (52),
   TOPIC_ITEMS_BY_ID(53),
-  RATE_LIMIT_EXCEEDED((54))
+  RATE_LIMIT_EXCEEDED(54),
+  DEVICE_CREATION_ERROR(55),
+  DEVICE_DELETION_ERROR(56),
+  DEVICE_RETRIEVAL_ERROR(57),
+  SEND_MESSAGE_INVALID_RECIPIENT(58),
+  SEND_MESSAGE_TOO_BIG(59),
+  SEND_MESSAGE_MALFORMED(60),
   ;
 
   private int code;

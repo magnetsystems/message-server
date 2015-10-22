@@ -60,6 +60,7 @@ public final class MMXServerConstants {
   public static final String HTTP_HEADER_APP_ID = "X-mmx-app-id";
   public static final String HTTP_HEADER_REST_API_KEY = "X-mmx-api-key";
   public static final String HTTP_HEADER_ADMIN_APP_OWNER_KEY = "X-mmx-app-owner";
+  public static final String HTTP_HEADER_USER_ID = "X-mmx-user-id";
 
   public final static String REPLY_TO = "Reply-To";
 
@@ -154,4 +155,6 @@ public final class MMXServerConstants {
    * Content is included in meta using the following key.
    */
   public static final String TEXT_CONTENT_KEY = "textContent";
+
+  public final static String TOPIC_ROLE_PUBLIC = "PUBLIC";
 }

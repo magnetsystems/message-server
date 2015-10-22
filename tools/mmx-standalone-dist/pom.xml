@@ -5,12 +5,12 @@
     <parent>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-root</artifactId>
-      <version>1.10.0-SNAPSHOT</version>
+      <version>2.0.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-standalone-dist</artifactId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>mmx-standalone-dist</name>
@@ -50,27 +50,27 @@
                             <includes>**/*.*</includes>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>unpack-mmx-console-server</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>com.magnet.devex</groupId>
-                                    <artifactId>messaging-console-server</artifactId>
-                                    <version>${version.addon}</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${sandbox.dir}</outputDirectory>
-                                    <includes>**/**</includes>
-                                </artifactItem>
-                            </artifactItems>
-                            <includes>**/*.*</includes>
-                        </configuration>
-		       </execution>
+                    <!--<execution>-->
+                        <!--<id>unpack-mmx-console-server</id>-->
+                        <!--<phase>initialize</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>unpack</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<artifactItems>-->
+                                <!--<artifactItem>-->
+                                    <!--<groupId>com.magnet.devex</groupId>-->
+                                    <!--<artifactId>messaging-console-server</artifactId>-->
+                                    <!--<version>1.6.0-SNAPSHOT</version>-->
+                                    <!--<type>zip</type>-->
+                                    <!--<overWrite>false</overWrite>-->
+                                    <!--<outputDirectory>${sandbox.dir}</outputDirectory>-->
+                                    <!--<includes>**/**</includes>-->
+                                <!--</artifactItem>-->
+                            <!--</artifactItems>-->
+                            <!--<includes>**/*.*</includes>-->
+                        <!--</configuration>-->
+		       <!--</execution>-->
 	           </executions>
             </plugin>
             <plugin>

@@ -1,3 +1,4 @@
+package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 /*   Copyright (c) 2015 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.api.v1;
 
-@CheckAppId
-public class AppIdFilter {
+public class DeviceResponse {
 
 }

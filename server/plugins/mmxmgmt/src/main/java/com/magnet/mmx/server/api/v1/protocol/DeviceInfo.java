@@ -21,6 +21,8 @@ import java.util.List;
  * JSON representation of device objects.
  */
 public class DeviceInfo {
+  private String appId;
+
   private String deviceId;
 
   private String displayName;
@@ -161,6 +163,15 @@ public class DeviceInfo {
 
   public DeviceInfo setPushStatus(String pushStatus) {
     this.pushStatus = pushStatus;
+    return this;
+  }
+
+  public String getAppId() {
+    return appId;
+  }
+
+  public DeviceInfo setAppId(String appId) {
+    this.appId = appId;
     return this;
   }
 }

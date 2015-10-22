@@ -77,6 +77,10 @@ public class UserManagerService {
     }
   }
 
+  public static void deleteUser(MMXUserInfo userInfo) throws UserNotFoundException, ServerNotInitializedException{
+        deleteUser(userInfo.getAppId(), userInfo);
+  }
+
   public static void deleteUser(String appId, MMXUserInfo userInfo) throws UserNotFoundException, ServerNotInitializedException{
     User user = getUserManager().getUser(userInfo.getMMXUsername(appId));
     getUserManager().deleteUser(user);
@@ -142,5 +146,23 @@ public class UserManagerService {
       }
     }
     return created;
+  }
+
+  public static MMXUserInfo getUser(String appId, String username) throws UserNotFoundException{
+
+    String mmxUsername = Helper.getMMXUsername(username, appId);
+    MMXUserInfo userInfo = new MMXUserInfo();
+
+    try {
+      User user = getUserManager().getUser(mmxUsername);
+      userInfo.setUsername(username);
+      //userInfo.setAppId(appId);
+      userInfo.setEmail(user.getEmail());
+      userInfo.setIsAdmin(AdminManager.getInstance().isUserAdmin(username, true));
+      userInfo.setName(user.getName());
+      return userInfo;
+    } catch (Exception e) {
+      throw new UserNotFoundException(username + " not found", e);
+    }
   }
 }

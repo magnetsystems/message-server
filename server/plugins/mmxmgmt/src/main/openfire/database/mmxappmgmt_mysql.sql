@@ -131,6 +131,19 @@ CREATE TABLE mmxAppConfiguration (
 
 ALTER TABLE mmxAppConfiguration ADD UNIQUE KEY `mmxAppConfiguration_uk` (appId, configKey);
 
+/* Table for mapping topics to roles that are allowed access to the topic */
+CREATE TABLE mmxTopicRole (
+    id           INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    serviceID    VARCHAR(100)    NOT NULL,
+    nodeID       VARCHAR(100)    NOT NULL,
+    role         VARCHAR(100)    NOT NULL,
+    creationDate datetime        NOT NULL,
+    FOREIGN KEY (serviceID, nodeID) REFERENCES ofPubsubNode(serviceID, nodeID) ON DELETE CASCADE
+);
+
+ALTER TABLE mmxTopicRole ADD UNIQUE KEY `mmxTopicRole_uk` (serviceID, nodeID, role);
+
+
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.admin.api.https.port', '6061') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.cluster.max.apps', '-1') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.rest.https.port', '5221') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);

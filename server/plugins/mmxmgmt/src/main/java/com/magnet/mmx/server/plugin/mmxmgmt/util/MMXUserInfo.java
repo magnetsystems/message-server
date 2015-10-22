@@ -14,11 +14,15 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class MMXUserInfo {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXUserInfo.class);
   private String username;
@@ -26,6 +30,7 @@ public class MMXUserInfo {
   private String name;
   private String email;
   private Boolean isAdmin;
+  private String appId;
 
   public MMXUserInfo() {}
 
@@ -33,6 +38,7 @@ public class MMXUserInfo {
     if (username.indexOf('\\') >= 0) {
       throw new IllegalArgumentException("username must not be in XEP-0106 format: "+username);
     }
+    this.appId = appId;
     this.username = username;
     this.password = password;
     this.name = name;
@@ -91,6 +97,15 @@ public class MMXUserInfo {
     this.isAdmin = isAdmin;
   }
 
+  public String getAppId() {
+    return appId;
+  }
+
+  public void setAppId(String appId) {
+    this.appId = appId;
+  }
+
+  @JsonIgnore
   public String getMMXUsername(String appId) {
       return Helper.getMMXUsername(username, appId);
   }

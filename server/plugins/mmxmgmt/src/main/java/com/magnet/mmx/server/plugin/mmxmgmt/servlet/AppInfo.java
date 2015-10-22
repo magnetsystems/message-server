@@ -17,7 +17,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 /**
  * Class that defines AppCreate and Update request objects.
  */
-public class AppRequest {
+public class AppInfo {
 
   private String name;
   private String ownerId;

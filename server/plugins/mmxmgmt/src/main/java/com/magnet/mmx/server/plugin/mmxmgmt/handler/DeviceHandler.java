@@ -450,6 +450,7 @@ public class DeviceHandler extends IQHandler {
     INVALID_COMMAND_VALUE (400, "Invalid command value"),
     INVALID_PHONE_NUMBER (400, "Invalid phone number"),
     INVALID_CARRIER (400, "Invalid carrier"),
+    INVALID_OWNER_ID(400, "Invalid Owner ID"),
     DEVICES_PER_APP_EXCEEDED(400, ""),
     DEVICES_PER_USER_EXCEEDED(400, "");
 

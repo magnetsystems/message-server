@@ -14,9 +14,9 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
-import java.text.DateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.dom4j.Element;
@@ -27,12 +27,12 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
+import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder.MetaToEntry;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.JSONifiable;
-import com.magnet.mmx.util.Utils;
 
 /**
  * Builder that builds the server ack message for unicast message (NO_BATCH),
@@ -60,6 +60,8 @@ public class ServerAckMessageBuilder {
   private Message originalMessage;
   private String appId;
   private Type type;
+  private ErrorCode errorCode;
+  private List<MMXMetaBuilder.MetaToEntry> badReceivers;
 
   /**
    * Constructor
@@ -71,8 +73,19 @@ public class ServerAckMessageBuilder {
     this.originalMessage = originalMessage;
     this.appId = appId;
     this.type = type;
+    this.errorCode = ErrorCode.NO_ERROR;
   }
 
+  public ServerAckMessageBuilder badReceivers(List<MetaToEntry> badReceivers) {
+    this.badReceivers = badReceivers;
+    return this;
+  }
+  
+  public ServerAckMessageBuilder errorCode(ErrorCode errorCode) {
+    this.errorCode = errorCode;
+    return this;
+  }
+  
   /**
    * Build the ServerAckMessage
    * @return Message
@@ -83,12 +96,8 @@ public class ServerAckMessageBuilder {
     String senderUserId = JIDUtil.getUserId(sender);
     String senderDeviceId = sender.getResource();
 
-    JID receiver = originalMessage.getTo();
-    String receiverUserId = JIDUtil.getUserId(receiver);
-    String receiverDeviceId = receiver.getResource();
-
     Message ackMessage = new Message();
-    ackMessage.setType(Message.Type.chat);
+    ackMessage.setType(Message.Type.normal);    // unreliable signal message; don't need an ack
     ackMessage.setFrom(appId + "%" + appId + "@" + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
     ackMessage.setTo(sender);
     ackMessage.setID(new MessageIdGeneratorImpl().generate(sender.toString(), appId, senderDeviceId));
@@ -97,24 +106,27 @@ public class ServerAckMessageBuilder {
     Map<String, ServerAckMmxMeta> mmxMetaMap = new HashMap<String, ServerAckMmxMeta>();
     ServerAckMmxMeta meta = new ServerAckMmxMeta();
     meta.setAckForMsgId(originalMessage.getID());
-    if (type == Type.ONE_TIME) {
-      meta.setReceiver(receiverUserId, receiverDeviceId);
+    if (type != Type.BATCH_BEGIN) {
+      if (badReceivers == null) {
+        // Don't allow null; use an empty list
+        badReceivers = new ArrayList<MetaToEntry>(0);
+      }
+      meta.setBadReceivers(badReceivers);
     }
+    meta.setErrorCode(errorCode);
     meta.setSender(senderUserId, senderDeviceId);
     mmxMetaMap.put(type.getValue(), meta);
 
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMetaMap);
     mmxMetaElement.setText(mmxMetaJSON);
 
-    Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
-
-    DateFormat fmt = Utils.buildISO8601DateFormat();
-    String formattedDateTime = fmt.format(new Date());
-    payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
-    String text = ".";
-    payloadElement.setText(text);
-    payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, MessageBuilder.buildChunkAttributeValue(text));
-    ackMessage.setBody(MMXServerConstants.MESSAGE_BODY_DOT);
+//    Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
+//
+//    DateFormat fmt = Utils.buildISO8601DateFormat();
+//    String formattedDateTime = fmt.format(new Date());
+//    payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
+//    payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, MessageBuilder.buildChunkAttributeValue(text));
+//    ackMessage.setBody(MMXServerConstants.MESSAGE_BODY_DOT);
     return ackMessage;
   }
 
@@ -124,16 +136,21 @@ public class ServerAckMessageBuilder {
    * is meant for server receiving the send request successfully.
    */
   static class ServerAckMmxMeta extends JSONifiable {
+    private ErrorCode errorCode;
     private String ackForMsgId;
     private MMXMetaBuilder.MetaToEntry sender;
-    private MMXMetaBuilder.MetaToEntry receiver;
+    private List<MMXMetaBuilder.MetaToEntry> badReceivers;
+
+    public ErrorCode getErrorCode() {
+      return errorCode;
+    }
+    
+    public void setErrorCode(ErrorCode errorCode) {
+      this.errorCode = errorCode;
+    }
 
     public String getAckForMsgId() {
       return ackForMsgId;
-    }
-
-    public MMXMetaBuilder.MetaToEntry getReceiver() {
-      return receiver;
     }
 
     public MMXMetaBuilder.MetaToEntry getSender() {
@@ -151,11 +168,12 @@ public class ServerAckMessageBuilder {
       sender = entry;
     }
 
-    public void setReceiver(String userId, String devId) {
-      MMXMetaBuilder.MetaToEntry entry = new MMXMetaBuilder.MetaToEntry();
-      entry.setUserId(userId);
-      entry.setDevId(devId);
-      receiver = entry;
+    public List<MMXMetaBuilder.MetaToEntry> getBadReceivers() {
+      return badReceivers;
+    }
+    
+    public void setBadReceivers(List<MMXMetaBuilder.MetaToEntry> badReceivers) {
+      this.badReceivers = badReceivers;
     }
   }
 }
