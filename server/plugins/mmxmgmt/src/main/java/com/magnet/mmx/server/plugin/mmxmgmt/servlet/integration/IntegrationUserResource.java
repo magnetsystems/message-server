@@ -13,6 +13,32 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;/*   Copyright 
  *  limitations under the License.
  */
 
+import java.io.UnsupportedEncodingException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.api.v1.CheckAppId;
 import com.magnet.mmx.server.api.v1.RestUtils;
@@ -24,19 +50,16 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXUserInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.ServerNotInitializedException;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.UserManagerService;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
-
+/**
+ * This API is used exclusively by Blowfish server to create/delete/update
+ * MMX users and disconnect the client session.
+ */
 @Path("/integration/users")
 @CheckAppId
 public class IntegrationUserResource {
@@ -167,6 +190,47 @@ public class IntegrationUserResource {
     }
   }
 
+  /**
+   * Disconnect an XMPP session of a user name and its device ID (endpoint.)
+   * @param username
+   * @param deviceId
+   * @return
+   */
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("disconnect")
+  public Response disconnectUser(@QueryParam("username") String username,
+                                  @QueryParam("deviceId") String deviceId) {
+    LOGGER.trace("disconnectUser : username={}", username);
+    try {
+      AppEntity appEntity;
+      Object o = servletRequest.getAttribute(MMXServerConstants.MMX_APP_ENTITY_PROPERTY);
+  
+      if(o instanceof AppEntity) {
+        appEntity = (AppEntity) o;
+        JID from = RestUtils.createJID(username, appEntity.getAppId(), deviceId);
+        XMPPServer xmppSrv = XMPPServer.getInstance();
+        SessionManager sessionMgr = xmppSrv.getSessionManager();
+        ClientSession session = sessionMgr.getSession(from);
+        if (session == null) {
+          ErrorResponse response = new ErrorResponse(ErrorCode.USER_NOT_LOGIN,
+              String.format("Session is not found: %s/%s", username, deviceId));
+          return RestUtils.getJAXRSResp(Response.Status.GONE, response);
+        }
+        // Terminate the session now.
+        session.close();
+        return RestUtils.getOKJAXRSResp();
+      } else {
+        LOGGER.error("disconnectUser : appEntity is not set");
+        ErrorResponse response = new ErrorResponse(ErrorCode.UNKNOWN_ERROR,
+                    "Disconnect user: appEntity not set");
+        return RestUtils.getInternalErrorJAXRSResp(response);
+      }
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+  
   protected ConnectionProvider getConnectionProvider() {
     return new OpenFireDBConnectionProvider();
   }

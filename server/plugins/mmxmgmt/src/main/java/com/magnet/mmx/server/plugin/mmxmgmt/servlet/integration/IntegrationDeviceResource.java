@@ -14,6 +14,23 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
+import java.sql.SQLException;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.magnet.mmx.protocol.CarrierEnum;
 import com.magnet.mmx.protocol.DeviceInfo;
 import com.magnet.mmx.protocol.OSType;
@@ -40,22 +57,12 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.sql.SQLException;
-
+/**
+ * This API is used by Blowfish server to add/delete devices to Openfire.
+ * It will be replaced by servlet.integration.DeviceResource which uses oauth
+ * token for authorization.
+ */
 @Path("/integration/devices")
 public class IntegrationDeviceResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationDeviceResource.class);

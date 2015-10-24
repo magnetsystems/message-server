@@ -13,3 +13,6 @@ insert into ofProperty values('xmpp.client.idle', '-1');
 
 delete from ofProperty where name='xmpp.client.idle.ping';
 insert into ofProperty values('xmpp.client.idle.ping', 'false');
+
+delete from ofProperty where name='route.all-resources';
+insert into ofProperty values('route.all-resources', 'true');

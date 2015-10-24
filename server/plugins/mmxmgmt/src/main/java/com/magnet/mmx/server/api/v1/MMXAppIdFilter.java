@@ -13,38 +13,38 @@ package com.magnet.mmx.server.api.v1;/*   Copyright (c) 2015 Magnet Systems, Inc
  *  limitations under the License.
  */
 
+import java.io.IOException;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Priority;
-import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 @CheckAppId
 @Provider
-@Priority(Priorities.AUTHENTICATION)
+//@Priority(Priorities.AUTHENTICATION)
 public class MMXAppIdFilter implements ContainerRequestFilter {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppIdFilter.class);
 
   @Override
-  public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+  public void filter(ContainerRequestContext containerRequestContext) throws IOException {    
     String appId = containerRequestContext.getHeaders().getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
     String apiKey = containerRequestContext.getHeaders().getFirst(MMXServerConstants.HTTP_HEADER_REST_API_KEY);
     LOGGER.trace("filter : appId={}, apiKey={}", appId, apiKey);
 
     if (Strings.isNullOrEmpty(appId)) {
-      LOGGER.error("filter : appId is empty");
-      Response response = RestUtils.buildMissingHeaderResponse(MMXServerConstants.HTTP_HEADER_APP_ID);
-      containerRequestContext.abortWith(response);
+      LOGGER.warn("filter : appId is empty");
+//      Response response = RestUtils.buildMissingHeaderResponse(MMXServerConstants.HTTP_HEADER_APP_ID);
+//      containerRequestContext.abortWith(response);
       return;
     }
 

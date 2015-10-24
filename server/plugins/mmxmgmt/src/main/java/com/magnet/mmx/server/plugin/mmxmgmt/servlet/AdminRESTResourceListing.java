@@ -16,8 +16,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.magnet.mmx.server.api.v1.MMXAppIdFilter;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationAppResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationUserResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationDeviceResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationUserResource;
 
 /**
  */

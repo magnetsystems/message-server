@@ -27,8 +27,10 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXUserTagsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.topics.MMXTopicSummaryResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.topics.MMXTopicsItemsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.user.MMXUsersResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.ChannelResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JacksonJSONObjectMapperProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.UserResource;
 
 /**
  */
@@ -52,9 +54,14 @@ public final class RESTResourceListing {
       /**
        * add the refactored APIs
        */
-      DevicesResource.class.getName(),
       TopicResource.class.getName(),
-      MMXTopicSummaryResource.class.getName()
+      MMXTopicSummaryResource.class.getName(),
+      
+      // New v2 API
+      ChannelResource.class.getName(),
+      UserResource.class.getName(),
+      DevicesResource.class.getName(),
+      MessageSendResource.class.getName(),
   };
 
   public static String[] getResources() {

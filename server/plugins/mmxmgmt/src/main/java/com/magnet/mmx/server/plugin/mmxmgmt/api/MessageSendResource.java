@@ -24,63 +24,53 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.sasl.TokenInfo;
+import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSender;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSenderImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.SendMessageResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
- * Resource that provides API related to message functions viz:
- * 1. /send_message (XMPP message)
- * 
- * @deprecated MessageSendResource
+ * Resource that provides API related to message functions via:
+ * 1. /messages/send_to_user_ids (XMPP message)
+ * 2. /messages/send_to_user_names (XMPP message)
+ * This API uses the auth token with Blowfish server.
  */
-@Deprecated
-@Path("/send_message")
-public class MessageFunctionResource extends AbstractBaseResource {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MessageFunctionResource.class);
+@Path("/messages")
+public class MessageSendResource {
+  private static final Logger LOGGER = LoggerFactory.getLogger(MessageSendResource.class);
 
   @POST
+  @Path("/send_to_user_ids")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response sendMessage(@Context HttpHeaders headers, SendMessageRequest request) {
+  public Response sendMessageToUserIds(@Context HttpHeaders headers, SendMessageRequest request) {
     try {
       long startTime = System.nanoTime();
-      MessageSender sender = new MessageSenderImpl();
-      AppDAO appDAO = new AppDAOImpl(getConnectionProvider());
-      ErrorResponse authCheck = isAuthenticated(headers, appDAO);
-      if (authCheck != null) {
-        return Response
-            .status(Response.Status.UNAUTHORIZED)
-            .entity(authCheck)
-            .build();
+
+      TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+      if (tokenInfo == null) {
+        return RestUtils.getUnauthJAXRSResp();
       }
-      MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
-      String appId = requestHeaders.getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
+      
+      MessageSender sender = new MessageSenderImpl();
+      String appId = tokenInfo.getMmxAppId();
       SendMessageResult result = sender.send(appId, request);
       Response rv = null;
       if (result.isError()) {
-        rv = Response
-            .status(Response.Status.BAD_REQUEST)
-            .entity(new ErrorResponse(result.getErrorCode(), result.getErrorMessage()))
-            .build();
+        ErrorResponse response = new ErrorResponse(result.getErrorCode(), result.getErrorMessage());
+        rv = RestUtils.getBadReqJAXRSResp(response);
       } else {
         SendMessageResponse response = new SendMessageResponse();
         response.setCount(result.getCount());
         response.setSentList(result.getSentList());
         response.setUnsentList(result.getUnsentList());
-        rv = Response
-            .status(Response.Status.OK)
-            .entity(response)
-            .build();
+        rv = RestUtils.getOKJAXRSResp(response);
       }
       long endTime = System.nanoTime();
       LOGGER.info("Completed processing sendMessage in {} milliseconds",
@@ -90,12 +80,22 @@ public class MessageFunctionResource extends AbstractBaseResource {
       throw e;
     } catch (Throwable t) {
       LOGGER.warn("Throwable during send message", t);
-      throw new WebApplicationException(
-          Response
-              .status(Response.Status.INTERNAL_SERVER_ERROR)
-              .entity(new ErrorResponse(ErrorCode.SEND_MESSAGE_ISE, t.getMessage()))
-              .build()
-      );
+      ErrorResponse response = new ErrorResponse(ErrorCode.SEND_MESSAGE_ISE, t.getMessage());
+      return RestUtils.getInternalErrorJAXRSResp(response);
     }
   }
+//  
+//  @POST
+//  @Path("/send_to_user_names")
+//  @Consumes(MediaType.APPLICATION_JSON)
+//  @Produces(MediaType.APPLICATION_JSON)
+//  public Response sendMessageToUserNames(@Context HttpHeaders headers, SendMessageRequest request) {
+//    List<String> ids = userNamesToIds(request.getRecipientUsernames());
+//    return sendMessageToUserIds(headers, request);
+//  }
+//  
+//  private List<String> userNamesToIds(List<String> names) {
+//    // TODO: not implemented
+//    return null;
+//  }
 }

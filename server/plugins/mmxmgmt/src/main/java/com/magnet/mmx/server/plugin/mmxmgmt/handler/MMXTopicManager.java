@@ -97,45 +97,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppTopic;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
-import org.dom4j.Element;
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeAffiliate;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.NotAcceptableException;
-import org.jivesoftware.openfire.pubsub.PubSubService;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
-import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
-import org.jivesoftware.openfire.pubsub.models.AccessModel;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.XMPPDateTimeFormat;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.forms.DataForm;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class MMXTopicManager {
 
@@ -297,15 +258,16 @@ public class MMXTopicManager {
       newAppTopic = createLeafNode(entity.getServerUserId(), topicId, appRootNode, topicInfo);
       result.setSuccess(true);
       result.setNode(TopicNode.build(appId, newAppTopic));
-      /*
-       * Add role mappings
-       */
-      List<String> roles = topicInfo.getRoles();
-      if (roles == null || roles.isEmpty()) {
-        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
-      }
-      TopicRoleDAO roleDAO = getTopicRoleDAO();
-      roleDAO.addTopicRoles("pubsub", newAppTopic.getNodeID(), roles);
+      // TODO: disable the roles; we only need the publish permission.
+//      /*
+//       * Add role mappings
+//       */
+//      List<String> roles = topicInfo.getRoles();
+//      if (roles == null || roles.isEmpty()) {
+//        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+//      }
+//      TopicRoleDAO roleDAO = getTopicRoleDAO();
+//      roleDAO.addTopicRoles("pubsub", newAppTopic.getNodeID(), roles);
     } catch (NotAcceptableException e) {
       result.setSuccess(false);
       result.setCode(TopicFailureCode.UNKNOWN);
