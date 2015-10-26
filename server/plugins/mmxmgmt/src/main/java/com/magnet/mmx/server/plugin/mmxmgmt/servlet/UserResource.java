@@ -15,7 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.GET;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -52,7 +52,7 @@ public class UserResource {
    * @param headers
    * @return
    */
-  @GET
+  @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("logout")
   public Response logout(@Context HttpHeaders headers) {

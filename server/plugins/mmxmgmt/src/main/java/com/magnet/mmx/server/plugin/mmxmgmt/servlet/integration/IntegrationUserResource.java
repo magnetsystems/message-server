@@ -196,7 +196,7 @@ public class IntegrationUserResource {
    * @param deviceId
    * @return
    */
-  @GET
+  @DELETE
   @Produces(MediaType.APPLICATION_JSON)
   @Path("disconnect")
   public Response disconnectUser(@QueryParam("username") String username,
