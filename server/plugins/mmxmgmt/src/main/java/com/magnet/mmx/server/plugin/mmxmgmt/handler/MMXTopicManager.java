@@ -258,16 +258,13 @@ public class MMXTopicManager {
       newAppTopic = createLeafNode(entity.getServerUserId(), topicId, appRootNode, topicInfo);
       result.setSuccess(true);
       result.setNode(TopicNode.build(appId, newAppTopic));
-      // TODO: disable the roles; we only need the publish permission.
-//      /*
-//       * Add role mappings
-//       */
-//      List<String> roles = topicInfo.getRoles();
-//      if (roles == null || roles.isEmpty()) {
-//        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
-//      }
-//      TopicRoleDAO roleDAO = getTopicRoleDAO();
-//      roleDAO.addTopicRoles("pubsub", newAppTopic.getNodeID(), roles);
+      // Add role mappings
+      List<String> roles = topicInfo.getRoles();
+      if (roles == null || roles.isEmpty()) {
+        roles = Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC);
+      }
+      TopicRoleDAO roleDAO = getTopicRoleDAO();
+      roleDAO.addTopicRoles("pubsub", newAppTopic.getNodeID(), roles);
     } catch (NotAcceptableException e) {
       result.setSuccess(false);
       result.setCode(TopicFailureCode.UNKNOWN);

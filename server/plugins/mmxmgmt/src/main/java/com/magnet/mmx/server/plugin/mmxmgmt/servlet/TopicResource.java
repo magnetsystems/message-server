@@ -112,7 +112,7 @@ public class TopicResource {
     if (o instanceof AppEntity) {
       appEntity = (AppEntity) o;
     } else {
-      LOGGER.error("deleteTopics : appEntity is not set");
+      LOGGER.error("createTopics : appEntity is not set");
       return Response
               .status(Response.Status.INTERNAL_SERVER_ERROR)
               .build();
@@ -166,8 +166,9 @@ public class TopicResource {
         sendResponse.setMessage(result.getErrorMessage());
         sendResponse.setStatus(result.getStatus());
         throw new WebApplicationException(
-            Response
-                .status(result.getErrorCode() == ErrorCode.TOPIC_PUBLISH_FORBIDDEN.getCode() ? Response.Status.FORBIDDEN :Response.Status.BAD_REQUEST)
+            Response.status(
+                result.getErrorCode() == ErrorCode.TOPIC_PUBLISH_FORBIDDEN.getCode() ?
+                    Response.Status.FORBIDDEN : Response.Status.BAD_REQUEST)
                 .entity(sendResponse)
                 .build()
         );
@@ -234,10 +235,13 @@ public class TopicResource {
       PaginationInfo paginationInfo = PaginationInfo.build(size, offset);
 
       TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
-      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(query, appId, paginationInfo, null,
+      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(
+          query, appId, paginationInfo, null,
           Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
-      SearchResult<TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), builtQuery, paginationInfo);
+      SearchResult<TopicInfoWithSubscriptionCount> topicList = 
+          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), 
+              builtQuery, paginationInfo);
 
       SearchResult<TopicNode> nodes = transform(appId, topicList);
 

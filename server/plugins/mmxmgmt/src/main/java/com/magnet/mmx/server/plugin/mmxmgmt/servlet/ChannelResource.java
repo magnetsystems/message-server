@@ -86,7 +86,7 @@ public class ChannelResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("create")
-  public Response createChannel(@Context HttpHeaders headers, /* @HeaderParam("X-mmx-app-id") String mmxappid, */ TopicCreateInfo topicInfo) {
+  public Response createChannel(@Context HttpHeaders headers, TopicCreateInfo topicInfo) {
     ErrorResponse errorResponse = null;
 
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
