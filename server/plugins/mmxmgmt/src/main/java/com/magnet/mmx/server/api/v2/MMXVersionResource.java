@@ -12,10 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.plugin.mmxmgmt.api;
-
-import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
+package com.magnet.mmx.server.api.v2;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -25,17 +22,16 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
+
 /**
+ * Get the version without authentication.
  */
 @Path("/mmx/version")
-public class MMXVersionResource extends AbstractBaseResource {
+public class MMXVersionResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Response getVersion(@Context HttpHeaders headers) {
-    Response response = getAuthResponse(headers);
-
-    if (response != null)
-      return response;
     return Response.status(Response.Status.OK).entity(new Version(MMXVersion.getVersion())).build();
   }
 
@@ -49,16 +45,5 @@ public class MMXVersionResource extends AbstractBaseResource {
     public String getVersion() {
       return version;
     }
-  }
-
-  private Response getAuthResponse(HttpHeaders headers) {
-    ErrorResponse authCheck = isAuthenticated(headers, DBUtil.getAppDAO());
-    if(authCheck != null) {
-      return Response
-              .status(Response.Status.UNAUTHORIZED)
-              .entity(authCheck)
-              .build();
-    }
-    return null;
   }
 }

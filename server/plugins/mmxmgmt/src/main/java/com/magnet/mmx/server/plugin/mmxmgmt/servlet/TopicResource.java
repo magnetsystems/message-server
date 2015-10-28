@@ -73,6 +73,10 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
 
+/**
+ * @deprecated ChannelResource
+ */
+@Deprecated
 @Path("topics/")
 public class TopicResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopicResource.class);

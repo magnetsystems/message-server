@@ -15,7 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
 import com.google.common.base.Joiner;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.message.MessageResource;
+import com.magnet.mmx.server.api.v2.MessageResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AppResource;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Ignore;

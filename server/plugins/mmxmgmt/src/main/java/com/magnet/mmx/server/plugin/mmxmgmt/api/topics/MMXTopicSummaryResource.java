@@ -46,7 +46,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
+ * @deprecated ChannelResource#getSummary
  */
+@Deprecated
 @Path("/topicssummary")
 public class MMXTopicSummaryResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXTopicSummaryResource.class);

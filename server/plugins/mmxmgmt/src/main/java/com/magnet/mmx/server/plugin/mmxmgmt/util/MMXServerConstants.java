@@ -119,6 +119,9 @@ public final class MMXServerConstants {
   public static final String SORT_ORDER_ASC = "asc";
   public static final String SORT_ORDER_DESC = "desc";
 
+  public final static String SINCE_PARAM = "since";
+  public final static String UNTIL_PARAM = "until";
+  
   public final static Integer DEFAULT_PAGE_SIZE = Integer.valueOf(100);
   public final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
   public final static String MMX_APP_ENTITY_PROPERTY = "mmxAppEntityProperty";

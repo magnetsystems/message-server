@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.plugin.mmxmgmt.api.tags;
+package com.magnet.mmx.server.api.v2;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,10 +31,14 @@ import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
+import com.magnet.mmx.sasl.TokenInfo;
+import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.DeviceTagInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.TagList;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceNotFoundException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
@@ -44,53 +48,46 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.Utils;
 
 /**
- * @deprecated DeviceTagsResource
+ * REST API v2 for device tags using auth token.  It deprecates
+ * MMXDeviceTagsResource.
+ * TODO: this file should become the new DevicesResource.
  */
-@Deprecated
-@Path("/devices/{"+MMXServerConstants.DEVICEID_PATH_PARAM+"}/tags")
-public class MMXDeviceTagsResource extends AbstractBaseResource {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MMXDeviceTagsResource.class);
+
+@Path("/devices/{" + MMXServerConstants.DEVICEID_PATH_PARAM + "}/tags")
+public class DeviceTagsResource {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DeviceTagsResource.class);
 
   @GET
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response getDeviceTags(@Context HttpHeaders headers,
                                 @PathParam(MMXServerConstants.DEVICEID_PATH_PARAM) String deviceId) {
-    ErrorResponse errorResponse = isAuthenticated(headers, DBUtil.getAppDAO());
+    ErrorResponse errorResponse;
 
-    if (errorResponse != null)
-      return errorResponse.toJaxRSResponse();
+    TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+    if (tokenInfo == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
 
-    String appId = headers.getRequestHeaders().getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
+    JID from = RestUtils.createJID(tokenInfo);
+    String appId = tokenInfo.getMmxAppId();
 
     try {
       DeviceEntity entity = DBUtil.getDeviceDAO().getDevice(appId, deviceId);
       if(entity != null) {
         List<String> tagnames = DBUtil.getTagDAO().getTagsForDevice(entity);
         DeviceTagInfo tagInfo = new DeviceTagInfo(deviceId, tagnames);
-        return Response.status(Response.Status.OK).entity(tagInfo).build();
+        return RestUtils.getOKJAXRSResp(tagInfo);
       } else {
         errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Device not found");
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .type(MediaType.APPLICATION_JSON)
-                .entity(errorResponse)
-                .build();
+        return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
       }
     } catch (DeviceNotFoundException e) {
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "DeviceId not found");
-      return Response
-              .status(Response.Status.NOT_FOUND)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
     } catch (Exception e) {
       LOGGER.error("getDeviceTags : caught exception getting tags for device = {}", deviceId);
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Invalid deviceId");
-      return Response
-              .status(Response.Status.INTERNAL_SERVER_ERROR)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getInternalErrorJAXRSResp(errorResponse);
     }
   }
 
@@ -99,38 +96,34 @@ public class MMXDeviceTagsResource extends AbstractBaseResource {
   public Response addDeviceTags(@Context HttpHeaders headers,
                                 @PathParam(MMXServerConstants.DEVICEID_PATH_PARAM) String deviceId,
                                 TagList tagList) {
+    ErrorResponse errorResponse;
 
     LOGGER.trace("addDeviceTags : tagList={}", tagList);
 
-    ErrorResponse errorResponse = isAuthenticated(headers, DBUtil.getAppDAO());
-
-    if (errorResponse != null)
-      return errorResponse.toJaxRSResponse();
-
-    String appId = headers.getRequestHeaders().getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
-
     if(tagList == null || Utils.isNullOrEmpty(tagList.getTags())) {
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Tag list is not set");
-      return Response
-              .status(Response.Status.BAD_REQUEST)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getBadReqJAXRSResp(errorResponse);
     }
 
     if(!Helper.validateTags(tagList.getTags())) {
-      errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Invalid tag : tag cannot be empty and can have a max length of : " + MMXServerConstants.MAX_TAG_LENGTH);
-      return Response.status(Response.Status.BAD_REQUEST)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+          "Invalid tag : tag cannot be empty and can have a max length of : " +
+              MMXServerConstants.MAX_TAG_LENGTH);
+      return RestUtils.getBadReqJAXRSResp(errorResponse);
     }
 
-    TagDAO tagDao = DBUtil.getTagDAO();
+    TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+    if (tokenInfo == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
+
+    JID from = RestUtils.createJID(tokenInfo);
+    String appId = tokenInfo.getMmxAppId();
 
     try {
       DeviceEntity deviceEntity = DBUtil.getDeviceDAO().getDevice(appId, deviceId);
-      if(deviceEntity != null) {
+      if (deviceEntity != null) {
+        TagDAO tagDao = DBUtil.getTagDAO();
         for(String tag : tagList.getTags()) {
           tagDao.createDeviceTag(tag, appId, deviceEntity.getId());
         }
@@ -141,27 +134,15 @@ public class MMXDeviceTagsResource extends AbstractBaseResource {
                 .build();
       } else {
         errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "DeviceId not found");
-        return Response
-                .status(Response.Status.NOT_FOUND)
-                .type(MediaType.APPLICATION_JSON)
-                .entity(errorResponse)
-                .build();
+        return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
       }
     } catch (DeviceNotFoundException e) {
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "DeviceId not found");
-      return Response
-              .status(Response.Status.NOT_FOUND)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
     } catch (Exception e) {
       LOGGER.error("addDeviceTags : caught exception creating tags for deviceId={}", deviceId);
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Error creating tags");
-      return Response
-              .status(Response.Status.INTERNAL_SERVER_ERROR)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getInternalErrorJAXRSResp(errorResponse);
     }
   }
 
@@ -169,12 +150,15 @@ public class MMXDeviceTagsResource extends AbstractBaseResource {
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response deleteAllTags(@Context HttpHeaders headers,
                                 @PathParam(MMXServerConstants.DEVICEID_PATH_PARAM) String deviceId) {
-    ErrorResponse errorResponse = isAuthenticated(headers, DBUtil.getAppDAO());
+    ErrorResponse errorResponse;
+    
+    TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+    if (tokenInfo == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
 
-    if (errorResponse != null)
-      return errorResponse.toJaxRSResponse();
-
-    String appId = headers.getRequestHeaders().getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
+    JID from = RestUtils.createJID(tokenInfo);
+    String appId = tokenInfo.getMmxAppId();
 
     LOGGER.trace("deleteAllTags : deviceId={}", deviceId);
 
@@ -183,69 +167,56 @@ public class MMXDeviceTagsResource extends AbstractBaseResource {
       if(deviceEntity != null) {
         DBUtil.getTagDAO().deleteAllTagsForDevice(deviceEntity);
         return Response.status(Response.Status.OK)
-                        .type(MediaType.TEXT_PLAIN).entity("deleted all tags").build();
+                        .type(MediaType.TEXT_PLAIN).entity("Deleted all tags").build();
       } else {
         errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Device not found");
-        return Response.status(Response.Status.NOT_FOUND)
-                        .type(MediaType.APPLICATION_JSON)
-                        .entity(errorResponse).build();
+        return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
       }
     } catch (DeviceNotFoundException e) {
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "DeviceId not found");
-      return Response
-              .status(Response.Status.NOT_FOUND)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
     } catch (Exception e) {
       LOGGER.error("deleteAllTags : caught exception deleting tags for device={}", deviceId);
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Error deleting tags for device");
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse).build();
+      return RestUtils.getInternalErrorJAXRSResp(errorResponse);
     }
   }
 
   @DELETE
   @Path("/{" + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
-  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response deleteTag(@Context HttpHeaders headers,
                             @PathParam(MMXServerConstants.DEVICEID_PATH_PARAM) String deviceId,
                             @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag) {
-
-    ErrorResponse errorResponse = isAuthenticated(headers, DBUtil.getAppDAO());
-
-    if (errorResponse != null)
-      return errorResponse.toJaxRSResponse();
-
-    String appId = headers.getRequestHeaders().getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
-
+    ErrorResponse errorResponse;
+    
+    TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+    if (tokenInfo == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
+    JID from = RestUtils.createJID(tokenInfo);
+    String appId = tokenInfo.getMmxAppId();
+    
     LOGGER.trace("deleteTag : deviceId={}, tag={}", deviceId, tag);
 
     try {
       DeviceEntity deviceEntity = DBUtil.getDeviceDAO().getDevice(appId, deviceId);
       if(deviceEntity != null) {
         DBUtil.getTagDAO().deleteTagsForDevice(deviceEntity, Arrays.asList(tag));
-        return Response.status(Response.Status.OK).build();
+        return Response.status(Response.Status.OK)
+            .type(MediaType.TEXT_PLAIN)
+            .entity("Deleted tag").build();
       } else {
         errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Device not found");
-        return Response.status(Response.Status.NOT_FOUND)
-                .type(MediaType.APPLICATION_JSON)
-                .entity(errorResponse).build();
+        return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
       }
     } catch (DeviceNotFoundException e) {
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "DeviceId not found");
-      return Response
-              .status(Response.Status.NOT_FOUND)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse)
-              .build();
+      return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
     } catch (Exception e) {
       LOGGER.error("deleteTag : caught exception deleting tags for deviceId={}", deviceId, e);
       errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Error deleting tags for device");
-      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-              .type(MediaType.APPLICATION_JSON)
-              .entity(errorResponse).build();
+      return RestUtils.getInternalErrorJAXRSResp(errorResponse);
     }
   }
 }

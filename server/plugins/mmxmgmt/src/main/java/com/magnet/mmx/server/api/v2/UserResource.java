@@ -12,7 +12,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
+package com.magnet.mmx.server.api.v2;
+
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
@@ -30,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import com.google.gson.annotations.SerializedName;
 import com.magnet.mmx.sasl.TokenInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
@@ -43,6 +46,76 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 @Path("users/")
 public class UserResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserResource.class);
+  
+  public enum UserStatus {
+    ACTIVE,
+    CREATED,
+    INACTIVE
+  };
+  
+  public enum UserRealm {
+    AD,
+    DB,
+    FACEBOOK,
+    GOOGLEPLUS,
+    LDAP,
+    OTHER,
+    TWITTER
+  };
+    
+  public class User {    
+    @SerializedName("userIdentifier")
+    private String mUserIdentifier;
+    @SerializedName("email")
+    private String mEmail;
+    @SerializedName("roles")
+    private String[] mRoles;
+    @SerializedName("userStatus")
+    private UserStatus mUserStatus;
+    @SerializedName("userName")
+    private String mUserName;
+    @SerializedName("userRealm")
+    private UserRealm mUserRealm;
+    @SerializedName("firstName")
+    private String mFirstName;
+    @SerializedName("lastName")
+    private String mLastName;
+    @SerializedName("clientId")
+    private String mClientId;
+    @SerializedName("userAccountData")
+    private Map<String, String> mUserAccountData;
+    
+    public String getUserIdentifier() {
+      return mUserIdentifier;
+    }
+    public String getEmail() {
+      return mEmail;
+    }
+    public String[] getRoles() {
+      return mRoles;
+    }
+    public UserStatus getUserStatus() {
+      return mUserStatus;
+    }
+    public String getUserName() {
+      return mUserName;
+    }
+    public UserRealm getUserRealm() {
+      return mUserRealm;
+    }
+    public String getFirstName() {
+      return mFirstName;
+    }
+    public String getLastName() {
+      return mLastName;
+    }
+    public String getClientId() {
+      return mClientId;
+    }
+    public Map<String, String> getUserAccountData() {
+      return mUserAccountData;
+    }
+  }
   
   @Context
   private HttpServletRequest servletRequest;

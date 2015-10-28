@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
 import com.google.gson.Gson;
+import com.magnet.mmx.server.api.v2.MMXVersionResource;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXTopicTagsResourceTest;

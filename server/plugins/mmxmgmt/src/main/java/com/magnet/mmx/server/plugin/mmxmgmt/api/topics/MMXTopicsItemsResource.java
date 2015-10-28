@@ -60,6 +60,7 @@ import com.magnet.mmx.util.TopicHelper;
 /**
  * REST entry point for the published items.  The URL is 
  * .../topics/{topicName}/items?size={maxsize}&since={datetime}&until={datetime}
+ * @deprecated ChannelResource#fetchItems
  */
 @Path("/topics/{" + MMXServerConstants.TOPICNAME_PATH_PARAM + "}/items")
 public class MMXTopicsItemsResource extends AbstractBaseResource {
