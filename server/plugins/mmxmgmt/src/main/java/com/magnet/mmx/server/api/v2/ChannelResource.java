@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -111,9 +110,6 @@ public class ChannelResource {
   static final String CHANNEL_NAME = "channelName";
   private static final String DEFAULT_MAX_ITEMS = "200";
   private final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
-
-  @Context
-  private HttpServletRequest servletRequest;
 
   @POST
   @Produces(MediaType.APPLICATION_JSON)
@@ -378,7 +374,7 @@ public class ChannelResource {
     }
 
     JID from = RestUtils.createJID(tokenInfo);
-    String appId = RestUtils.getAppEntity(servletRequest).getAppId();
+    String appId = tokenInfo.getMmxAppId();
     MMXTopicId tid = nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid
         .getName());
