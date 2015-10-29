@@ -14,24 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.InputStream;
-import java.util.Properties;
-import java.util.UUID;
-
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.dbcp2.BasicDataSource;
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.log4j.Level;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.gson.Gson;
 import com.magnet.mmx.server.api.v2.MMXVersionResource;
 import com.magnet.mmx.server.common.data.AppEntity;
@@ -41,6 +23,24 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.BaseJAXRSTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBTestUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import mockit.Mock;
+import mockit.MockUp;
+import org.apache.commons.dbcp2.BasicDataSource;
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.log4j.Level;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import java.io.InputStream;
+import java.util.Properties;
+import java.util.UUID;
+
+import static org.junit.Assert.assertEquals;
 
 /**
 */
