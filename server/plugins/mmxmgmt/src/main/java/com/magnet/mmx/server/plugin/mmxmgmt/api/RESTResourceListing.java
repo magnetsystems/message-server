@@ -17,7 +17,12 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api;
 import com.magnet.mmx.server.api.v1.DevicesResource;
 import com.magnet.mmx.server.api.v1.MMXAuthHeadersFilter;
 import com.magnet.mmx.server.api.v1.RateLimitFilter;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.message.MessageResource;
+import com.magnet.mmx.server.api.v2.ChannelResource;
+import com.magnet.mmx.server.api.v2.DeviceTagsResource;
+import com.magnet.mmx.server.api.v2.MMXVersionResource;
+import com.magnet.mmx.server.api.v2.MessageResource;
+import com.magnet.mmx.server.api.v2.UserResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.message.AdminMessageResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PingMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResource;
@@ -27,10 +32,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXUserTagsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.topics.MMXTopicSummaryResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.topics.MMXTopicsItemsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.user.MMXUsersResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.ChannelResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JacksonJSONObjectMapperProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.UserResource;
 
 /**
  */
@@ -39,15 +42,13 @@ public final class RESTResourceListing {
   // Any new resources added should be added to this list at compile time.
   // we maintain this list statically because I am not able to get
   // resteasy to scan all classes and bind the resources automatically.
-  private static final String[] resourceClasses = {
+  private static final String[] v1resourceClasses = {
       MMXDeviceTagsResource.class.getName(),
       MMXUserTagsResource.class.getName(),
       MMXTopicTagsResource.class.getName(),
       MMXTopicsItemsResource.class.getName(),
       MMXUsersResource.class.getName(),
-      MMXVersionResource.class.getName(),
       MessageFunctionResource.class.getName(),
-      MessageResource.class.getName(),
       PingMessageFunctionResource.class.getName(),
       PushMessageFunctionResource.class.getName(),
       PushResource.class.getName(),
@@ -56,16 +57,25 @@ public final class RESTResourceListing {
        */
       TopicResource.class.getName(),
       MMXTopicSummaryResource.class.getName(),
-      
-      // New v2 API
-      ChannelResource.class.getName(),
-      UserResource.class.getName(),
       DevicesResource.class.getName(),
-      MessageSendResource.class.getName(),
+      AdminMessageResource.class.getName(),
+  };
+  
+  private static final String[] v2resourceClasses = {
+    // New v2 API
+    MMXVersionResource.class.getName(),
+    ChannelResource.class.getName(),
+    UserResource.class.getName(),
+    MessageResource.class.getName(),
+    DeviceTagsResource.class.getName(),
   };
 
-  public static String[] getResources() {
-    return resourceClasses;
+  public static String[] getV1Resources() {
+    return v1resourceClasses;
+  }
+  
+  public static String[] getV2Resources() {
+    return v2resourceClasses;
   }
 
   private static final String[] providers = {

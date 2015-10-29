@@ -14,18 +14,10 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.message;
 
-import com.magnet.mmx.server.common.data.AppEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,21 +28,31 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 
 /**
+ * V1 Admin REST API to get message status.  It is used by Console only.
  */
-@Path("message")
-public class MessageResource extends AbstractBaseResource {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MessageResource.class);
-
+@Path("/messages")
+public class AdminMessageResource extends AbstractBaseResource {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AdminMessageResource.class);
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("{id}")
+  @Path("/{id}")
   public Response getMessageById(@Context HttpHeaders headers, @PathParam("id") String messageId) {
     try {
       long startTime = System.nanoTime();

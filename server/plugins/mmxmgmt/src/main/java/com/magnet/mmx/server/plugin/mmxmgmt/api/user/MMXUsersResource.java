@@ -67,6 +67,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.ServerNotInitializedException;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.UserManagerService;
 
 /**
+ * @deprecated Use Blowfish User REST API.
  */
 @Path("/users")
 public class MMXUsersResource extends AbstractBaseResource {

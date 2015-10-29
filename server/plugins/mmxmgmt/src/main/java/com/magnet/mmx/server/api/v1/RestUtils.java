@@ -15,19 +15,29 @@
 package com.magnet.mmx.server.api.v1;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import com.google.gson.Gson;
 import com.magnet.mmx.sasl.BFOAuthAccessor;
 import com.magnet.mmx.sasl.TokenInfo;
 import com.magnet.mmx.server.common.data.AppEntity;
@@ -35,7 +45,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-
 /**
  */
 public class RestUtils {
@@ -43,35 +52,142 @@ public class RestUtils {
 
   private static String MISSING_HEADER = "Authentication failed : mandatory header %s is missing";
   private static String INVALID_HEADER_VALUE = "Authentication failed : header %s has an invalid value %s";
+  private static String DEFAULT_MAX_SERVER_BASE_URL = "http://localhost:8443/api/com.magnet.server";
  
   private static Map<String, TokenInfo> sAuthTokenCache = new Hashtable<String, TokenInfo>();
   
+  public static <T> T doMAXGet(String authToken, String path, Map<String, List<String>> reqt,
+                             Class<T> respClz) throws IOException {
+    String maxServerBaseUrl = JiveGlobals.getProperty("mmx.auth.server.base.url", DEFAULT_MAX_SERVER_BASE_URL);
+    LOGGER.debug("Sending GET to " + maxServerBaseUrl+path);
+    Reader reader = null;
+    HttpURLConnection conn = null;
+    try {
+      URL url;
+      if (reqt == null || reqt.isEmpty()) {
+        url = new URL(maxServerBaseUrl + path);
+      } else {
+        UriBuilder builder = UriBuilder.fromUri(maxServerBaseUrl + path);
+        url = builder.buildFromMap(reqt).toURL();
+      }
+      LOGGER.debug("Sending GET to "+url.toString());
+      conn = getConnection(url);
+      conn.setDoOutput(false);
+      conn.setUseCaches(false);
+      conn.setRequestMethod("GET");
+      conn.setRequestProperty("Content-Type", MediaType.APPLICATION_FORM_URLENCODED);
+      conn.setRequestProperty("Authorization", "Bearer " + authToken);
+      int respCode = conn.getResponseCode();
+      if (respCode != HttpURLConnection.HTTP_OK && respCode != HttpURLConnection.HTTP_CREATED) {
+        LOGGER.error("Unexpected response "+respCode+" from "+(maxServerBaseUrl+path));
+        return null;
+      }
+      Gson gson = new Gson();
+      reader = new InputStreamReader(conn.getInputStream());
+      T resp = gson.fromJson(reader, respClz);
+      return resp;
+    } catch (Throwable e) {
+      LOGGER.error("Unable to get response from "+(maxServerBaseUrl+path), e);
+      return null;
+    } finally {
+      if (reader != null) {
+        reader.close();
+      }
+      if (conn != null) {
+        conn.disconnect();
+      }
+    }
+  }
+  
+  public static <T> T doMAXPost(String authToken, String path, Object reqt,
+                                 Class<T> respClass) throws IOException {
+    String maxServerBaseUrl = JiveGlobals.getProperty("mmx.auth.server.base.url", DEFAULT_MAX_SERVER_BASE_URL);
+    LOGGER.debug("Sending POST to " + maxServerBaseUrl+path);
+    Reader reader = null;
+    Writer writer = null;
+    HttpURLConnection conn = null;
+    try {
+      conn = getConnection(new URL(maxServerBaseUrl+path));
+      conn.setDoOutput(true);
+      conn.setUseCaches(false);
+      conn.setRequestMethod("POST");
+      conn.setRequestProperty("Content-Type", MediaType.APPLICATION_JSON);
+      conn.setRequestProperty("Authorization", "Bearer " + authToken);
+      Gson gson = new Gson();
+      if (reqt != null) {
+        writer = new OutputStreamWriter(conn.getOutputStream());
+        gson.toJson(reqt, writer);
+      }
+      int respCode = conn.getResponseCode();
+      if (respCode != HttpURLConnection.HTTP_OK && respCode != HttpURLConnection.HTTP_CREATED) {
+        LOGGER.error("Unexpected response "+respCode+" from "+(maxServerBaseUrl+path));
+        return null;
+      }
+      reader = new InputStreamReader(conn.getInputStream());
+      T resp = gson.fromJson(reader, respClass);
+      return resp;
+    } catch (Throwable e) {
+      LOGGER.error("Unable to get response from "+(maxServerBaseUrl+path), e);
+      return null;
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
+      if (reader != null) {
+        reader.close();
+      }
+      if (conn != null) {
+        conn.disconnect();
+      }
+    }
+  }
+  
+  private static HttpURLConnection getConnection(URL url) throws IOException {
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    return conn;
+  }
+  
   /**
-   * Get the authentication information via the auth token from HTTP header.
-   * The "Authorization" header should be in the form of "Bearer auth-token".
-   * We also accept a malformed value without the "Bearer" token.
+   * Get the authentication token from HTTP header.
    * @param headers
-   * @return The token info object or null
+   * @return The auth token or null.
    */
-  public static TokenInfo getAuthTokenInfo(HttpHeaders headers) {
+  public static String getAuthToken(HttpHeaders headers) {
     String authToken = null;
-    TokenInfo tokenInfo = null;
     String authHeader = headers.getHeaderString("Authorization");
     if (authHeader != null) {
       // Skip the standard "Bearer " token, and allow the malformed value.
       int index = authHeader.indexOf(' ');
       authToken = (index < 0) ? authHeader : authHeader.substring(index+1);
     }
+    return authToken;
+  }
+  
+  /**
+   * Get the authentication information via the auth token from HTTP header.
+   * The "Authorization" header should be in the form of "Bearer auth-token".
+   * We also accept a malformed value without the "Bearer" token.  If the token
+   * is expired, null will be returned.
+   * @param headers
+   * @return The token info object or null
+   */
+  public static TokenInfo getAuthTokenInfo(HttpHeaders headers) {
+    TokenInfo tokenInfo = null;
+    String authToken = getAuthToken(headers);
     if (authToken != null) {
-      tokenInfo = sAuthTokenCache.get(authToken);
-      if (tokenInfo == null || isTokenExpired(tokenInfo)) {
+//      tokenInfo = sAuthTokenCache.get(authToken);
+      if (isTokenExpired(tokenInfo)) {
         if (tokenInfo != null) {
           // remove the expired cached auth token info.
-          sAuthTokenCache.remove(authToken);
+//          sAuthTokenCache.remove(authToken);
         }
         try {
           tokenInfo = BFOAuthAccessor.getTokenInfo(authToken);
-          sAuthTokenCache.put(authToken, tokenInfo);
+          if (!isTokenExpired(tokenInfo)) {
+//            sAuthTokenCache.put(authToken, tokenInfo);
+          } else {
+            tokenInfo = null;
+          }
         } catch (IOException e) {
           LOGGER.warn("Unable to get auth token info from MAX server", e);
         }
@@ -81,8 +197,7 @@ public class RestUtils {
   }
   
   private static boolean isTokenExpired(TokenInfo tokenInfo) {
-    return !tokenInfo.isAuthenticated();
-//    // TODO: is it in seconds?
+    return tokenInfo == null || !tokenInfo.isAuthenticated();
 //    Integer expiresIn = tokenInfo.getTokenExpiresIn();
 //    if (expiresIn == null) {
 //      return false;
@@ -114,6 +229,10 @@ public class RestUtils {
     return Response.status(status).type(MediaType.APPLICATION_JSON).entity(errorResponse).build();
   }
 
+  public static Response getNotFoundJAXRSResp(ErrorResponse errorResponse) {
+    return getJAXRSResp(Response.Status.NOT_FOUND, errorResponse);
+  }
+  
   public static Response getBadReqJAXRSResp(ErrorResponse errorResponse) {
     return getJAXRSResp(Response.Status.BAD_REQUEST, errorResponse);
   }

@@ -78,6 +78,7 @@ public enum ErrorCode {
   TOPIC_ALREADY_SUBSCRIBED(66),
   TOPIC_NOT_SUBSCRIBED(67),
   USER_NOT_LOGIN(68),
+  MESSAGE_SENDER_NOT_MATCHED(69),
   ;
 
   private int code;
