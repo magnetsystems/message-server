@@ -927,6 +927,7 @@ public class ChannelResource {
       itemEntity.setPayload(item.getPayloadXml());
       itemEntity.setCreationDate(StringUtils.dateToMillis(item.getCreationDate()));
       itemEntity.setServiceId("pubsub");
+      list.add(itemEntity);
     }
     return list;
   }
