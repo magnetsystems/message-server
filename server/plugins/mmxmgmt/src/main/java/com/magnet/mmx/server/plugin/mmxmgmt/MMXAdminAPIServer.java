@@ -14,18 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AdminRESTResourceListing;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.ConfigServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.DeviceServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JacksonJSONObjectMapperProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.MMXRestEasyServletWrapper;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.MessageServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushMessageServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.UserServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.Connector;
@@ -37,6 +25,18 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AdminRESTResourceListing;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.ConfigServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.DeviceServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.MMXRestEasyServletWrapper;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.MessageServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushMessageServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.UserServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
  */
@@ -107,13 +107,13 @@ public class MMXAdminAPIServer {
     }
     ServletHolder holder = new ServletHolder(new MMXRestEasyServletWrapper());
     holder.setInitParameter(MMXServerConstants.RESTEASY_SERVLET_MAPPING_PREFIX_KEY,
-        MMXServerConstants.ADMIN_API_SERVLET_MAPPING_PREFIX);
+        MMXServerConstants.ADMIN_API_SERVLET_V1_MAPPING_PREFIX);
 
     holder.setInitParameter(MMXServerConstants.RESTEASY_RESOURCES_KEY, resources);
     holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, providers);
 
 
-    context.addServlet(holder, MMXServerConstants.ADMIN_API_REST_MAPPING);
+    context.addServlet(holder, MMXServerConstants.ADMIN_API_V1_REST_MAPPING);
     try {
       LOGGER.info("Admin API server starting at port:" + callBackHandlerPort) ;
       privateApiServer.start();

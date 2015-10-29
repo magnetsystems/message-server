@@ -55,11 +55,11 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 
 /**
  * Messages functionality using auth token.
- * 1. /messages/{message-id}  (get the state of a message sent by current user)
- * 2. /messages/send_to_user_ids (XMPP message)
- * 3. /messages/send_to_user_names (XMPP message)
+ * 1. .../messages/{message-id}  (get the state of a message sent by current user)
+ * 2. .../messages/send_to_user_ids (XMPP message)
+ * 3. .../messages/send_to_user_names (XMPP message)
  */
-@Path("/messages")
+@Path("messages")
 public class MessageResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageResource.class);
 
@@ -73,13 +73,14 @@ public class MessageResource {
    */
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/{id}")
-  public Response getMessageById(@Context HttpHeaders headers, @PathParam("id") String messageId) {
+  @Path("{id}")
+  public Response getStatusById(@Context HttpHeaders headers,
+                                @PathParam("id") String messageId) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
       return RestUtils.getUnauthJAXRSResp();
     }
-    LOGGER.trace("getUserTags : username={}", tokenInfo.getUserName());
+    LOGGER.trace("getMessageById : id={}", messageId);
 
     JID from = RestUtils.createJID(tokenInfo);
     String appId = tokenInfo.getMmxAppId();
@@ -122,7 +123,7 @@ public class MessageResource {
    * @return
    */
   @POST
-  @Path("/send_to_user_ids")
+  @Path("send_to_user_ids")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response sendMessageToUserIds(@Context HttpHeaders headers, SendMessageRequest request) {
@@ -168,7 +169,7 @@ public class MessageResource {
    * @return
    */
   @POST
-  @Path("/send_to_user_names")
+  @Path("send_to_user_names")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Response sendMessageToUserNames(@Context HttpHeaders headers, SendMessageRequest request) {
@@ -180,9 +181,8 @@ public class MessageResource {
   
   private List<String> userNamesToIds(String authToken, List<String> names) {
     List<String> userIds = new ArrayList<String>(names.size());
-    HashMap<String, String[]> reqt = new HashMap<String, String[]>(1);
-    String[] array = new String[names.size()];
-    reqt.put("userNames", names.toArray(array));
+    HashMap<String, List<String>> reqt = new HashMap<String, List<String>>(1);
+    reqt.put("userNames", names);
     try {
       User[] users = RestUtils.doMAXGet(authToken, "/user/users", reqt, User[].class);
       for (User user : users) {

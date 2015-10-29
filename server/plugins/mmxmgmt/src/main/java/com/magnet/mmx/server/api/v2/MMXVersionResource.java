@@ -27,7 +27,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
 /**
  * Get the version without authentication.
  */
-@Path("/mmx/version")
+@Path("mmx/version")
 public class MMXVersionResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)

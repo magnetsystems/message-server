@@ -14,12 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.api.RESTResourceListing;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JacksonJSONObjectMapperProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushReplyServlet;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.ssl.SslContextFactory;
 import org.eclipse.jetty.server.Connector;
@@ -31,6 +25,12 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.plugin.mmxmgmt.api.RESTResourceListing;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.PushReplyServlet;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
  * Class that holds the jetty server that serves as the endpoint for public REST API
@@ -79,19 +79,29 @@ public class MMXPublicAPIServer {
     /**
      * add the rest easy endpoint handling the public rest API.
      */
-    String[] resourceClasses = RESTResourceListing.getResources();
+    String[] v1resourceClasses = RESTResourceListing.getV1Resources();
     String[] providerList = RESTResourceListing.getProviders();
-    String resources = StringUtils.join(resourceClasses, ",");
+    String v1resources = StringUtils.join(v1resourceClasses, ",");
     String providers = StringUtils.join(providerList, ",");
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Resource classes:{}", resources);
+      LOGGER.debug("V1 Resource classes:{}", v1resources);
     }
-    ServletHolder holder = new ServletHolder(new org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher());
-    holder.setInitParameter(MMXServerConstants.RESTEASY_SERVLET_MAPPING_PREFIX_KEY, MMXServerConstants.PUBLIC_API_SERVLET_MAPPING_PREFIX);
-    holder.setInitParameter(MMXServerConstants.RESTEASY_RESOURCES_KEY, resources);
-    holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, providers);
-    context.addServlet(holder, MMXServerConstants.PUBLIC_REST_API_MAPPING);
+    ServletHolder v1holder = new ServletHolder(new org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher());
+    v1holder.setInitParameter(MMXServerConstants.RESTEASY_SERVLET_MAPPING_PREFIX_KEY, MMXServerConstants.PUBLIC_API_SERVLET_V1_MAPPING_PREFIX);
+    v1holder.setInitParameter(MMXServerConstants.RESTEASY_RESOURCES_KEY, v1resources);
+    v1holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, providers);
+    context.addServlet(v1holder, MMXServerConstants.PUBLIC_REST_API_V1_MAPPING);
 
+    String[] v2resourceClasses = RESTResourceListing.getV2Resources();
+    String v2resources = StringUtils.join(v2resourceClasses, ",");
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("V2 Resource classes:{}", v2resources);
+    }
+    ServletHolder v2holder = new ServletHolder(new org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher());
+    v2holder.setInitParameter(MMXServerConstants.RESTEASY_SERVLET_MAPPING_PREFIX_KEY, MMXServerConstants.PUBLIC_API_SERVLET_V2_MAPPING_PREFIX);
+    v2holder.setInitParameter(MMXServerConstants.RESTEASY_RESOURCES_KEY, v2resources);
+    v2holder.setInitParameter(MMXServerConstants.RESTEASY_PROVIDERS_KEY, providers);
+    context.addServlet(v2holder, MMXServerConstants.PUBLIC_REST_API_V2_MAPPING);
 
     try {
       LOGGER.info("Public REST API server starting at port:" + port);
@@ -100,7 +110,6 @@ public class MMXPublicAPIServer {
     } catch (Exception e) {
       LOGGER.error("Exception in starting the Public REST API server", e);
     }
-
   }
 
   public void stop() {

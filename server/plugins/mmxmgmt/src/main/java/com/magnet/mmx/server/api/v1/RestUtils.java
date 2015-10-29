@@ -22,6 +22,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -44,7 +45,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-
 /**
  */
 public class RestUtils {
@@ -56,7 +56,7 @@ public class RestUtils {
  
   private static Map<String, TokenInfo> sAuthTokenCache = new Hashtable<String, TokenInfo>();
   
-  public static <T> T doMAXGet(String authToken, String path, Map<String, String[]> reqt,
+  public static <T> T doMAXGet(String authToken, String path, Map<String, List<String>> reqt,
                              Class<T> respClz) throws IOException {
     String maxServerBaseUrl = JiveGlobals.getProperty("mmx.auth.server.base.url", DEFAULT_MAX_SERVER_BASE_URL);
     LOGGER.debug("Sending GET to " + maxServerBaseUrl+path);

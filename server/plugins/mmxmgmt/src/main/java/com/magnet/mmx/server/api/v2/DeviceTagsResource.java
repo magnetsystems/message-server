@@ -53,7 +53,7 @@ import com.magnet.mmx.util.Utils;
  * TODO: this file should become the new DevicesResource.
  */
 
-@Path("/devices/{" + MMXServerConstants.DEVICEID_PATH_PARAM + "}/tags")
+@Path("devices/{" + MMXServerConstants.DEVICEID_PATH_PARAM + "}/tags")
 public class DeviceTagsResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(DeviceTagsResource.class);
 
@@ -183,7 +183,7 @@ public class DeviceTagsResource {
   }
 
   @DELETE
-  @Path("/{" + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
+  @Path("{" + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response deleteTag(@Context HttpHeaders headers,
                             @PathParam(MMXServerConstants.DEVICEID_PATH_PARAM) String deviceId,

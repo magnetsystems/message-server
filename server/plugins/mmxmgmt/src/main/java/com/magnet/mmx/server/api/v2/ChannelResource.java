@@ -98,7 +98,10 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
 
-@Path("channels/")
+/**
+ * Channel REST API for web client using auth token.
+ */
+@Path("channels")
 public class ChannelResource {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(ChannelResource.class);

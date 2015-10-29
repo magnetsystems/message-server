@@ -52,7 +52,7 @@ import com.magnet.mmx.util.Utils;
  * TODO: this file should be merged into UserResource
  */
 
-@Path("/users/tags")
+@Path("users/tags")
 public class UserTagsResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserTagsResource.class);
 
@@ -173,7 +173,7 @@ public class UserTagsResource {
 
   @DELETE
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
-  @Path("/{"+MMXServerConstants.TAGNAME_PATH_PARAM+"}")
+  @Path("{"+MMXServerConstants.TAGNAME_PATH_PARAM+"}")
   public Response deleteUserTag(@Context HttpHeaders headers,
                                 @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag) {
     ErrorResponse errorResponse;

@@ -43,7 +43,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
  * future, most of the functionality from IntegrationUserResource should be
  * migrated to this class, but it should remain as administrative functionality.
  */
-@Path("users/")
+@Path("users")
 public class UserResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserResource.class);
   
