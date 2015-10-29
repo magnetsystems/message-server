@@ -166,7 +166,8 @@ public class RestUtils {
   /**
    * Get the authentication information via the auth token from HTTP header.
    * The "Authorization" header should be in the form of "Bearer auth-token".
-   * We also accept a malformed value without the "Bearer" token.
+   * We also accept a malformed value without the "Bearer" token.  If the token
+   * is expired, null will be returned.
    * @param headers
    * @return The token info object or null
    */
@@ -174,15 +175,19 @@ public class RestUtils {
     TokenInfo tokenInfo = null;
     String authToken = getAuthToken(headers);
     if (authToken != null) {
-      tokenInfo = sAuthTokenCache.get(authToken);
-      if (tokenInfo == null || isTokenExpired(tokenInfo)) {
+//      tokenInfo = sAuthTokenCache.get(authToken);
+      if (isTokenExpired(tokenInfo)) {
         if (tokenInfo != null) {
           // remove the expired cached auth token info.
-          sAuthTokenCache.remove(authToken);
+//          sAuthTokenCache.remove(authToken);
         }
         try {
           tokenInfo = BFOAuthAccessor.getTokenInfo(authToken);
-          sAuthTokenCache.put(authToken, tokenInfo);
+          if (!isTokenExpired(tokenInfo)) {
+//            sAuthTokenCache.put(authToken, tokenInfo);
+          } else {
+            tokenInfo = null;
+          }
         } catch (IOException e) {
           LOGGER.warn("Unable to get auth token info from MAX server", e);
         }
@@ -192,8 +197,7 @@ public class RestUtils {
   }
   
   private static boolean isTokenExpired(TokenInfo tokenInfo) {
-    return !tokenInfo.isAuthenticated();
-//    // TODO: is it in seconds?
+    return tokenInfo == null || !tokenInfo.isAuthenticated();
 //    Integer expiresIn = tokenInfo.getTokenExpiresIn();
 //    if (expiresIn == null) {
 //      return false;
