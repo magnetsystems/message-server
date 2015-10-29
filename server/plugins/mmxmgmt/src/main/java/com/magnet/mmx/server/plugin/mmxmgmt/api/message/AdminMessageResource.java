@@ -46,7 +46,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 /**
  * V1 Admin REST API to get message status.  It is used by Console only.
  */
-@Path("/message")
+@Path("/messages")
 public class AdminMessageResource extends AbstractBaseResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(AdminMessageResource.class);
 
