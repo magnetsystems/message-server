@@ -98,6 +98,7 @@ public class MessageSenderImpl implements MessageSender {
       int requested = 0;
       int sent = 0;
       int unsent = 0;
+      AppEntity appEntity = appDAO.getAppForAppKey(appId);
       List<SentMessageId> sentList = new LinkedList<SentMessageId>();
       List<UnsentMessage> unsentList = new LinkedList<UnsentMessage>();
       Count count = null;
@@ -120,6 +121,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(validationResult.getDeviceEntity())
+                .setSenderId(appEntity.getServerUserId())
                 .setUserId(username)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -148,6 +150,7 @@ public class MessageSenderImpl implements MessageSender {
             .setIdGenerator(new MessageIdGeneratorImpl())
             .setUtcTime(System.currentTimeMillis())
             .setDeviceEntity(validationResult.getDeviceEntity())
+            .setSenderId(appEntity.getServerUserId())
             .setUserId(recipient)
             .setReplyTo(request.getReplyTo())
             .setMetadata(request.getContent())
@@ -186,6 +189,7 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppEntity(validationResult.getAppEntity())
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
+                .setSenderId(appEntity.getServerUserId())
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -220,6 +224,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(de)
+                .setSenderId(appEntity.getServerUserId())
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())

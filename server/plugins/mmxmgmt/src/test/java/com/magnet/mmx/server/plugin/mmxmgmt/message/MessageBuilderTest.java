@@ -14,6 +14,19 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.junit.Test;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -22,18 +35,6 @@ import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import org.dom4j.Element;
-import org.junit.Test;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
-import static org.junit.Assert.assertEquals;
 
 /**
  */
@@ -60,6 +61,7 @@ public class MessageBuilderTest {
     app.setServerUserId("admin%i1cglsw8dsa");
 
     MessageBuilder builder = new MessageBuilder();
+    builder.setSenderId(app.getServerUserId());
     builder.setAppEntity(app);
     builder.setDomain("localhost");
     builder.setUserId(request.getRecipientUsernames().get(0));
@@ -98,6 +100,7 @@ public class MessageBuilderTest {
     builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
+    builder.setSenderId(app.getServerUserId());
     builder.setUserId(request.getRecipientUsernames().get(0));
     Message m = builder.build();
     assertNotNull("Message shouldn't be null", m);
@@ -138,6 +141,7 @@ public class MessageBuilderTest {
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);
     builder.setDomain("localhost");
+    builder.setSenderId(app.getServerUserId());
     builder.setUserId(request.getRecipientUsernames().get(0));
     builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());

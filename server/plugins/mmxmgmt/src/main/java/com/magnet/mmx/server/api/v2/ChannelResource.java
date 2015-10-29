@@ -779,7 +779,7 @@ public class ChannelResource {
   @Path("{" + CHANNEL_NAME + "}/items/byids")
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response getItemsByIds(@Context HttpHeaders headers,
-      @PathParam(MMXServerConstants.TOPICNAME_PATH_PARAM) String topicName,
+      @PathParam(CHANNEL_NAME) String topicName,
       @QueryParam(ID_KEY) List<String> idList) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
@@ -836,8 +836,8 @@ public class ChannelResource {
   @Path("{" + CHANNEL_NAME + "}/items")
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteAllItems(@Context HttpHeaders headers,
-      @PathParam(MMXServerConstants.TOPICNAME_PATH_PARAM) String topicName,
-      @QueryParam("isPersonal") String isPersonalTopic) {    
+      @PathParam(CHANNEL_NAME) String topicName,
+      @QueryParam("personal") String isPersonalTopic) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
       return RestUtils.getUnauthJAXRSResp();
@@ -875,7 +875,7 @@ public class ChannelResource {
   @Path("{" + CHANNEL_NAME + "}/items/byids")
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteItemsByIds(@Context HttpHeaders headers,
-      @PathParam(MMXServerConstants.TOPICNAME_PATH_PARAM) String topicName,
+      @PathParam(CHANNEL_NAME) String topicName,
       @QueryParam(ID_KEY) List<String> idList) {
     ErrorResponse errorResponse;
     if (idList == null || idList.isEmpty()) {
