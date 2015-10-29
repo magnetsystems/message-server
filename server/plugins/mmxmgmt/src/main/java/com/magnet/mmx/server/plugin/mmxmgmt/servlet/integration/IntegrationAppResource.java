@@ -32,6 +32,7 @@ import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.bot.BotStarter;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppAlreadyExistsException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppManagementException;
@@ -46,6 +47,9 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Path("/integration/apps")
 public class IntegrationAppResource {
@@ -97,6 +101,27 @@ public class IntegrationAppResource {
       if(appEntity == null) {
         return RestUtils.getInternalErrorJAXRSResp(new ErrorResponse(ErrorCode.UNKNOWN_ERROR, "Unable to create app"));
       }
+
+      ///// BOT support
+      String appName = appInfo.getName();
+      String appId = appInfo.getAppId();
+      if (BotStarter.isBotEnabled(appName)) {
+        Future<Boolean> resultFuture = BotStarter.startApplicableBots(appName, appId, Executors.newSingleThreadExecutor());
+        try {
+          if (resultFuture != null && resultFuture.get()) {
+            LOGGER.debug("Created/Started bots for appId:{} and name:{}", appId, appName);
+          } else {
+            LOGGER.warn("Failed to create bots for appId:{} and name:{}", appId, appName);
+          }
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        } catch (ExecutionException e) {
+          e.printStackTrace();
+        }
+      }
+
+
+
       return Response.status(Response.Status.CREATED)
           .entity(new JSONFriendlyAppEntityDecorator(appEntity))
           .build();
