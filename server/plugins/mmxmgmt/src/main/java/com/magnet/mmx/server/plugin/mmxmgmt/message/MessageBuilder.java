@@ -120,7 +120,7 @@ public class MessageBuilder {
       mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, null));
     }
     if (userId != null) {
-      mmxMeta.put(MmxHeaders.TO, new MMXid(userId, null));
+      mmxMeta.put(MmxHeaders.TO, new MMXid[] {new MMXid(userId, null)});
     }
     // mmxMeta.put("mmxdistributed", Boolean.TRUE);
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMeta);
