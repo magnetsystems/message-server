@@ -14,9 +14,24 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.bot;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
+
 import com.google.gson.Gson;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.DevReg;
+import com.magnet.mmx.protocol.MMXid;
+import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.protocol.MsgAck;
 import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
@@ -28,18 +43,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageIdGeneratorImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
-import org.dom4j.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class BotRegistrationImpl implements BotRegistration {
   private static final Logger LOGGER = LoggerFactory.getLogger(BotRegistrationImpl.class);
@@ -163,15 +166,21 @@ public class BotRegistrationImpl implements BotRegistration {
           Element payload = payloadList.get(0);
           payload.setText(AMAZING_MESSAGE);
         }
+        // mmx meta
         Element internalMeta = mmx.element(Constants.MMX_MMXMETA);
-        String userId = JIDUtil.getUserId(fromJID);
-        String devId = fromJID.getResource();
-        String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
         if (internalMeta != null) {
           mmx.remove(internalMeta);
         }
+        String userId = JIDUtil.getUserId(fromJID);
+        String devId = fromJID.getResource();
+        String senderId = JIDUtil.getUserId(toJID);
+        String senderDevId = toJID.getResource();
+        MmxHeaders mmxMeta = new MmxHeaders();
+        mmxMeta.put(MmxHeaders.TO, new MMXid(userId, devId, null));
+        mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, senderDevId, null));
         Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
-        revisedMeta.setText(mmxMetaJSON);
+        revisedMeta.setText(GsonData.getGson().toJson(mmxMeta));
+        
         //add the content to meta (as requested by iOS team) and replace the meta object.
         Map<String, String> metaMap =  new HashMap<String, String>();
         metaMap.put(MMXServerConstants.TEXT_CONTENT_KEY, AMAZING_MESSAGE);
