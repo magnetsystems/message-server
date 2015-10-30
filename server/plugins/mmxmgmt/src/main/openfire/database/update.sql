@@ -22,6 +22,3 @@ insert into ofProperty values('xmpp.proxy.enabled', 'false');
 
 delete from ofProperty where name='xmpp.auth.anonymous';
 insert into ofProperty values('xmpp.auth.anonymous', 'false');
-
-delete from ofProperty where name='route.all-resources';
-insert into ofProperty values('route.all-resources', 'true');
