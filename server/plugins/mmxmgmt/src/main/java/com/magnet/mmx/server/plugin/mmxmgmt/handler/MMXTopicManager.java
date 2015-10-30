@@ -86,7 +86,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicRoleDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.handler.ConfigureForm.PublishModel;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.TopicQueryBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
@@ -398,8 +397,12 @@ public class MMXTopicManager {
       form.setNotifyDelete(false);
       form.setNotifyConfig(false);
       form.setNodeType(ConfigureForm.NodeType.leaf);
-      // ;TODO: a workaround for MOB-1763
-      form.setPublishModel(PublishModel.open);
+      // TODO: default permission for topics created from console is subscribers
+      TopicAction.PublisherType permission = topicInfo.getPublishPermission();
+      if (permission == null) {
+        permission = TopicAction.PublisherType.subscribers;
+      }
+      form.setPublishModel(ConfigureForm.convert(permission));
       form.setTitle(topicName);
       form.setSubscribe(topicInfo.isSubscriptionEnabled());
       if (topicDescription != null) {
