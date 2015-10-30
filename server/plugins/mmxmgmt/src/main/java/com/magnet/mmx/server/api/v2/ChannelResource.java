@@ -28,6 +28,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -114,7 +115,6 @@ public class ChannelResource {
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  @Path("create")
   public Response createChannel(@Context HttpHeaders headers,
       TopicCreateInfo topicInfo) {
     ErrorResponse errorResponse = null;
@@ -188,7 +188,7 @@ public class ChannelResource {
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
-  @Path("{" + CHANNEL_NAME + "}/publish")
+  @Path("{" + CHANNEL_NAME + "}/items")
   public Response publishMessage(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topic,
       TopicPostMessageRequest request) {
@@ -250,8 +250,7 @@ public class ChannelResource {
       offset = DEFAULT_OFFSET;
 
     TopicAction.TopicSearchRequest rqt = toSearchRequest(topicName,
-        description,
-        tags, size, offset);
+        description, tags, size, offset);
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
     try {
       long startTime = System.nanoTime();
@@ -282,7 +281,7 @@ public class ChannelResource {
     return rqt;
   }
 
-  @GET
+  @PUT
   @Path("{" + CHANNEL_NAME + "}/subscribe")
   @Produces(MediaType.APPLICATION_JSON)
   public Response subscribeChannel(@Context HttpHeaders headers,
@@ -325,7 +324,7 @@ public class ChannelResource {
     }
   }
 
-  @GET
+  @PUT
   @Path("{" + CHANNEL_NAME + "}/unsubscribe")
   @Produces(MediaType.APPLICATION_JSON)
   public Response unsubscribeChannel(@Context HttpHeaders headers,
@@ -556,10 +555,10 @@ public class ChannelResource {
   @Path("{" + CHANNEL_NAME + "}/tags/" + "{"
       + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
   public Response deleteTags(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topicName,
-      @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag) {
+      @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag,
+      @QueryParam("personal") String isPersonalTopic) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
       return RestUtils.getUnauthJAXRSResp();
@@ -569,9 +568,9 @@ public class ChannelResource {
     String appId = tokenInfo.getMmxAppId();
     try {
       MMXTopicManager topicManager = MMXTopicManager.getInstance();
-      MMXTopicId topicId = nameToId(topicName);
-      TopicTags tags = new TopicTags(topicId.getEscUserId(), topicId.getName(),
-          Arrays.asList(tag));
+      boolean myTopic = Boolean.parseBoolean(isPersonalTopic);
+      TopicTags tags = new TopicTags(myTopic ? tokenInfo.getUserId() : null,
+          topicName, Arrays.asList(tag));
       topicManager.removeTags(from, appId, tags);
       return RestUtils.getOKJAXRSResp();
     } catch (MMXException e) {
@@ -598,7 +597,6 @@ public class ChannelResource {
   @DELETE
   @Path("{" + CHANNEL_NAME + "}/tags")
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
   public Response deleteAllTags(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topicName,
       @QueryParam("personal") String isPersonalTopic) {
@@ -638,10 +636,10 @@ public class ChannelResource {
   }
 
   @GET
-  @Path("summary")
+  @Path("{" + CHANNEL_NAME + "}/summary")
   @Produces(MediaType.APPLICATION_JSON)
   public Response getSummary(@Context HttpHeaders headers,
-      @QueryParam(CHANNEL_NAME) String topicName) {
+      @PathParam(CHANNEL_NAME) String topicName) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
       return RestUtils.getUnauthJAXRSResp();
