@@ -104,7 +104,7 @@ public class IntegrationAppResource {
 
       ///// BOT support
       String appName = appInfo.getName();
-      String appId = appInfo.getAppId();
+      String appId =  appEntity.getAppId();//appInfo.getAppId();
       if (BotStarter.isBotEnabled(appName)) {
         Future<Boolean> resultFuture = BotStarter.startApplicableBots(appName, appId, Executors.newSingleThreadExecutor());
         try {
