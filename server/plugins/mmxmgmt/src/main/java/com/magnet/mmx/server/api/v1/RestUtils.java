@@ -52,13 +52,14 @@ public class RestUtils {
 
   private static String MISSING_HEADER = "Authentication failed : mandatory header %s is missing";
   private static String INVALID_HEADER_VALUE = "Authentication failed : header %s has an invalid value %s";
-  private static String DEFAULT_MAX_SERVER_BASE_URL = "http://localhost:8443/api/com.magnet.server";
  
   private static Map<String, TokenInfo> sAuthTokenCache = new Hashtable<String, TokenInfo>();
   
   public static <T> T doMAXGet(String authToken, String path, Map<String, List<String>> reqt,
                              Class<T> respClz) throws IOException {
-    String maxServerBaseUrl = JiveGlobals.getProperty("mmx.auth.server.base.url", DEFAULT_MAX_SERVER_BASE_URL);
+    String maxServerBaseUrl = JiveGlobals.getProperty(
+        BFOAuthAccessor.SERVER_BASE_URL_KEY,
+        BFOAuthAccessor.DEFAULT_OAUTH_SERVER_BASE_URL);
     LOGGER.debug("Sending GET to " + maxServerBaseUrl+path);
     Reader reader = null;
     HttpURLConnection conn = null;
@@ -101,7 +102,9 @@ public class RestUtils {
   
   public static <T> T doMAXPost(String authToken, String path, Object reqt,
                                  Class<T> respClass) throws IOException {
-    String maxServerBaseUrl = JiveGlobals.getProperty("mmx.auth.server.base.url", DEFAULT_MAX_SERVER_BASE_URL);
+    String maxServerBaseUrl = JiveGlobals.getProperty(
+        BFOAuthAccessor.SERVER_BASE_URL_KEY,
+        BFOAuthAccessor.DEFAULT_OAUTH_SERVER_BASE_URL);
     LOGGER.debug("Sending POST to " + maxServerBaseUrl+path);
     Reader reader = null;
     Writer writer = null;

@@ -689,11 +689,12 @@ public class ChannelResource {
   }
 
   /**
-   * Fetch the published items using a date range filter.  The URL looks like:
-   * .../channels/{topicName}/items?offset={offset}&amp;since={datetime}&amp;
-   * until={datetime}&amp;size={itemsPerPage}&smp;sort_order={ASC|DESC}
+   * Fetch the published items using a date range filter with pagination.  The
+   * URL looks like:<br>
+   * .../channels/{topicName}/items/fetch?offset={offset}&amp;since={datetime}
+   * &amp;until={datetime}&amp;size={itemsPerPage}&smp;sort_order={ASC|DESC}
    * @param headers
-   * @param topicName
+   * @param topicName A public channel or private channel (userID#topicName)
    * @param sortOrder
    * @param since
    * @param until
@@ -702,7 +703,7 @@ public class ChannelResource {
    * @return
    */
   @GET
-  @Path("{" + CHANNEL_NAME + "}/items")
+  @Path("{" + CHANNEL_NAME + "}/items/fetch")
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response fetchItems(@Context HttpHeaders headers,
@@ -769,14 +770,15 @@ public class ChannelResource {
   
   /**
    * Get the published items by their ID's.  The channel name can be a public
-   * channel or private channel (userID#topicName.)
+   * channel or private channel.  The URL may look like:<br>
+   * .../channels/{topicName}/items?id={itemID1}&amp;id={itemID2}
    * @param headers
-   * @param topicName
+   * @param topicName Public channel or private channel (userID#topicName).
    * @param idList
    * @return
    */
   @GET
-  @Path("{" + CHANNEL_NAME + "}/items/byids")
+  @Path("{" + CHANNEL_NAME + "}/items")
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response getItemsByIds(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topicName,
@@ -825,15 +827,16 @@ public class ChannelResource {
   }
   
   /**
-   * Delete all published items from a channel.  Only the channel owner can
-   * perform this operation.
+   * Delete all published items from a channel owned by the current user.
+   * The URL may look like:<br>
+   * .../channels/{topicName}/items/all?personal=boolean
    * @param headers
-   * @param topicName
-   * @param isPersonalTopic
+   * @param topicName The channel name.
+   * @param isPersonalTopic true for private channel, false for public channel
    * @return
    */
   @DELETE
-  @Path("{" + CHANNEL_NAME + "}/items")
+  @Path("{" + CHANNEL_NAME + "}/items/all")
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteAllItems(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topicName,
@@ -871,8 +874,17 @@ public class ChannelResource {
     }
   }
   
+  /**
+   * Delete the items published by the current user from a public channel or
+   * private channel.  The URL may look like:<br>
+   * .../channels/{topicName}/items?id={itemID1}&amp;id={itemID2}
+   * @param headers
+   * @param topicName A public channel name or private channel name (userID#topicName)
+   * @param idList
+   * @return
+   */
   @DELETE
-  @Path("{" + CHANNEL_NAME + "}/items/byids")
+  @Path("{" + CHANNEL_NAME + "}/items")
   @Produces(MediaType.APPLICATION_JSON)
   public Response deleteItemsByIds(@Context HttpHeaders headers,
       @PathParam(CHANNEL_NAME) String topicName,
