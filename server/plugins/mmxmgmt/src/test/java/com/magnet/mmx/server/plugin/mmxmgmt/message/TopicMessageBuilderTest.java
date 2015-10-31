@@ -14,6 +14,20 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.junit.Assert;
+import org.junit.Test;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,20 +35,6 @@ import com.google.gson.JsonSyntaxException;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
-import org.dom4j.Element;
-import org.junit.Assert;
-import org.junit.Test;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.fail;
 
 public class TopicMessageBuilderTest {
 
@@ -59,7 +59,7 @@ public class TopicMessageBuilderTest {
     builder.setDomain("localhost");
     builder.setRequest(request);
     builder.setUtcTime(System.currentTimeMillis());
-    builder.setIdGenerator(new MessageIdGeneratorImpl());
+    builder.setItemId(new MessageIdGeneratorImpl().generateItemIdentifier(topicId));
     builder.setTopicId(topicId);
     builder.setAppId(app.getAppId());
     IQ iqPublishMessage = builder.build();

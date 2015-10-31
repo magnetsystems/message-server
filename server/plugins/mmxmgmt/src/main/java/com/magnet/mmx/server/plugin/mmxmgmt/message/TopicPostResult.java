@@ -15,7 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
 /**
- * Result of topic post operation
+ * Result of topic post operation.  The messageId is the published item ID.
  */
 public class TopicPostResult {
 

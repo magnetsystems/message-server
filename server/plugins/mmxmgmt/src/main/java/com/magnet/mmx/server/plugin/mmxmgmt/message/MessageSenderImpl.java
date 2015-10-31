@@ -30,6 +30,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.magnet.mmx.protocol.MMXTopicId;
+import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
@@ -293,12 +294,14 @@ public class MessageSenderImpl implements MessageSender {
       }
 
       // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName"
-      MMXTopicId tid = TopicResource.nameToId(topicName);
+      MMXTopicId tid = ChannelResource.nameToId(topicName);
       String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
       //ok validated.
       TopicMessageBuilder builder = new TopicMessageBuilder();
+      MessageIdGeneratorImpl idGen = new MessageIdGeneratorImpl();
+      String itemId = idGen.generateItemIdentifier(topicId);
       builder.setAppEntity(validationResult.getAppEntity())
-          .setIdGenerator(new MessageIdGeneratorImpl())
+          .setItemId(itemId)
           .setUtcTime(System.currentTimeMillis())
           .setRequest(request)
           .setDomain(domain)
@@ -311,11 +314,10 @@ public class MessageSenderImpl implements MessageSender {
         LOGGER.debug("Topic message:" + publishIQ.toXML());
       }
 
-      String messageId = publishIQ.getID();
       routeMessage(publishIQ);
       result = new TopicPostResult();
       result.setError(false);
-      result.setMessageId(messageId);
+      result.setMessageId(itemId);
       result.setStatus(SEND_MESSAGE_STATUS_OK);
     } else {
       LOGGER.info("topic post errorMessage validation failed");

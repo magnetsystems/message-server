@@ -15,6 +15,18 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.servlet.http.HttpServletResponse;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.APNS;
 import com.magnet.mmx.protocol.AppCreate;
@@ -37,17 +49,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AppIDGenerator;
 import com.magnet.mmx.util.AppHelper;
 import com.magnet.mmx.util.Utils;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.servlet.http.HttpServletResponse;
 
 public class MMXAppManager {
 
@@ -119,43 +120,60 @@ public class MMXAppManager {
     if (guestSecret == null || guestSecret.isEmpty()) {
       guestSecret = AppHelper.generateRandomKey();
     }
-    // Add all these entries in our database.
-    // TODO: if server user ID is null, don't create the app server user account.
-    serverUserId = (serverUserId == null) ? 
-        AppHelper.generateRandomPositiveKey() : serverUserId;
-    String serverUser = AppHelper.generateUser(null, serverUserId, appId);
-    if (serverUserKey == null) {
-      serverUserKey = AppHelper.generateRandomKey();  // generate a random one
+//    // Add all these entries in our database.
+//    // TODO: if server user ID is null, don't create the app server user account.
+//    serverUserId = (serverUserId == null) ?
+//        AppHelper.generateRandomPositiveKey() : serverUserId;
+//    String serverUser = AppHelper.generateUser(null, serverUserId, appId);
+//    if (serverUserKey == null) {
+//      serverUserKey = AppHelper.generateRandomKey();  // generate a random one
+//    }
+//    User suser = null;
+//    AppEntity app = null;
+//    try {
+//      if (serverUser != null) {
+//        suser = createUser(serverUser, serverUserKey,
+//          userNameToDisplayName(appName + " ", serverUser, null));
+//      }
+//
+//      app = appDAO.createApp(((suser == null) ? null : suser.getUsername()),
+//          appName, appId,
+//          apiKey, googleApiKey, googleProjectId, apnsPwd,
+//          ownerID, ownerEmail, guestSecret, productionApnsCert);
+//    } catch (UserAlreadyExistsException e) {
+//      throw new AppManagementException(e);
+//    } catch (AppAlreadyExistsException e) {
+//      // Remove user that we already created above and return an error.
+//      if (suser != null) {
+//        deleteUser(suser);
+//      }
+//      throw e;
+//    } catch (DbInteractionException e) {
+//      if (suser != null) {
+//        deleteUser(suser);
+//      }
+//      throw e;
+//    }
+
+    // For v2, we assume that server user has been created by MMS and we bind
+    // the server user ID with the app.  The server user ID is used by console
+    // to send messages, so it is required.
+    if (serverUserId == null) {
+      serverUserId = "do-not-reply";
     }
-    User suser = null;
     AppEntity app = null;
     try {
-      if (serverUser != null) {
-        suser = createUser(serverUser, serverUserKey,
-          userNameToDisplayName(appName + " ", serverUser, null));
-      }
-
-      app = appDAO.createApp(((suser == null) ? null : suser.getUsername()),
-          appName, appId,
+      app = appDAO.createApp(serverUserId, appName, appId,
           apiKey, googleApiKey, googleProjectId, apnsPwd,
           ownerID, ownerEmail, guestSecret, productionApnsCert);
-    } catch (UserAlreadyExistsException e) {
-      throw new AppManagementException(e);
     } catch (AppAlreadyExistsException e) {
-      // Remove user that we already created above and return an error.
-      if (suser != null) {
-        deleteUser(suser);
-      }
       throw e;
     } catch (DbInteractionException e) {
-      if (suser != null) {
-        deleteUser(suser);
-      }
       throw e;
     }
     // create the app collection topic node
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
-    topicManager.createCollectionNode(suser.getUsername(), appId, null);
+    topicManager.createCollectionNode(serverUserId, appId, null);
     AppCreate.Response response = new AppCreate.Response();
     response.setApiKey(apiKey);
     response.setAppId(appId);
