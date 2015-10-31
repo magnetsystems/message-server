@@ -14,9 +14,9 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import com.magnet.mmx.server.common.data.AppEntity;
-
 import java.util.List;
+
+import com.magnet.mmx.server.common.data.AppEntity;
 
 /**
  * DAO interface for app records
@@ -126,6 +126,22 @@ public interface AppDAO {
       throws AppDoesntExistException;
 
 
+  /**
+   * Update app information.
+   * @param appId
+   * @param appName - name of the app. can be null if app name is not being updated
+   * @param googleApiKey - google api key for the app. can be null if not being updated
+   * @param googleProjectId - google project id for the app. can be null if not being updated.
+   * @param apnsCertPwd - apns certificate password. can be null if not being updated.
+   * @param productionApnsCert
+   * @param serverUserId - server user ID.  can be null if not being updated.
+   * @throws AppDoesntExistException
+   */
+  public void updateApp(String appId, String appName, String googleApiKey,
+                        String googleProjectId, String apnsCertPwd, String ownerEmail,
+                        String guestSecret, boolean productionApnsCert, String serverUserId)
+      throws AppDoesntExistException;
+  
   /**
    * Get a list of all apps currently defined in the database.
    * @return

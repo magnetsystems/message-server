@@ -27,6 +27,24 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;/*   Copyright 
  *  limitations under the License.
  */
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.magnet.mmx.protocol.AppCreate;
 import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.common.data.AppEntity;
@@ -41,15 +59,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.MaxAppLimitExceededExcept
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AppInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JSONFriendlyAppEntityDecorator;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 @Path("/integration/apps")
 public class IntegrationAppResource {
@@ -75,7 +84,8 @@ public class IntegrationAppResource {
         return createMmxApp(appInfo);
       } else {
         dao.updateApp(appInfo.getAppId(), appInfo.getName(), appInfo.getGoogleApiKey(),appInfo.getGoogleProjectId(),
-            appInfo.getApnsCertPassword(), appInfo.getOwnerEmail(), appInfo.getGuestSecret(), appInfo.isApnsCertProduction());
+            appInfo.getApnsCertPassword(), appInfo.getOwnerEmail(), appInfo.getGuestSecret(), appInfo.isApnsCertProduction(),
+            appInfo.getServerUserId());
         AppEntity revised = dao.getAppForAppKey(appInfo.getAppId());
         return Response.status(Response.Status.CREATED)
             .entity(new JSONFriendlyAppEntityDecorator(revised))
