@@ -299,7 +299,7 @@ public class ChannelResource {
       TopicAction.SubscribeRequest rqt = new TopicAction.SubscribeRequest(
           topicId.getEscUserId(), topicId.getName(), null);
       TopicAction.SubscribeResponse resp = topicManager.subscribeTopic(from,
-          appId, rqt, null);
+          appId, rqt, Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
       return RestUtils.getOKJAXRSResp(resp);
     } catch (MMXException e) {
       Response.Status status;
