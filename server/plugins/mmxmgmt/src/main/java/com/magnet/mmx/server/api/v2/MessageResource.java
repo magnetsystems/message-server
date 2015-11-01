@@ -117,7 +117,8 @@ public class MessageResource {
   }
 
   /**
-   * Send a message to a list of user ID's.
+   * Send a message to a list of user ID's.  The user ID's are MMS user ID
+   * (uuid) without %appID.
    * @param headers
    * @param request
    * @return
@@ -163,7 +164,8 @@ public class MessageResource {
   }
   
   /**
-   * Send a message to a list of user names.
+   * Send a message to a list of user names.  The user names are the MMX userId
+   * (without %appID).  For example, "john.doe", not "john.doe%appID".
    * @param headers
    * @param request
    * @return

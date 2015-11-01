@@ -58,7 +58,7 @@ public class MessageBuilderTest {
 
     AppEntity app = new AppEntity();
     app.setAppId("testapp");
-    app.setServerUserId("admin%i1cglsw8dsa");
+    app.setServerUserId("admin");
 
     MessageBuilder builder = new MessageBuilder();
     builder.setSenderId(app.getServerUserId());
@@ -92,7 +92,7 @@ public class MessageBuilderTest {
 
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
-    app.setServerUserId("admin%i1cglsw8dsa");
+    app.setServerUserId("admin");
 
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);
@@ -136,7 +136,7 @@ public class MessageBuilderTest {
 
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
-    app.setServerUserId("admin%i1cglsw8dsa");
+    app.setServerUserId("admin");
 
     MessageBuilder builder = new MessageBuilder();
     builder.setAppEntity(app);

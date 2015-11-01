@@ -14,11 +14,10 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 
 /**
  */
@@ -35,6 +34,7 @@ public class SendMessageRequest {
     return recipientUsernames;
   }
 
+  // recipientUsername should not contain the %appID.
   public void setRecipientUsernames(List<String> recipientUsername) {
     this.recipientUsernames = recipientUsername;
   }
