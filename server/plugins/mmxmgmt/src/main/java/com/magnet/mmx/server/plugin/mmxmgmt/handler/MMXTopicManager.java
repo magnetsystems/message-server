@@ -328,7 +328,8 @@ public class MMXTopicManager {
     return result;
   }
 
-  CollectionNode createCollectionNode(String creatorUserId, String nodeId, CollectionNode parentNode) {
+  // creatorUsername is "userID%appID"
+  CollectionNode createCollectionNode(String creatorUsername, String nodeId, CollectionNode parentNode) {
     CollectionNode parent = (parentNode == null) ? mPubSubModule.getRootCollectionNode() : parentNode;
     Node result = mPubSubModule.getNode(nodeId);
     if (result != null && !result.isCollectionNode()) {
@@ -348,7 +349,7 @@ public class MMXTopicManager {
       form.setPublishModel(ConfigureForm.PublishModel.open);
       LOGGER.trace("Collection config form: " + form);
       
-      JID jid = new JID(creatorUserId, mServer.getServerInfo().getXMPPDomain(), null);
+      JID jid = new JID(creatorUsername, mServer.getServerInfo().getXMPPDomain(), null);
       CollectionNode node = new CollectionNode(mPubSubModule, parent, nodeId, jid);
       node.addOwner(jid);
       try {

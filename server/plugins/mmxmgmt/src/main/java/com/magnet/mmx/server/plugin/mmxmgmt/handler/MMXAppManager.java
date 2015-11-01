@@ -47,6 +47,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.MaxAppLimitExceededExcept
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertEventsManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AppIDGenerator;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.util.AppHelper;
 import com.magnet.mmx.util.Utils;
 
@@ -157,9 +158,12 @@ public class MMXAppManager {
 
     // For v2, we assume that server user has been created by MMS and we bind
     // the server user ID with the app.  The server user ID is used by console
-    // to send messages, so it is required.
-    if (serverUserId == null) {
+    // to send messages, so it is required.  The "do-not-reply" is for debug
+    // purpose in case MMS cannot provide the serverUserId.
+    String creatorUserId;
+    if ((creatorUserId = serverUserId) == null) {
       serverUserId = "do-not-reply";
+      creatorUserId = ownerID;
     }
     AppEntity app = null;
     try {
@@ -171,9 +175,10 @@ public class MMXAppManager {
     } catch (DbInteractionException e) {
       throw e;
     }
-    // create the app collection topic node
+    // create the app collection topic node.  If the serverUserId is not
+    // available, use the ownerID as the creator.
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
-    topicManager.createCollectionNode(serverUserId, appId, null);
+    topicManager.createCollectionNode(JIDUtil.makeNode(creatorUserId, appId), appId, null);
     AppCreate.Response response = new AppCreate.Response();
     response.setApiKey(apiKey);
     response.setAppId(appId);
