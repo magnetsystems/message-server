@@ -180,8 +180,8 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
     String senderId = JIDUtil.getUserId(fromJID);
     String senderDevId = fromJID.getResource();
     MmxHeaders mmxMeta = new MmxHeaders();
-    mmxMeta.put(MmxHeaders.TO, new MMXid[] {new MMXid(userId, devId, null)});
-    mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, senderDevId, null));
+    mmxMeta.setTo(new MMXid[] {new MMXid(userId, devId, null)});
+    mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
     internalMeta.setText(GsonData.getGson().toJson(mmxMeta));
 
     Element meta = mmx.addElement(Constants.MMX_META);
@@ -240,8 +240,8 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
     String senderId = JIDUtil.getUserId(fromJID);
     String senderDevId = fromJID.getResource();
     MmxHeaders mmxMeta = new MmxHeaders();
-    mmxMeta.put(MmxHeaders.TO, new MMXid[] {new MMXid(userId, devId, null)});
-    mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, senderDevId, null));
+    mmxMeta.setTo(new MMXid[] {new MMXid(userId, devId, null)});
+    mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
     internalMeta.setText(GsonData.getGson().toJson(mmxMeta));
 
     Element meta = mmx.addElement(Constants.MMX_META);

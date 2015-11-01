@@ -32,8 +32,6 @@ import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.Utils;
@@ -114,15 +112,14 @@ public class MessageBuilder {
     Element mmxElement = message.addChildElement(Constants.MMX,
         Constants.MMX_NS_MSG_PAYLOAD);
 
-    // construct the <mmxmeta> stanza with To, From, mmxdistributed(?)
+    // construct the <mmxmeta> stanza with To and From.
     MmxHeaders mmxMeta = new MmxHeaders();
     if (senderId != null) {
-      mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, null));
+      mmxMeta.setFrom(new MMXid(senderId, null));
     }
     if (userId != null) {
-      mmxMeta.put(MmxHeaders.TO, new MMXid[] {new MMXid(userId, null)});
+      mmxMeta.setTo(new MMXid[] {new MMXid(userId, null)});
     }
-    // mmxMeta.put("mmxdistributed", Boolean.TRUE);
     String mmxMetaJSON = GsonData.getGson().toJson(mmxMeta);
     Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
     mmxMetaElement.setText(mmxMetaJSON);
@@ -196,9 +193,9 @@ public class MessageBuilder {
   }
 
   /**
-   * Build from JID using the application's server user. This is for:
+   * Build the From bared JID using the application's server user. This is for:
    * https://magneteng.atlassian.net/browse/MOB-772. If the app doesn't have a
-   * server user we fall back to console user.
+   * server user we fall back to the app owner.
    * 
    * @return from JID.
    */
@@ -206,13 +203,10 @@ public class MessageBuilder {
     String serverUser = appEntity.getServerUserId();
     if (serverUser == null) {
       LOGGER.warn("Server user for app with id:" + appEntity.getAppId()
-          + " is null.");
-      serverUser = MMXConfiguration.getConfiguration().getString(
-          MMXConfigKeys.CONSOLE_MESSAGE_SEND_USER, "console");
+          + " is null, use app owner as the sender");
+      serverUser = appEntity.getOwnerId();
     }
-    // note: serverUser is stored with the appId suffix included and in escaped
-    // format
-    JID toJID = new JID(serverUser, domain, null);
+    JID toJID = new JID(JIDUtil.makeNode(serverUser, appEntity.getAppId()), domain, null);
     return toJID;
   }
 

@@ -237,7 +237,8 @@ public class MMXTopicManager {
     topicName = TopicHelper.normalizePath(topicName);
 
     String appId = entity.getAppId();
-    String topicId = TopicHelper.makeTopic(appId, null, topicName);
+    String topicId = TopicHelper.makeTopic(appId, topicInfo.isPersonalTopic() ?
+        entity.getServerUserId() : null, topicName);
 
     /**
      * Get the appRootNode
@@ -254,7 +255,8 @@ public class MMXTopicManager {
     Node newAppTopic = null;
 
     try {
-      newAppTopic = createLeafNode(entity.getServerUserId(), topicId, appRootNode, topicInfo);
+      newAppTopic = createLeafNode(JIDUtil.makeNode(entity.getServerUserId(), appId),
+          topicId, appRootNode, topicInfo);
       result.setSuccess(true);
       result.setNode(TopicNode.build(appId, newAppTopic));
       // Add role mappings
@@ -364,13 +366,13 @@ public class MMXTopicManager {
   /**
    * Create a topic using the topic request.
    *
-   * @param creatorUserId
+   * @param createUsername
    * @param topicId
    * @param parentNode
    * @throws TopicExistsException   -- if topic already exists
    * @throws NotAcceptableException -- if an exception is thrown by openfire during topic creation.
    */
-  private LeafNode createLeafNode(String creatorUserId, String topicId, 
+  private LeafNode createLeafNode(String createUsername, String topicId, 
                     CollectionNode parentNode, TopicCreateInfo topicInfo)
                         throws TopicExistsException, NotAcceptableException {
 
@@ -410,7 +412,7 @@ public class MMXTopicManager {
       }
 //      LOGGER.trace("Leaf config form: "+form);
 
-      JID jid = new JID(creatorUserId, mServer.getServerInfo().getXMPPDomain(), null);
+      JID jid = new JID(createUsername, mServer.getServerInfo().getXMPPDomain(), null);
       LeafNode node = new LeafNode(mPubSubModule, parentNode, topicId, jid);
       node.addOwner(jid);
       try {

@@ -176,8 +176,8 @@ public class BotRegistrationImpl implements BotRegistration {
         String senderId = JIDUtil.getUserId(toJID);
         String senderDevId = toJID.getResource();
         MmxHeaders mmxMeta = new MmxHeaders();
-        mmxMeta.put(MmxHeaders.TO, new MMXid[] {new MMXid(userId, devId, null)});
-        mmxMeta.put(MmxHeaders.FROM, new MMXid(senderId, senderDevId, null));
+        mmxMeta.setTo(new MMXid[] {new MMXid(userId, devId, null)});
+        mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
         Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
         revisedMeta.setText(GsonData.getGson().toJson(mmxMeta));
         
