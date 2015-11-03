@@ -529,7 +529,7 @@ public class ChannelResource {
       TopicTags tags = new TopicTags(topicId.getEscUserId(), topicId.getName(),
           tagList.getTags());
       MMXStatus status = topicManager.addTags(from, appId, tags);
-      return RestUtils.getOKJAXRSResp(tags);
+      return RestUtils.getOKJAXRSResp(status);
     } catch (MMXException e) {
       ErrorResponse errorResponse = new ErrorResponse();
       if (e.getCode() == StatusCode.NOT_FOUND) {

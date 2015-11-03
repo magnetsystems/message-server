@@ -83,7 +83,8 @@ public class MessageSenderImpl implements MessageSender {
 
 
   @Override
-  public SendMessageResult send(String appId, com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request) {
+  public SendMessageResult send(String senderUserId, String appId,
+        com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request) {
     ConnectionProvider provider = getConnectionProvider();
     AppDAO appDAO = new AppDAOImpl(provider);
     DeviceDAO deviceDAO = new DeviceDAOImpl(provider);
@@ -122,7 +123,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(validationResult.getDeviceEntity())
-                .setSenderId(appEntity.getServerUserId())
+                .setSenderId(senderUserId)
                 .setUserId(username)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -151,7 +152,7 @@ public class MessageSenderImpl implements MessageSender {
             .setIdGenerator(new MessageIdGeneratorImpl())
             .setUtcTime(System.currentTimeMillis())
             .setDeviceEntity(validationResult.getDeviceEntity())
-            .setSenderId(appEntity.getServerUserId())
+            .setSenderId(senderUserId)
             .setUserId(recipient)
             .setReplyTo(request.getReplyTo())
             .setMetadata(request.getContent())
@@ -190,7 +191,7 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppEntity(validationResult.getAppEntity())
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
-                .setSenderId(appEntity.getServerUserId())
+                .setSenderId(senderUserId)
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -225,7 +226,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setIdGenerator(new MessageIdGeneratorImpl())
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(de)
-                .setSenderId(appEntity.getServerUserId())
+                .setSenderId(senderUserId)
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())

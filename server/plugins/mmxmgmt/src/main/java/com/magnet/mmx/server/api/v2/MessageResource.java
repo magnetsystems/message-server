@@ -138,7 +138,7 @@ public class MessageResource {
       
       MessageSender sender = new MessageSenderImpl();
       String appId = tokenInfo.getMmxAppId();
-      SendMessageResult result = sender.send(appId, request);
+      SendMessageResult result = sender.send(tokenInfo.getUserId(), appId, request);
       Response rv = null;
       if (result.isError()) {
         ErrorResponse response = new ErrorResponse(result.getErrorCode(), result.getErrorMessage());

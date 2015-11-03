@@ -105,7 +105,7 @@ public class MessageSenderImplTest {
     String appId = "i0sq7ddvi17";
 
     MessageSenderImpl sender = new StubMessageSenderImpl();
-    SendMessageResult result = sender.send(appId, request);
+    SendMessageResult result = sender.send("bogus-sender-user-id", appId, request);
     assertFalse("Send result is error", result.isError());
     assertNotNull("message result is null", result);
     Count count = result.getCount();
@@ -130,7 +130,7 @@ public class MessageSenderImplTest {
     String appId = "i0sq7ddvi17";
 
     MessageSenderImpl sender = new StubMessageSenderImpl();
-    SendMessageResult result = sender.send(appId, request);
+    SendMessageResult result = sender.send("bogus-sender-user-id", appId, request);
     assertNotNull("message result is null", result);
     assertFalse("Expect error flag to be set", result.isError());
  }
@@ -149,7 +149,7 @@ public class MessageSenderImplTest {
     request.setContent(contentMap);
 
     MessageSenderImpl sender = new StubMessageSenderImpl();
-    SendMessageResult result = sender.send(appId, request);
+    SendMessageResult result = sender.send("bogus-sender-user-id", appId, request);
     assertNotNull("message result is null", result);
 
     boolean error = result.isError();
@@ -174,7 +174,7 @@ public class MessageSenderImplTest {
 
 
     MessageSenderImpl sender = new MessageReturningStubMessageSenderImpl();
-    SendMessageResult result = sender.send(appId, request);
+    SendMessageResult result = sender.send("bogus-sender-user-id", appId, request);
     assertNotNull("message result is null", result);
 
     assertNotNull("Message Id is expected to be not null", result.getSentList().get(0).getMessageId());

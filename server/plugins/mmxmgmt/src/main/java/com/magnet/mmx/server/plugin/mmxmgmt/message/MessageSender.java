@@ -23,12 +23,13 @@ public interface MessageSender {
 
   /**
    * Send a message using the information in the request object.
-   *
+   * @param senderUesrId The userID without %appID.
    * @param appId
    * @param request
    * @return
    */
-  public SendMessageResult send(String appId, com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request);
+  public SendMessageResult send(String senderUserId, String appId,
+      com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request);
 
   /**
    * Post a message to a topic.
