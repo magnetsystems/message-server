@@ -77,7 +77,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.TagList;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.TopicTagInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
@@ -112,6 +111,19 @@ public class ChannelResource {
   private static final String DEFAULT_MAX_ITEMS = "200";
   private final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
 
+  public static class AddTagRequest {
+    private boolean personal;
+    private List<String> tags;
+    
+    public boolean isPersonal() {
+      return personal;
+    }
+    
+    public List<String> getTags() {
+      return tags;
+    }
+  }
+  
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
@@ -514,8 +526,7 @@ public class ChannelResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   public Response addTags(@Context HttpHeaders headers,
-      @PathParam(CHANNEL_NAME) String topicName,
-      TagList tagList) {
+      @PathParam(CHANNEL_NAME) String topicName, AddTagRequest request) {
     TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
     if (tokenInfo == null) {
       return RestUtils.getUnauthJAXRSResp();
@@ -525,9 +536,8 @@ public class ChannelResource {
     String appId = tokenInfo.getMmxAppId();
     try {
       MMXTopicManager topicManager = MMXTopicManager.getInstance();
-      MMXTopicId topicId = nameToId(topicName);
-      TopicTags tags = new TopicTags(topicId.getEscUserId(), topicId.getName(),
-          tagList.getTags());
+      TopicTags tags = new TopicTags(request.isPersonal() ?
+          tokenInfo.getUserId() : null, topicName, request.getTags());
       MMXStatus status = topicManager.addTags(from, appId, tags);
       return RestUtils.getOKJAXRSResp(status);
     } catch (MMXException e) {
