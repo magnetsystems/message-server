@@ -44,7 +44,7 @@ public class MessageBuilderTest {
   @Test
   public void test1Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("importantuser"));
+    request.setRecipientUserIds(Collections.singletonList("importantuser"));
 
 
 
@@ -64,7 +64,7 @@ public class MessageBuilderTest {
     builder.setSenderId(app.getServerUserId());
     builder.setAppEntity(app);
     builder.setDomain("localhost");
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     builder.setUtcTime(System.currentTimeMillis());
     builder.setMetadata(request.getContent());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
@@ -82,7 +82,7 @@ public class MessageBuilderTest {
   @Test
   public void test2Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("test"));
+    request.setRecipientUserIds(Collections.singletonList("test"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
 
     Map<String, String> contentMap = new HashMap<String, String>();
@@ -101,7 +101,7 @@ public class MessageBuilderTest {
     builder.setUtcTime(System.currentTimeMillis());
     builder.setIdGenerator(new MessageIdGeneratorImpl());
     builder.setSenderId(app.getServerUserId());
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     Message m = builder.build();
     assertNotNull("Message shouldn't be null", m);
     Element mmx = m.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
@@ -122,7 +122,7 @@ public class MessageBuilderTest {
   @Test
   public void test3BuildWithNameAndValue() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("test"));
+    request.setRecipientUserIds(Collections.singletonList("test"));
     String message = "Simple Test";
     Map<String, String> contentMap = new HashMap<String, String>();
     contentMap.put("content", message);
@@ -142,7 +142,7 @@ public class MessageBuilderTest {
     builder.setAppEntity(app);
     builder.setDomain("localhost");
     builder.setSenderId(app.getServerUserId());
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
     builder.setIdGenerator(new MessageIdGeneratorImpl());

@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
@@ -43,6 +45,7 @@ import com.magnet.mmx.server.api.v2.UserResource.User;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest2;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAOImpl;
@@ -165,7 +168,8 @@ public class MessageResource {
   
   /**
    * Send a message to a list of user names.  The user names are the MMX userId
-   * (without %appID).  For example, "john.doe", not "john.doe%appID".
+   * (without %appID).  For example, "john.doe", not "john.doe%appID".  If any
+   * user names are invalid, no message will be sent.
    * @param headers
    * @param request
    * @return
@@ -174,14 +178,25 @@ public class MessageResource {
   @Path("send_to_user_names")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response sendMessageToUserNames(@Context HttpHeaders headers, SendMessageRequest request) {
+  public Response sendMessageToUserNames(@Context HttpHeaders headers,
+                                          SendMessageRequest2 request) {
     String authToken = RestUtils.getAuthToken(headers);
-    List<String> ids = userNamesToIds(authToken, request.getRecipientUsernames());
-    request.setRecipientUsernames(ids);
-    return sendMessageToUserIds(headers, request);
+    Set<String> badNames = new HashSet<String>();
+    List<String> ids = userNamesToIds(authToken, request.getRecipientUsernames(),
+        badNames);
+    if (!badNames.isEmpty()) {
+      ErrorResponse errorResponse = new ErrorResponse(ErrorCode.SEND_MESSAGE_INVALID_RECIPIENT,
+          (new ArrayList<String>(badNames)).toString());
+      return RestUtils.getBadReqJAXRSResp(errorResponse);
+    }
+    return sendMessageToUserIds(headers, request.toInternal(ids));
   }
   
-  private List<String> userNamesToIds(String authToken, List<String> names) {
+  private List<String> userNamesToIds(String authToken, List<String> names,
+                                        Set<String> badNamesHolder) {
+    if (badNamesHolder != null) {
+      badNamesHolder.addAll(names);
+    }
     List<String> userIds = new ArrayList<String>(names.size());
     HashMap<String, List<String>> reqt = new HashMap<String, List<String>>(1);
     reqt.put("userNames", names);
@@ -189,6 +204,9 @@ public class MessageResource {
       User[] users = RestUtils.doMAXGet(authToken, "/user/users", reqt, User[].class);
       for (User user : users) {
         userIds.add(user.getUserIdentifier());
+        if (badNamesHolder != null) {
+          badNamesHolder.remove(user.getUserName());
+        }
       }
       return userIds;
     } catch (IOException e) {

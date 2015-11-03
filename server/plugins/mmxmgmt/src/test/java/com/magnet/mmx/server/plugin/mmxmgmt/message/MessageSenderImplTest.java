@@ -14,14 +14,20 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
-import com.magnet.mmx.protocol.Constants;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
@@ -37,19 +43,14 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 
 /**
  */
@@ -96,7 +97,7 @@ public class MessageSenderImplTest {
   @Test
   public void testSendNonExistingRecipient() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("unknown"));
+    request.setRecipientUserIds(Collections.singletonList("unknown"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
     HashMap<String,String> contentMap = new HashMap<String, String>();
     contentMap.put("content", message);
@@ -121,7 +122,7 @@ public class MessageSenderImplTest {
   @Test
   public void testSendWithValidRecipient() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("login3"));
+    request.setRecipientUserIds(Collections.singletonList("login3"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
     HashMap<String,String> contentMap = new HashMap<String, String>();
     contentMap.put("content", message);
@@ -139,7 +140,7 @@ public class MessageSenderImplTest {
   @Test
   public void testSendWithBadAppId() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("importantuser"));
+    request.setRecipientUserIds(Collections.singletonList("importantuser"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
     request.setReceipt(true);
 

@@ -105,8 +105,8 @@ public class MessageSenderImpl implements MessageSender {
       List<UnsentMessage> unsentList = new LinkedList<UnsentMessage>();
       Count count = null;
 
-      if (request.getRecipientUsernames() != null && !request.getRecipientUsernames().isEmpty()) {
-        List<String> userList = request.getRecipientUsernames();
+      if (request.getRecipientUserIds() != null && !request.getRecipientUserIds().isEmpty()) {
+        List<String> userList = request.getRecipientUserIds();
         UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
         for (String username : userList) {
           requested++;
@@ -342,7 +342,7 @@ public class MessageSenderImpl implements MessageSender {
       return result;
     }
 
-    List<String> userList = request.getRecipientUsernames();
+    List<String> userList = request.getRecipientUserIds();
     String deviceId = request.getDeviceId();
 
     if ((userList == null || userList.isEmpty()) && deviceId == null && request.getTarget() == null) {

@@ -52,7 +52,7 @@ public class MessageFunctionResource extends AbstractBaseResource {
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response sendMessage(@Context HttpHeaders headers, SendMessageRequest request) {
+  public Response sendMessage(@Context HttpHeaders headers, SendMessageRequest1 request) {
     try {
       long startTime = System.nanoTime();
       MessageSender sender = new MessageSenderImpl();
@@ -67,7 +67,7 @@ public class MessageFunctionResource extends AbstractBaseResource {
       MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
       String appId = requestHeaders.getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
       AppEntity appEntity = appDAO.getAppForAppKey(appId);
-      SendMessageResult result = sender.send(appEntity.getServerUserId(), appId, request);
+      SendMessageResult result = sender.send(appEntity.getServerUserId(), appId, request.toInternal());
       Response rv = null;
       if (result.isError()) {
         rv = Response

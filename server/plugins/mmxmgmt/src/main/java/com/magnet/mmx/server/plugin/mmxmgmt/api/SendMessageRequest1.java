@@ -20,10 +20,10 @@ import java.util.Map;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 
 /**
- * This is used as internal protocol.
+ * REST v1 protocol used by Console.  It is used for v1 to v2 transition.
  */
-public class SendMessageRequest {
-  private List<String> recipientUserIds;
+public class SendMessageRequest1 {
+  private List<String> recipientUsernames;  // actually storing user ID's
   private String deviceId;
   private Map<String, String> content;
   private boolean receipt;
@@ -31,13 +31,13 @@ public class SendMessageRequest {
   private Target target;
 
 
-  public List<String> getRecipientUserIds() {
-    return recipientUserIds;
+  public List<String> getRecipientUsernames() {
+    return recipientUsernames;
   }
 
-  // recipientUserIds should not contain the %appID.
-  public void setRecipientUserIds(List<String> recipientUserIds) {
-    this.recipientUserIds = recipientUserIds;
+  // recipientUsername should not contain the %appID.
+  public void setRecipientUsernames(List<String> recipientUsername) {
+    this.recipientUsernames = recipientUsername;
   }
 
   public String getDeviceId() {
@@ -85,12 +85,24 @@ public class SendMessageRequest {
   public String toString() {
     final StringBuilder sb = new StringBuilder("SendMessageRequest{");
     sb.append("content=").append(content);
-    sb.append(", recipientUserIds=").append(recipientUserIds);
+    sb.append(", recipientUsernames=").append(recipientUsernames);
     sb.append(", deviceId='").append(deviceId).append('\'');
     sb.append(", receipt=").append(receipt);
     sb.append(", replyTo='").append(replyTo).append('\'');
     sb.append(", target=").append(target);
     sb.append('}');
     return sb.toString();
+  }
+  
+  // Convert to an internal protocol.
+  public SendMessageRequest toInternal() {
+    SendMessageRequest rqt = new SendMessageRequest();
+    rqt.setContent(content);
+    rqt.setDeviceId(deviceId);
+    rqt.setReceipt(receipt);
+    rqt.setRecipientUserIds(recipientUsernames);
+    rqt.setReplyTo(replyTo);
+    rqt.setTarget(target);
+    return rqt;
   }
 }

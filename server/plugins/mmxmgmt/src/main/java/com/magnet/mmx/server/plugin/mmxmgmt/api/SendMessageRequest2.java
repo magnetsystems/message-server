@@ -20,10 +20,11 @@ import java.util.Map;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 
 /**
- * This is used as internal protocol.
+ * This is the V2 external protocol which is same as the V1 protocol.
+ * The recipients are in user names.
  */
-public class SendMessageRequest {
-  private List<String> recipientUserIds;
+public class SendMessageRequest2 {
+  private List<String> recipientUsernames;
   private String deviceId;
   private Map<String, String> content;
   private boolean receipt;
@@ -31,13 +32,13 @@ public class SendMessageRequest {
   private Target target;
 
 
-  public List<String> getRecipientUserIds() {
-    return recipientUserIds;
+  public List<String> getRecipientUsernames() {
+    return recipientUsernames;
   }
 
-  // recipientUserIds should not contain the %appID.
-  public void setRecipientUserIds(List<String> recipientUserIds) {
-    this.recipientUserIds = recipientUserIds;
+  // recipientUsername should not contain the %appID.
+  public void setRecipientUsernames(List<String> recipientUsername) {
+    this.recipientUsernames = recipientUsername;
   }
 
   public String getDeviceId() {
@@ -85,12 +86,23 @@ public class SendMessageRequest {
   public String toString() {
     final StringBuilder sb = new StringBuilder("SendMessageRequest{");
     sb.append("content=").append(content);
-    sb.append(", recipientUserIds=").append(recipientUserIds);
+    sb.append(", recipientUsernames=").append(recipientUsernames);
     sb.append(", deviceId='").append(deviceId).append('\'');
     sb.append(", receipt=").append(receipt);
     sb.append(", replyTo='").append(replyTo).append('\'');
     sb.append(", target=").append(target);
     sb.append('}');
     return sb.toString();
+  }
+  
+  public SendMessageRequest toInternal(List<String> userIds) {
+    SendMessageRequest rqt = new SendMessageRequest();
+    rqt.setContent(content);
+    rqt.setDeviceId(deviceId);
+    rqt.setReceipt(receipt);
+    rqt.setRecipientUserIds(userIds);
+    rqt.setReplyTo(replyTo);
+    rqt.setTarget(target);
+    return rqt;
   }
 }
