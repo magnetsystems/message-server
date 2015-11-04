@@ -163,7 +163,8 @@ public class TopicResource {
       }
 
       MessageSender sender = new MessageSenderImpl();
-      TopicPostResult result = sender.postMessage(topic, appEntity.getAppId(), request);
+      TopicPostResult result = sender.postMessage(appEntity.getServerUserId(),
+          topic, appEntity.getAppId(), request);
       TopicPostResponse sendResponse = new TopicPostResponse();
       if (result.isError()) {
         LOGGER.info("Problem posting message:" + result.getErrorMessage());

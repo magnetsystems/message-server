@@ -211,8 +211,8 @@ public class ChannelResource {
 
     try {
       MessageSender sender = new MessageSenderImpl();
-      TopicPostResult result = sender.postMessage(topic, tokenInfo
-          .getMmxAppId(), request);
+      TopicPostResult result = sender.postMessage(tokenInfo.getUserId(), topic,
+          tokenInfo.getMmxAppId(), request);
       TopicPostResponse sendResponse = new TopicPostResponse();
       if (result.isError()) {
         LOGGER.info("Problem posting message:" + result.getErrorMessage());

@@ -17,13 +17,13 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api;
 public class SentMessageId {
   String messageId;
   String deviceId;
-  String recipientUsername;
+  String recipientUserId;
 
 
   public SentMessageId(String recipientId, String deviceId, String messageId) {
     this.messageId = messageId;
     this.deviceId = deviceId;
-    this.recipientUsername = recipientId;
+    this.recipientUserId = recipientId;
   }
 
   public String getMessageId() {
@@ -42,11 +42,11 @@ public class SentMessageId {
     this.deviceId = deviceId;
   }
 
-  public String getRecipientUsername() {
-    return recipientUsername;
+  public String getRecipientUserId() {
+    return recipientUserId;
   }
 
-  public void setRecipientUsername(String recipientUsername) {
-    this.recipientUsername = recipientUsername;
+  public void setRecipientUserId(String recipientUserId) {
+    this.recipientUserId = recipientUserId;
   }
 }

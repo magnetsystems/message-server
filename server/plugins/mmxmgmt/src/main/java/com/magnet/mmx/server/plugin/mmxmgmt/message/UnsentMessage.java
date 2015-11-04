@@ -18,18 +18,18 @@ package com.magnet.mmx.server.plugin.mmxmgmt.message;
 * Created by rphadnis on 4/23/15.
 */
 public class UnsentMessage {
-  private String recipientUsername;
+  private String recipientUserId;
   private int code;
   private String message;
 
-  public UnsentMessage(String username, int code, String message) {
-    this.recipientUsername = username;
+  public UnsentMessage(String userId, int code, String message) {
+    this.recipientUserId = userId;
     this.code = code;
     this.message = message;
   }
 
-  public String getRecipientUsername() {
-    return recipientUsername;
+  public String getRecipientUserId() {
+    return recipientUserId;
   }
 
   public int getCode() {
