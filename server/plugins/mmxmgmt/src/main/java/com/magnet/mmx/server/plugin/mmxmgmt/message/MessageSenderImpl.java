@@ -116,7 +116,7 @@ public class MessageSenderImpl implements MessageSender {
           String mmxUsername = Helper.getMMXUsername(userId, appId);
           UserEntity userEntity = userDAO.getUser(mmxUsername);
           if (userEntity == null) {
-            LOGGER.info("User with name:{} not found", userId);
+            LOGGER.info("User with id:{} not found", userId);
             UnsentMessage badUser = new UnsentMessage(userId,
                 ErrorCode.INVALID_USER_NAME.getCode(), ErrorMessages.ERROR_USERNAME_NOT_FOUND);
             unsentList.add(badUser);

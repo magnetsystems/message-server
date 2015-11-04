@@ -263,8 +263,8 @@ public class RestUtils {
     return Response.status(Response.Status.OK).entity(entity).type(MediaType.APPLICATION_JSON).build();
   }
 
-  public static Response getCreatedJAXRSResp() {
-    return Response.status(Response.Status.CREATED).build();
+  public static Response getCreatedJAXRSResp(Object entity) {
+    return Response.status(Response.Status.CREATED).entity(entity).type(MediaType.APPLICATION_JSON).build();
   }
 
   public static Response getInternalErrorJAXRSResp(ErrorResponse errorResponse) {

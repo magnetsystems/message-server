@@ -228,7 +228,6 @@ public class MessageResource {
     private String state;
     private String recipient;
     private String sender;
-    private String appId;
     private String deviceId;
     private String messageId;
     private Date queuedAt;
@@ -240,10 +239,6 @@ public class MessageResource {
 
     public String getRecipient() {
       return recipient;
-    }
-
-    public String getAppId() {
-      return appId;
     }
 
     public String getSender() {
@@ -269,7 +264,6 @@ public class MessageResource {
     public static SentMessage from(MessageEntity me) {
       SentMessage message = new SentMessage();
       message.messageId = me.getMessageId();
-      message.appId = me.getAppId();
       message.deviceId = me.getDeviceId();
       message.receivedAt = me.getDeliveryAckAt();
       message.queuedAt = me.getQueuedAt();

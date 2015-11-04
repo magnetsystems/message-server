@@ -161,7 +161,8 @@ public class ChannelResource {
       JID from = RestUtils.createJID(tokenInfo);
       CreateRequest rqt = toCreateRequest(topicInfo);
       topicManager.createTopic(from, tokenInfo.getMmxAppId(), rqt);
-      return RestUtils.getCreatedJAXRSResp();
+      errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Channel created");
+      return RestUtils.getCreatedJAXRSResp(errorResponse);
     } catch (MMXException e) {
       if (e.getCode() == StatusCode.CONFLICT) {
         errorResponse = new ErrorResponse(ErrorCode.TOPIC_EXISTS,
