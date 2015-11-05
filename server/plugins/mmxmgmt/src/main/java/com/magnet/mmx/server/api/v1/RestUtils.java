@@ -21,6 +21,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
@@ -68,8 +68,17 @@ public class RestUtils {
       if (reqt == null || reqt.isEmpty()) {
         url = new URL(maxServerBaseUrl + path);
       } else {
-        UriBuilder builder = UriBuilder.fromUri(maxServerBaseUrl + path);
-        url = builder.buildFromMap(reqt).toURL();
+        // TODO: can't figure out how to use UriBuilder.
+        char sep = '?';
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, List<String>> entry : reqt.entrySet()) {
+          for (String value : entry.getValue()) {
+            sb.append(sep).append(entry.getKey()).append('=')
+              .append(URLEncoder.encode(value, "utf-8"));
+            sep = '&';
+          }
+        }
+        url = new URL(maxServerBaseUrl + path + sb.toString());
       }
       LOGGER.debug("Sending GET to "+url.toString());
       conn = getConnection(url);
@@ -254,8 +263,8 @@ public class RestUtils {
     return Response.status(Response.Status.OK).entity(entity).type(MediaType.APPLICATION_JSON).build();
   }
 
-  public static Response getCreatedJAXRSResp() {
-    return Response.status(Response.Status.CREATED).build();
+  public static Response getCreatedJAXRSResp(Object entity) {
+    return Response.status(Response.Status.CREATED).entity(entity).type(MediaType.APPLICATION_JSON).build();
   }
 
   public static Response getInternalErrorJAXRSResp(ErrorResponse errorResponse) {

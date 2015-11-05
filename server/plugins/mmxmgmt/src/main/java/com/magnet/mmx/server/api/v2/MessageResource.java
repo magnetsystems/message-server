@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
@@ -43,6 +45,7 @@ import com.magnet.mmx.server.api.v2.UserResource.User;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest2;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAOImpl;
@@ -90,19 +93,23 @@ public class MessageResource {
       MessageDAO messageDAO = new MessageDAOImpl(new OpenFireDBConnectionProvider());
       List<MessageEntity> messageEntityList = messageDAO.getMessages(appId, messageId);
       
-      if (messageEntityList.size() > 0) {
-        MessageEntity me = messageEntityList.get(0);
-        JID jid = new JID(me.getFrom());
-        if (!jid.getNode().equalsIgnoreCase(from.getNode())) {
-          ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_SENDER_NOT_MATCHED, "User is not the sender");
-          return RestUtils.getJAXRSResp(Response.Status.FORBIDDEN, response);
-        }
+      if (messageEntityList.size() == 0) {
+        ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_STATUS_NOT_FOUND, "No message status found");
+        return RestUtils.getNotFoundJAXRSResp(response);
       }
+
+      JID jid = new JID(messageEntityList.get(0).getFrom());
+      if (!jid.getNode().equalsIgnoreCase(from.getNode())) {
+        ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_SENDER_NOT_MATCHED, "User is not the sender");
+        return RestUtils.getJAXRSResp(Response.Status.FORBIDDEN, response);
+      }
+
+      // A message ID is not unique: multicast msg or user has multiple devices
       List<SentMessage> sentMessageList = new ArrayList<SentMessage>(messageEntityList.size());
       for (MessageEntity me : messageEntityList) {
         sentMessageList.add(SentMessage.from(me));
       }
-      
+
       long endTime = System.nanoTime();
       LOGGER.info("Completed processing getMessageById in {} milliseconds",
           TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
@@ -138,7 +145,7 @@ public class MessageResource {
       
       MessageSender sender = new MessageSenderImpl();
       String appId = tokenInfo.getMmxAppId();
-      SendMessageResult result = sender.send(appId, request);
+      SendMessageResult result = sender.send(tokenInfo.getUserId(), appId, request);
       Response rv = null;
       if (result.isError()) {
         ErrorResponse response = new ErrorResponse(result.getErrorCode(), result.getErrorMessage());
@@ -165,7 +172,8 @@ public class MessageResource {
   
   /**
    * Send a message to a list of user names.  The user names are the MMX userId
-   * (without %appID).  For example, "john.doe", not "john.doe%appID".
+   * (without %appID).  For example, "john.doe", not "john.doe%appID".  If any
+   * user names are invalid, no message will be sent.
    * @param headers
    * @param request
    * @return
@@ -174,14 +182,28 @@ public class MessageResource {
   @Path("send_to_user_names")
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response sendMessageToUserNames(@Context HttpHeaders headers, SendMessageRequest request) {
+  public Response sendMessageToUserNames(@Context HttpHeaders headers,
+                                          SendMessageRequest2 request) {
     String authToken = RestUtils.getAuthToken(headers);
-    List<String> ids = userNamesToIds(authToken, request.getRecipientUsernames());
-    request.setRecipientUsernames(ids);
-    return sendMessageToUserIds(headers, request);
+    if (authToken == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
+    Set<String> badNames = new HashSet<String>();
+    List<String> ids = userNamesToIds(authToken, request.getRecipientUsernames(),
+        badNames);
+    if (!badNames.isEmpty()) {
+      ErrorResponse errorResponse = new ErrorResponse(ErrorCode.SEND_MESSAGE_INVALID_RECIPIENT,
+          (new ArrayList<String>(badNames)).toString());
+      return RestUtils.getBadReqJAXRSResp(errorResponse);
+    }
+    return sendMessageToUserIds(headers, request.toInternal(ids));
   }
   
-  private List<String> userNamesToIds(String authToken, List<String> names) {
+  private List<String> userNamesToIds(String authToken, List<String> names,
+                                        Set<String> badNamesHolder) {
+    if (badNamesHolder != null) {
+      badNamesHolder.addAll(names);
+    }
     List<String> userIds = new ArrayList<String>(names.size());
     HashMap<String, List<String>> reqt = new HashMap<String, List<String>>(1);
     reqt.put("userNames", names);
@@ -189,6 +211,9 @@ public class MessageResource {
       User[] users = RestUtils.doMAXGet(authToken, "/user/users", reqt, User[].class);
       for (User user : users) {
         userIds.add(user.getUserIdentifier());
+        if (badNamesHolder != null) {
+          badNamesHolder.remove(user.getUserName());
+        }
       }
       return userIds;
     } catch (IOException e) {
@@ -203,7 +228,6 @@ public class MessageResource {
     private String state;
     private String recipient;
     private String sender;
-    private String appId;
     private String deviceId;
     private String messageId;
     private Date queuedAt;
@@ -215,10 +239,6 @@ public class MessageResource {
 
     public String getRecipient() {
       return recipient;
-    }
-
-    public String getAppId() {
-      return appId;
     }
 
     public String getSender() {
@@ -244,7 +264,6 @@ public class MessageResource {
     public static SentMessage from(MessageEntity me) {
       SentMessage message = new SentMessage();
       message.messageId = me.getMessageId();
-      message.appId = me.getAppId();
       message.deviceId = me.getDeviceId();
       message.receivedAt = me.getDeliveryAckAt();
       message.queuedAt = me.getQueuedAt();

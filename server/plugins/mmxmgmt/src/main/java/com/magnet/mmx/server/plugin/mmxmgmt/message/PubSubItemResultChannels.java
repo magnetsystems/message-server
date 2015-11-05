@@ -1,10 +1,10 @@
-/* Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,29 +14,24 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import java.util.List;
+
 /**
-* Created by rphadnis on 4/23/15.
-*/
-public class UnsentMessage {
-  private String recipientUserId;
-  private int code;
-  private String message;
+ */
+public class PubSubItemResultChannels {
+  int totalCount;
+  List<MMXPubSubItemChannel> items;
 
-  public UnsentMessage(String userId, int code, String message) {
-    this.recipientUserId = userId;
-    this.code = code;
-    this.message = message;
+  public PubSubItemResultChannels(int totalCount, List<MMXPubSubItemChannel> list) {
+    this.totalCount = totalCount;
+    this.items = list;
   }
 
-  public String getRecipientUserId() {
-    return recipientUserId;
+  public int getTotalCount() {
+    return totalCount;
   }
 
-  public int getCode() {
-    return code;
-  }
-
-  public String getMessage() {
-    return message;
+  public List<MMXPubSubItemChannel> getItems() {
+    return items;
   }
 }

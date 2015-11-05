@@ -44,11 +44,12 @@ public class MessageBuilderTest {
   @Test
   public void test1Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("importantuser"));
+    request.setRecipientUserIds(Collections.singletonList("importantuser"));
 
 
 
     String appId = "i0sq7ddvi17";
+    String msgId = new MessageIdGeneratorImpl().generateItemIdentifier(appId);
 
     String message = "This is a very important message";
     HashMap<String,String> contentMap = new HashMap<String, String>();
@@ -62,12 +63,12 @@ public class MessageBuilderTest {
 
     MessageBuilder builder = new MessageBuilder();
     builder.setSenderId(app.getServerUserId());
-    builder.setAppEntity(app);
+    builder.setAppId(app.getAppId());
     builder.setDomain("localhost");
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     builder.setUtcTime(System.currentTimeMillis());
     builder.setMetadata(request.getContent());
-    builder.setIdGenerator(new MessageIdGeneratorImpl());
+    builder.setId(msgId);
     Message m = builder.build();
     /**
      * Simply assert the the message object is not null.
@@ -82,7 +83,7 @@ public class MessageBuilderTest {
   @Test
   public void test2Build() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("test"));
+    request.setRecipientUserIds(Collections.singletonList("test"));
     String message = "<message><subject>This is a test</subject><content>Tell me a story</content></message>";
 
     Map<String, String> contentMap = new HashMap<String, String>();
@@ -93,15 +94,16 @@ public class MessageBuilderTest {
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
     app.setServerUserId("admin");
+    String msgId = new MessageIdGeneratorImpl().generateItemIdentifier(app.getAppId());
 
     MessageBuilder builder = new MessageBuilder();
-    builder.setAppEntity(app);
+    builder.setAppId(app.getAppId());
     builder.setDomain("localhost");
     builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
-    builder.setIdGenerator(new MessageIdGeneratorImpl());
+    builder.setId(msgId);
     builder.setSenderId(app.getServerUserId());
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     Message m = builder.build();
     assertNotNull("Message shouldn't be null", m);
     Element mmx = m.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
@@ -122,7 +124,7 @@ public class MessageBuilderTest {
   @Test
   public void test3BuildWithNameAndValue() throws Exception {
     SendMessageRequest request = new SendMessageRequest();
-    request.setRecipientUsernames(Collections.singletonList("test"));
+    request.setRecipientUserIds(Collections.singletonList("test"));
     String message = "Simple Test";
     Map<String, String> contentMap = new HashMap<String, String>();
     contentMap.put("content", message);
@@ -137,15 +139,16 @@ public class MessageBuilderTest {
     AppEntity app = new AppEntity();
     app.setAppId("i1cglsw8dsa");
     app.setServerUserId("admin");
+    String msgId = new MessageIdGeneratorImpl().generateItemIdentifier(app.getAppId());
 
     MessageBuilder builder = new MessageBuilder();
-    builder.setAppEntity(app);
+    builder.setAppId(app.getAppId());
     builder.setDomain("localhost");
     builder.setSenderId(app.getServerUserId());
-    builder.setUserId(request.getRecipientUsernames().get(0));
+    builder.setUserId(request.getRecipientUserIds().get(0));
     builder.setMetadata(request.getContent());
     builder.setUtcTime(System.currentTimeMillis());
-    builder.setIdGenerator(new MessageIdGeneratorImpl());
+    builder.setId(msgId);
     Message m = builder.build();
 
     assertNotNull("Message shouldn't be null", m);

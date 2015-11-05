@@ -29,7 +29,6 @@ import org.xmpp.packet.Message;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXid;
 import com.magnet.mmx.protocol.MmxHeaders;
-import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
@@ -42,20 +41,20 @@ import com.magnet.mmx.util.Utils;
 public class MessageBuilder {
   private static Logger LOGGER = LoggerFactory.getLogger(MessageBuilder.class);
 
-  private AppEntity appEntity;
+  private String appId;
   private DeviceEntity deviceEntity;
   private long utcTime;
   private String domain;
-  private MessageIdGenerator idGenerator;
+  private String messageId;
   private String senderId;
   private String userId;
   private String replyTo;
   private Map<String, String> metadata;
   private boolean receipt;
   private static final String EMPTY = "";
-
-  public MessageBuilder setAppEntity(AppEntity appEntity) {
-    this.appEntity = appEntity;
+  
+  public MessageBuilder setAppId(String appId) {
+    this.appId = appId;
     return this;
   }
 
@@ -74,8 +73,8 @@ public class MessageBuilder {
     return this;
   }
 
-  public MessageBuilder setIdGenerator(MessageIdGenerator idGenerator) {
-    this.idGenerator = idGenerator;
+  public MessageBuilder setId(String messageId) {
+    this.messageId = messageId;
     return this;
   }
 
@@ -106,13 +105,12 @@ public class MessageBuilder {
 
   public Message build() {
     Message message = new Message();
-    String id = idGenerator.generate(userId, appEntity.getAppId(),
-        deviceEntity != null ? deviceEntity.getDeviceId() : null);
-    message.setID(id);
+    JID from = new JID(JIDUtil.makeNode(senderId, appId), domain, null);
+    message.setID(messageId);
     Element mmxElement = message.addChildElement(Constants.MMX,
         Constants.MMX_NS_MSG_PAYLOAD);
 
-    // construct the <mmxmeta> stanza with To and From.
+   // construct the <mmxmeta> stanza with To and From.
     MmxHeaders mmxMeta = new MmxHeaders();
     if (senderId != null) {
       mmxMeta.setFrom(new MMXid(senderId, null));
@@ -151,7 +149,7 @@ public class MessageBuilder {
         buildChunkAttributeValue(text));
 
     message.setType(Message.Type.chat);
-    message.setFrom(buildFromJID());
+    message.setFrom(from);
     message.setTo(buildToJID());
     if (receipt) {
       // add the element for requesting read receipt
@@ -165,7 +163,6 @@ public class MessageBuilder {
   }
 
   private JID buildToJID() {
-    String appId = appEntity.getAppId();
     // Fix for MOB-839
     if (userId.indexOf('@') >= 0) {
       userId = JID.escapeNode(userId);
@@ -192,24 +189,6 @@ public class MessageBuilder {
     return 0 + "/" + byteCount + "/" + byteCount;
   }
 
-  /**
-   * Build the From bared JID using the application's server user. This is for:
-   * https://magneteng.atlassian.net/browse/MOB-772. If the app doesn't have a
-   * server user we fall back to the app owner.
-   * 
-   * @return from JID.
-   */
-  private JID buildFromJID() {
-    String serverUser = appEntity.getServerUserId();
-    if (serverUser == null) {
-      LOGGER.warn("Server user for app with id:" + appEntity.getAppId()
-          + " is null, use app owner as the sender");
-      serverUser = appEntity.getOwnerId();
-    }
-    JID toJID = new JID(JIDUtil.makeNode(serverUser, appEntity.getAppId()), domain, null);
-    return toJID;
-  }
-
   private String formatReplyTo(String replyTo) {
     String extractedAppId = JIDUtil.getAppId(replyTo);
     if (extractedAppId == null) {
@@ -218,12 +197,12 @@ public class MessageBuilder {
       builder.append((replyTo.indexOf('@') >= 0) ? JID.escapeNode(replyTo)
           : replyTo);
       builder.append(JIDUtil.APP_ID_DELIMITER);
-      builder.append(appEntity.getAppId());
+      builder.append(appId);
       builder.append("@");
       builder.append(domain);
       return builder.toString();
     } else {
-      if (!extractedAppId.equalsIgnoreCase(appEntity.getAppId())) {
+      if (!extractedAppId.equalsIgnoreCase(appId)) {
         throw new IllegalArgumentException("Bad reply-to address specified");
       }
       return replyTo;
