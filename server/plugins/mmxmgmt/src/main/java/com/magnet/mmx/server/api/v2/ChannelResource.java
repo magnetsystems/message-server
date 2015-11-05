@@ -623,7 +623,8 @@ public class ChannelResource {
             MMXChannelId channelId = nameToId(channelName);
             SummaryRequest rqt = new SummaryRequest(Arrays.asList(channelId));
             SummaryResponse resp = channelManager.getSummary(from, appId, rqt);
-            List<MMXChannelSummary> summaryList = new ArrayList<MMXChannelSummary>();
+//            List<MMXChannelSummary> summaryList = new ArrayList<MMXChannelSummary>();
+            MMXChannelSummary singleResult = null;
             for (ChannelSummary s : resp) {
                 int count = s.getCount();
                 Date lastPublishedDate = s.getLastPubTime();
@@ -631,11 +632,14 @@ public class ChannelResource {
                 String name = s.getChannelNode().getName();
                 MMXChannelSummary mts = new MMXChannelSummary(userId, name, count,
                         lastPublishedDate);
-                summaryList.add(mts);
+                singleResult = mts;
+                break;
+//                summaryList.add(mts);
             }
-            MMXChannelSummaryResult summaryResult = new MMXChannelSummaryResult(appId,
-                    summaryList);
-            return RestUtils.getOKJAXRSResp(summaryResult);
+//            MMXChannelSummaryResult summaryResult = new MMXChannelSummaryResult(summaryList);
+//            return RestUtils.getOKJAXRSResp(summaryResult);
+            return RestUtils.getOKJAXRSResp(singleResult);
+//            return RestUtils.getOKJAXRSResp(summaryList);
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
             if (e.getCode() == StatusCode.NOT_FOUND) {
@@ -712,7 +716,8 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+//            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+            List<MMXPubSubItemChannel> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
             return RestUtils.getOKJAXRSResp(result);
         } catch (MMXException e) {
@@ -767,7 +772,8 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+//            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+            List<MMXPubSubItemChannel> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
 
             return RestUtils.getOKJAXRSResp(result);
@@ -912,12 +918,11 @@ public class ChannelResource {
         return list;
     }
 
-    private List<MMXPubSubItemChannel> toPubSubItems(final String appId,
-                                                     final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+    private List<MMXPubSubItemChannel> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
-                        return new MMXPubSubItemChannel(appId, idToName(channelId.getEscUserId(),
+                        return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
                                 channelId.getName()),
                                 i.getId(), new JID(i.getJid()), i.getPayload());
                     }
@@ -932,39 +937,39 @@ public class ChannelResource {
         return new OpenFireDBConnectionProvider();
     }
 
-    protected SearchResult<ChannelNode> transform(
-            String appId, SearchResult<ChannelInfoWithSubscriptionCount> results) {
-        SearchResult<ChannelNode> nodes = new SearchResult<ChannelNode>();
-        nodes.setOffset(results.getOffset());
-        nodes.setSize(results.getSize());
-        nodes.setTotal(results.getTotal());
-
-        List<ChannelInfoWithSubscriptionCount> objects = results.getResults();
-        List<ChannelNode> nodeList = new LinkedList<ChannelNode>();
-
-        for (ChannelInfoWithSubscriptionCount object : objects) {
-            ChannelNode node = new ChannelNode();
-            // TODO: hack to fix MOB-2516;display a user channel as userId#channelName.
-            node.setChannelName(idToName(object.getUserId(), object.getName()));
-            node.setUserId(object.getUserId());
-            node.setCollection(object.isCollection());
-            node.setDescription(object.getDescription());
-            node.setPersistent(object.isPersistent());
-            node.setMaxItems(object.getMaxItems());
-            node.setMaxPayloadSize(object.getMaxPayloadSize());
-            node.setPublishPermission(object.getPublishPermission().name());
-            Date creationDate = object.getCreationDate();
-            Date modified = object.getModifiedDate();
-            DateFormat isoFormatter = Utils.buildISO8601DateFormat();
-            node.setCreationDate(isoFormatter.format(creationDate));
-            node.setModificationDate(isoFormatter.format(modified));
-            node.setSubscriptionEnabled(object.isSubscriptionEnabled());
-            node.setSubscriptionCount(object.getSubscriptionCount());
-            nodeList.add(node);
-        }
-        nodes.setResults(nodeList);
-        return nodes;
-    }
+//    protected SearchResult<ChannelNode> transform(
+//            String appId, SearchResult<ChannelInfoWithSubscriptionCount> results) {
+//        SearchResult<ChannelNode> nodes = new SearchResult<ChannelNode>();
+//        nodes.setOffset(results.getOffset());
+//        nodes.setSize(results.getSize());
+//        nodes.setTotal(results.getTotal());
+//
+//        List<ChannelInfoWithSubscriptionCount> objects = results.getResults();
+//        List<ChannelNode> nodeList = new LinkedList<ChannelNode>();
+//
+//        for (ChannelInfoWithSubscriptionCount object : objects) {
+//            ChannelNode node = new ChannelNode();
+//            // TODO: hack to fix MOB-2516;display a user channel as userId#channelName.
+//            node.setChannelName(idToName(object.getUserId(), object.getName()));
+//            node.setUserId(object.getUserId());
+//            node.setCollection(object.isCollection());
+//            node.setDescription(object.getDescription());
+//            node.setPersistent(object.isPersistent());
+//            node.setMaxItems(object.getMaxItems());
+//            node.setMaxPayloadSize(object.getMaxPayloadSize());
+//            node.setPublishPermission(object.getPublishPermission().name());
+//            Date creationDate = object.getCreationDate();
+//            Date modified = object.getModifiedDate();
+//            DateFormat isoFormatter = Utils.buildISO8601DateFormat();
+//            node.setCreationDate(isoFormatter.format(creationDate));
+//            node.setModificationDate(isoFormatter.format(modified));
+//            node.setSubscriptionEnabled(object.isSubscriptionEnabled());
+//            node.setSubscriptionCount(object.getSubscriptionCount());
+//            nodeList.add(node);
+//        }
+//        nodes.setResults(nodeList);
+//        return nodes;
+//    }
 
     protected List<ChannelSubscription> getChannelSubscriptions(String appId,
                                                             String channelName) {

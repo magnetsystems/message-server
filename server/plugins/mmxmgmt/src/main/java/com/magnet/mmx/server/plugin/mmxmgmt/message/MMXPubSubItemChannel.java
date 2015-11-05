@@ -44,21 +44,23 @@ public class MMXPubSubItemChannel {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXPubSubItemChannel.class);
   private String itemId;
   private String channelName;
-  private String appId;
+//  private String appId;
   private MMXItemPublisher publisher;
   private Map<String, String> meta;
   private MMXPubSubPayload payload;
 
-  public MMXPubSubItemChannel(PublishedItem publishedItem, String appId, String channelName) {
+  public MMXPubSubItemChannel(PublishedItem publishedItem, String channelName) {
+//    public MMXPubSubItemChannel(PublishedItem publishedItem, String appId, String channelName) {
     itemId = publishedItem.getID();
-    this.appId = appId;
+//    this.appId = appId;
     this.channelName = channelName;
     parsePayload(publishedItem.getPayload());
 
   }
 
-  public MMXPubSubItemChannel(String appId, String channelName, String itemId, JID publisher, String payload) {
-    this.appId = appId;
+  public MMXPubSubItemChannel(String channelName, String itemId, JID publisher, String payload) {
+//    public MMXPubSubItemChannel(String appId, String channelName, String itemId, JID publisher, String payload) {
+//      this.appId = appId;
     this.channelName = channelName;
     this.itemId = itemId;
     this.publisher = new MMXItemPublisher(publisher);
@@ -102,13 +104,13 @@ public class MMXPubSubItemChannel {
     this.channelName = channelName;
   }
 
-  public String getAppId() {
-    return appId;
-  }
-
-  public void setAppId(String appId) {
-    this.appId = appId;
-  }
+//  public String getAppId() {
+//    return appId;
+//  }
+//
+//  public void setAppId(String appId) {
+//    this.appId = appId;
+//  }
 
   public String getItemId() {
     return itemId;
@@ -164,7 +166,7 @@ public class MMXPubSubItemChannel {
     return "MMXPubSubItem{" +
             "itemId='" + itemId + '\'' +
             ", channelName='" + channelName + '\'' +
-            ", appId='" + appId + '\'' +
+//            ", appId='" + appId + '\'' +
             ", meta=" + meta +
             ", payload=" + payload +
             '}';
@@ -177,7 +179,7 @@ public class MMXPubSubItemChannel {
 
     MMXPubSubItemChannel that = (MMXPubSubItemChannel) o;
 
-    if (!appId.equals(that.appId)) return false;
+//    if (!appId.equals(that.appId)) return false;
     if (!itemId.equals(that.itemId)) return false;
     if (meta != null ? !meta.equals(that.meta) : that.meta != null) return false;
     if (payload != null ? !payload.equals(that.payload) : that.payload != null) return false;
@@ -191,7 +193,7 @@ public class MMXPubSubItemChannel {
   public int hashCode() {
     int result = itemId.hashCode();
     result = 31 * result + channelName.hashCode();
-    result = 31 * result + appId.hashCode();
+//    result = 31 * result + appId.hashCode();
     result = 31 * result + publisher.hashCode();
     result = 31 * result + (meta != null ? meta.hashCode() : 0);
     result = 31 * result + (payload != null ? payload.hashCode() : 0);

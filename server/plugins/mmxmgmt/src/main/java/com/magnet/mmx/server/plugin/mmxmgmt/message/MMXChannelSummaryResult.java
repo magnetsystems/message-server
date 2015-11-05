@@ -26,20 +26,10 @@ import java.util.List;
 @XmlType(propOrder = {"appId", "channels"})
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MMXChannelSummaryResult {
-  String appId;
   List<MMXChannelSummary> channels;
 
-  public MMXChannelSummaryResult(String appId, List<MMXChannelSummary> channels) {
-    this.appId = appId;
+  public MMXChannelSummaryResult(List<MMXChannelSummary> channels) {
     this.channels = channels;
-  }
-
-  public String getAppId() {
-    return appId;
-  }
-
-  public void setAppId(String appId) {
-    this.appId = appId;
   }
 
   public List<MMXChannelSummary> getChannels() {
@@ -53,7 +43,6 @@ public class MMXChannelSummaryResult {
   @Override
   public String toString() {
     return "MMXChannelSummaryResult{" +
-            "appId='" + appId + '\'' +
             ", channels=" + channels +
             '}';
   }
