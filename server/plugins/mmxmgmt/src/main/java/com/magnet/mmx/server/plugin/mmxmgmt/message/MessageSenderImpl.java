@@ -301,7 +301,7 @@ public class MessageSenderImpl implements MessageSender {
       }
 
       // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName"
-      MMXTopicId tid = ChannelResource.nameToId(topicName);
+      MMXTopicId tid = TopicResource.nameToId(topicName);
       String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
       //ok validated.
       TopicMessageBuilder builder = new TopicMessageBuilder();
