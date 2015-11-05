@@ -105,26 +105,30 @@ public class MessageSenderImpl implements MessageSender {
       List<UnsentMessage> unsentList = new LinkedList<UnsentMessage>();
       Count count = null;
 
+      // Only one message ID as a multicast message.
+      String msgId = (new MessageIdGeneratorImpl()).generateItemIdentifier(appId);
+
       if (request.getRecipientUserIds() != null && !request.getRecipientUserIds().isEmpty()) {
         List<String> userList = request.getRecipientUserIds();
         UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
-        for (String username : userList) {
+        for (String userId : userList) {
           requested++;
-          String mmxUsername = Helper.getMMXUsername(username, appId);
+          String mmxUsername = Helper.getMMXUsername(userId, appId);
           UserEntity userEntity = userDAO.getUser(mmxUsername);
           if (userEntity == null) {
-            LOGGER.info("User with name:{} not found", username);
-            UnsentMessage badUser = new UnsentMessage(username, ErrorCode.INVALID_USER_NAME.getCode(), ErrorMessages.ERROR_USERNAME_NOT_FOUND);
+            LOGGER.info("User with id:{} not found", userId);
+            UnsentMessage badUser = new UnsentMessage(userId,
+                ErrorCode.INVALID_USER_NAME.getCode(), ErrorMessages.ERROR_USERNAME_NOT_FOUND);
             unsentList.add(badUser);
             unsent++;
           } else {
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(validationResult.getDeviceEntity())
                 .setSenderId(senderUserId)
-                .setUserId(username)
+                .setUserId(userId)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
@@ -132,7 +136,7 @@ public class MessageSenderImpl implements MessageSender {
             Message message = builder.build();
             String messageId = message.getID();
             routeMessage(message);
-            SentMessageId sentMessageId = new SentMessageId(username, null, messageId);
+            SentMessageId sentMessageId = new SentMessageId(userId, null, messageId);
             sentList.add(sentMessageId);
             sent++;
           }
@@ -148,8 +152,8 @@ public class MessageSenderImpl implements MessageSender {
       } else if (request.getDeviceId() != null) {
         MessageBuilder builder = new MessageBuilder();
         String recipient = validationResult.getDeviceEntity().getOwnerId();
-        builder.setAppEntity(validationResult.getAppEntity())
-            .setIdGenerator(new MessageIdGeneratorImpl())
+        builder.setAppId(appId)
+            .setId(msgId)
             .setUtcTime(System.currentTimeMillis())
             .setDeviceEntity(validationResult.getDeviceEntity())
             .setSenderId(senderUserId)
@@ -185,11 +189,11 @@ public class MessageSenderImpl implements MessageSender {
           List<UserEntity> userEntityList = resolver.resolve(appId, target);
           requested = userEntityList.size();
           for (UserEntity ue : userEntityList) {
-            //get the bare user id.
+            //get the bared user id.
             String recipient = JIDUtil.getUserId(ue.getUsername());
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
                 .setSenderId(senderUserId)
                 .setUserId(recipient)
@@ -222,8 +226,8 @@ public class MessageSenderImpl implements MessageSender {
             //get the bare user id.
             String recipient = de.getOwnerId();
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(de)
                 .setSenderId(senderUserId)
@@ -267,7 +271,8 @@ public class MessageSenderImpl implements MessageSender {
    * @return SendMessageResult
    */
   @Override
-  public TopicPostResult postMessage(String topicName, String appId, TopicPostMessageRequest request) {
+  public TopicPostResult postMessage(String pubUserId, String topicName,
+      String appId, TopicPostMessageRequest request) {
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
     ConnectionProvider provider = getConnectionProvider();
     AppDAO appDAO = new AppDAOImpl(provider);
@@ -281,11 +286,12 @@ public class MessageSenderImpl implements MessageSender {
       Node topicNode = validationResult.getTopicNode();
       String domain = getDomain();
       PublisherModel publisherModel = validationResult.getTopicNode().getPublisherModel();
-      JID from = TopicMessageBuilder.buildFromJID(appEntity, domain);
+      JID from = new JID(JIDUtil.makeNode(pubUserId, appEntity.getAppId()), domain, null);
+
       boolean canPublish = publisherModel.canPublish(topicNode, from);
       if (!canPublish) {
         LOGGER.info("Server user:{} for app with id:{} is not allowed to publish to topic:{}",
-            validationResult.getAppEntity().getServerUserId(), appEntity.getAppId(), topicName);
+            pubUserId, appEntity.getAppId(), topicName);
         result = new TopicPostResult();
         result.setError(true);
         result.setErrorMessage(String.format(ErrorMessages.ERROR_TOPIC_PUBLISHING_NOT_ALLOWED, topicName));
@@ -301,7 +307,7 @@ public class MessageSenderImpl implements MessageSender {
       TopicMessageBuilder builder = new TopicMessageBuilder();
       MessageIdGeneratorImpl idGen = new MessageIdGeneratorImpl();
       String itemId = idGen.generateItemIdentifier(topicId);
-      builder.setAppEntity(validationResult.getAppEntity())
+      builder.setPubUserId(pubUserId)
           .setItemId(itemId)
           .setUtcTime(System.currentTimeMillis())
           .setRequest(request)
@@ -396,7 +402,7 @@ public class MessageSenderImpl implements MessageSender {
       result.setValid(false, ERROR_INVALID_POST_MESSAGE_TOPIC);
       return result;
     }
-    // TODO: hack for MOB-2516 that user topic is shown as "userID/topicName".
+    // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName".
     MMXTopicId tid = TopicResource.nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
     Node topic = topicManager.getTopicNode(topicId);

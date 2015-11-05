@@ -24,13 +24,11 @@ import com.magnet.mmx.sasl.TokenInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.api.v1.protocol.ChannelCreateInfo;
 import com.magnet.mmx.server.api.v1.protocol.ChannelSubscription;
-import com.magnet.mmx.server.api.v1.protocol.TopicSubscription;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.TopicTagInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
@@ -38,7 +36,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
-
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.ChannelNode;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
@@ -65,65 +62,33 @@ import java.util.concurrent.TimeUnit;
  */
 @Path("channels")
 public class ChannelResource {
-
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(ChannelResource.class);
     static final String DESCRIPTION_KEY = "description";
     static final String TAGS_KEY = "tag";
     static final String ID_KEY = "id";
     static final String CHANNEL_NAME = "channelName";
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelResource.class);
     private static final String DEFAULT_MAX_ITEMS = "200";
     private final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
 
-    // The hack to fix MOB-2516 that allows the console to display user channels as
-    // userID#channelName. This method parses the global channel or user channel
-    // properly.
-    public static MMXChannelId nameToId(String channelName) {
-        int index = channelName.indexOf(ChannelHelper.CHANNEL_SEPARATOR);
-        if (index < 0) {
-            return new MMXChannelId(channelName);
-        } else {
-            return new MMXChannelId(channelName.substring(0, index), channelName
-                    .substring(index + 1));
+    public static class AddTagRequest {
+        private boolean personal;
+        private List<String> tags;
+
+        public boolean isPersonal() {
+            return personal;
+        }
+
+        public List<String> getTags() {
+            return tags;
         }
     }
-
-    // The hack to fix MOB-2516 to convert a user channel to userID#channelName
-    public static String idToName(String userId, String channelName) {
-
-        if (userId == null) {
-            return channelName;
-        } else {
-            return userId + ChannelHelper.CHANNEL_SEPARATOR + channelName;
-        }
-    }
-
-//    // SUPPORT FOR PROPER NAMING - should be temporary
-//    private static ChannelCreateInfo convert(ChannelCreateInfo source) {
-//
-//        if (source == null) {
-//            return null;
-//        }
-//        ChannelCreateInfo target = new ChannelCreateInfo();
-//        target.setDescription(source.getDescription());
-//        target.setMaxItems(source.getMaxItems());
-//        target.setPersonalChannel(source.isPrivateChannel());
-//        target.setPublishPermission(source.getPublishPermission());
-//        target.setRoles(source.getRoles());
-//        target.setSubscribeOnCreate(source.isSubscribeOnCreate());
-//        target.setChannelName(source.getChannelName());
-//        target.setSubscriptionEnabled(source.isSubscriptionEnabled());
-//
-//        return target;
-//    }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response createChannel(@Context HttpHeaders headers, ChannelCreateInfo channelInfo) {
-
-        // SUPPORT FOR PROPER NAMING - should be temporary
-//        ChannelCreateInfo channelInfo = convert(channelInfo);
-
+    public Response createChannel(@Context HttpHeaders headers,
+                                  ChannelCreateInfo channelInfo) {
         ErrorResponse errorResponse = null;
 
         TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
@@ -156,7 +121,8 @@ public class ChannelResource {
             JID from = RestUtils.createJID(tokenInfo);
             CreateRequest rqt = toCreateRequest(channelInfo);
             channelManager.createChannel(from, tokenInfo.getMmxAppId(), rqt);
-            return RestUtils.getCreatedJAXRSResp();
+            errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Channel created");
+            return RestUtils.getCreatedJAXRSResp(errorResponse);
         } catch (MMXException e) {
             if (e.getCode() == StatusCode.CONFLICT) {
                 errorResponse = new ErrorResponse(ErrorCode.TOPIC_EXISTS,
@@ -197,7 +163,7 @@ public class ChannelResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("{" + CHANNEL_NAME + "}/items")
     public Response publishMessage(@Context HttpHeaders headers,
-                                   @PathParam(CHANNEL_NAME) String channelName,
+                                   @PathParam(CHANNEL_NAME) String channel,
                                    TopicPostMessageRequest request) {
         TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
         if (tokenInfo == null) {
@@ -206,8 +172,8 @@ public class ChannelResource {
 
         try {
             MessageSender sender = new MessageSenderImpl();
-            TopicPostResult result = sender.postMessage(channelName, tokenInfo
-                    .getMmxAppId(), request);
+            TopicPostResult result = sender.postMessage(tokenInfo.getUserId(), channel,
+                    tokenInfo.getMmxAppId(), request);
             TopicPostResponse sendResponse = new TopicPostResponse();
             if (result.isError()) {
                 LOGGER.info("Problem posting message:" + result.getErrorMessage());
@@ -557,24 +523,26 @@ public class ChannelResource {
     }
 
     @DELETE
-    @Path("{" + CHANNEL_NAME + "}/tags")
+    @Path("{" + CHANNEL_NAME + "}/tags/" + "{"
+            + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteAllTags(@Context HttpHeaders headers,
-                                  @PathParam(CHANNEL_NAME) String channelName,
-                                  @QueryParam("personal") String isPersonalChannel) {
+    public Response deleteTags(@Context HttpHeaders headers,
+                               @PathParam(CHANNEL_NAME) String channelName,
+                               @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag,
+                               @QueryParam("personal") String isPersonalChannel) {
         TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
         if (tokenInfo == null) {
             return RestUtils.getUnauthJAXRSResp();
         }
 
-        boolean myChannel = Boolean.parseBoolean(isPersonalChannel);
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
+            boolean myChannel = Boolean.parseBoolean(isPersonalChannel);
             ChannelTags tags = new ChannelTags(myChannel ? tokenInfo.getUserId() : null,
-                    channelName, null);
-            channelManager.setTags(from, appId, tags);
+                    channelName, Arrays.asList(tag));
+            channelManager.removeTags(from, appId, tags);
             return RestUtils.getOKJAXRSResp();
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
@@ -598,26 +566,24 @@ public class ChannelResource {
     }
 
     @DELETE
-    @Path("{" + CHANNEL_NAME + "}/tags/" + "{"
-            + MMXServerConstants.TAGNAME_PATH_PARAM + "}")
+    @Path("{" + CHANNEL_NAME + "}/tags")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteTags(@Context HttpHeaders headers,
-                               @PathParam(CHANNEL_NAME) String channelName,
-                               @PathParam(MMXServerConstants.TAGNAME_PATH_PARAM) String tag,
-                               @QueryParam("personal") String isPersonalChannel) {
+    public Response deleteAllTags(@Context HttpHeaders headers,
+                                  @PathParam(CHANNEL_NAME) String channelName,
+                                  @QueryParam("personal") String isPersonalChannel) {
         TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
         if (tokenInfo == null) {
             return RestUtils.getUnauthJAXRSResp();
         }
 
+        boolean myChannel = Boolean.parseBoolean(isPersonalChannel);
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            boolean myChannel = Boolean.parseBoolean(isPersonalChannel);
             ChannelTags tags = new ChannelTags(myChannel ? tokenInfo.getUserId() : null,
-                    channelName, Arrays.asList(tag));
-            channelManager.removeTags(from, appId, tags);
+                    channelName, null);
+            channelManager.setTags(from, appId, tags);
             return RestUtils.getOKJAXRSResp();
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
@@ -696,7 +662,6 @@ public class ChannelResource {
      * URL looks like:<br>
      * .../channels/{channelName}/items/fetch?offset={offset}&amp;since={datetime}
      * &amp;until={datetime}&amp;size={itemsPerPage}&smp;sort_order={ASC|DESC}
-     *
      * @param headers
      * @param channelName A public channel or private channel (userID#channelName)
      * @param sortOrder
@@ -749,7 +714,6 @@ public class ChannelResource {
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
             List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
-
             return RestUtils.getOKJAXRSResp(result);
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
@@ -776,7 +740,6 @@ public class ChannelResource {
      * Get the published items by their ID's.  The channel name can be a public
      * channel or private channel.  The URL may look like:<br>
      * .../channels/{channelName}/items?id={itemID1}&amp;id={itemID2}
-     *
      * @param headers
      * @param channelName Public channel or private channel (userID#channelName).
      * @param idList
@@ -835,9 +798,8 @@ public class ChannelResource {
      * Delete all published items from a channel owned by the current user.
      * The URL may look like:<br>
      * .../channels/{channelName}/items/all?personal=boolean
-     *
      * @param headers
-     * @param channelName       The channel name.
+     * @param channelName The channel name.
      * @param isPersonalChannel true for private channel, false for public channel
      * @return
      */
@@ -884,7 +846,6 @@ public class ChannelResource {
      * Delete the items published by the current user from a public channel or
      * private channel.  The URL may look like:<br>
      * .../channels/{channelName}/items?id={itemID1}&amp;id={itemID2}
-     *
      * @param headers
      * @param channelName A public channel name or private channel name (userID#channelName)
      * @param idList
@@ -952,7 +913,7 @@ public class ChannelResource {
     }
 
     private List<MMXPubSubItemChannel> toPubSubItems(final String appId,
-                                              final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+                                                     final MMXChannelId channelId, List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
@@ -1022,16 +983,26 @@ public class ChannelResource {
         return infoList;
     }
 
-    public static class AddTagRequest {
-        private boolean personal;
-        private List<String> tags;
-
-        public boolean isPersonal() {
-            return personal;
+    // The hack to fix MOB-2516 that allows the console to display user channels as
+    // userID#channelName. This method parses the global channel or user channel
+    // properly.
+    public static MMXChannelId nameToId(String channelName) {
+        int index = channelName.indexOf(ChannelHelper.CHANNEL_SEPARATOR);
+        if (index < 0) {
+            return new MMXChannelId(channelName);
+        } else {
+            return new MMXChannelId(channelName.substring(0, index), channelName
+                    .substring(index + 1));
         }
+    }
 
-        public List<String> getTags() {
-            return tags;
+    // The hack to fix MOB-2516 to convert a user channel to userID#channelName
+    public static String idToName(String userId, String channelName) {
+
+        if (userId == null) {
+            return channelName;
+        } else {
+            return userId + ChannelHelper.CHANNEL_SEPARATOR + channelName;
         }
     }
 }

@@ -126,7 +126,8 @@ public class TopicResource {
       MMXTopicManager topicManager = MMXTopicManager.getInstance();
       MMXTopicManager.TopicActionResult result = topicManager.createTopic(appEntity, topicInfo);
       if(result.isSuccess()) {
-        return RestUtils.getCreatedJAXRSResp();
+        errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Channel created");
+        return RestUtils.getCreatedJAXRSResp(errorResponse);
       } else {
         if(result.getCode().equals(MMXTopicManager.TopicFailureCode.DUPLICATE)) {
           errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Channel already exists");
@@ -163,7 +164,8 @@ public class TopicResource {
       }
 
       MessageSender sender = new MessageSenderImpl();
-      TopicPostResult result = sender.postMessage(topic, appEntity.getAppId(), request);
+      TopicPostResult result = sender.postMessage(appEntity.getServerUserId(),
+          topic, appEntity.getAppId(), request);
       TopicPostResponse sendResponse = new TopicPostResponse();
       if (result.isError()) {
         LOGGER.info("Problem posting message:" + result.getErrorMessage());

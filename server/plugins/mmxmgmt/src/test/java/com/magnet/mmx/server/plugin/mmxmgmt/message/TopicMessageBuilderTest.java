@@ -55,7 +55,7 @@ public class TopicMessageBuilderTest {
     app.setServerUserId("adminserver");
 
     TopicMessageBuilder builder = new TopicMessageBuilder();
-    builder.setAppEntity(app);
+    builder.setPubUserId(app.getServerUserId());
     builder.setDomain("localhost");
     builder.setRequest(request);
     builder.setUtcTime(System.currentTimeMillis());

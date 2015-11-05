@@ -93,19 +93,23 @@ public class MessageResource {
       MessageDAO messageDAO = new MessageDAOImpl(new OpenFireDBConnectionProvider());
       List<MessageEntity> messageEntityList = messageDAO.getMessages(appId, messageId);
       
-      if (messageEntityList.size() > 0) {
-        MessageEntity me = messageEntityList.get(0);
-        JID jid = new JID(me.getFrom());
-        if (!jid.getNode().equalsIgnoreCase(from.getNode())) {
-          ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_SENDER_NOT_MATCHED, "User is not the sender");
-          return RestUtils.getJAXRSResp(Response.Status.FORBIDDEN, response);
-        }
+      if (messageEntityList.size() == 0) {
+        ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_STATUS_NOT_FOUND, "No message status found");
+        return RestUtils.getNotFoundJAXRSResp(response);
       }
+
+      JID jid = new JID(messageEntityList.get(0).getFrom());
+      if (!jid.getNode().equalsIgnoreCase(from.getNode())) {
+        ErrorResponse response = new ErrorResponse(ErrorCode.MESSAGE_SENDER_NOT_MATCHED, "User is not the sender");
+        return RestUtils.getJAXRSResp(Response.Status.FORBIDDEN, response);
+      }
+
+      // A message ID is not unique: multicast msg or user has multiple devices
       List<SentMessage> sentMessageList = new ArrayList<SentMessage>(messageEntityList.size());
       for (MessageEntity me : messageEntityList) {
         sentMessageList.add(SentMessage.from(me));
       }
-      
+
       long endTime = System.nanoTime();
       LOGGER.info("Completed processing getMessageById in {} milliseconds",
           TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
@@ -181,6 +185,9 @@ public class MessageResource {
   public Response sendMessageToUserNames(@Context HttpHeaders headers,
                                           SendMessageRequest2 request) {
     String authToken = RestUtils.getAuthToken(headers);
+    if (authToken == null) {
+      return RestUtils.getUnauthJAXRSResp();
+    }
     Set<String> badNames = new HashSet<String>();
     List<String> ids = userNamesToIds(authToken, request.getRecipientUsernames(),
         badNames);
@@ -221,7 +228,6 @@ public class MessageResource {
     private String state;
     private String recipient;
     private String sender;
-    private String appId;
     private String deviceId;
     private String messageId;
     private Date queuedAt;
@@ -233,10 +239,6 @@ public class MessageResource {
 
     public String getRecipient() {
       return recipient;
-    }
-
-    public String getAppId() {
-      return appId;
     }
 
     public String getSender() {
@@ -262,7 +264,6 @@ public class MessageResource {
     public static SentMessage from(MessageEntity me) {
       SentMessage message = new SentMessage();
       message.messageId = me.getMessageId();
-      message.appId = me.getAppId();
       message.deviceId = me.getDeviceId();
       message.receivedAt = me.getDeliveryAckAt();
       message.queuedAt = me.getQueuedAt();
