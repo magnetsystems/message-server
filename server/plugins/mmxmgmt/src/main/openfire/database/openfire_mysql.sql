@@ -386,3 +386,5 @@ insert into ofProperty values('xmpp.proxy.enabled', 'false');
 insert into ofProperty values('xmpp.auth.anonymous', 'false');
 
 insert into ofProperty values('route.all-resources', 'true');
+
+insert into ofProperty values('xmpp.pubsub.flush.max', '0');
