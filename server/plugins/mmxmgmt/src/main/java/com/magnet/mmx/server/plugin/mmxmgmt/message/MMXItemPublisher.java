@@ -21,25 +21,25 @@ import org.xmpp.packet.JID;
  */
 
 public class MMXItemPublisher {
-  String username;
+  String userId;
   String deviceId;
 
-  public MMXItemPublisher(String username, String deviceId) {
-    this.username = username;
+  public MMXItemPublisher(String userId, String deviceId) {
+    this.userId = userId;
     this.deviceId = deviceId;
   }
 
   public MMXItemPublisher(JID publisher) {
-    username = JIDUtil.getUserId(publisher);
+    userId = JIDUtil.getUserId(publisher);
     deviceId = publisher.getResource();
   }
 
-  public String getUsername() {
-    return username;
+  public String getUserId() {
+    return userId;
   }
 
-  public void setUsername(String username) {
-    this.username = username;
+  public void setUserId(String userId) {
+    this.userId = userId;
   }
 
   public String getDeviceId() {
@@ -58,14 +58,14 @@ public class MMXItemPublisher {
     MMXItemPublisher that = (MMXItemPublisher) o;
 
     if (deviceId != null ? !deviceId.equals(that.deviceId) : that.deviceId != null) return false;
-    if (!username.equals(that.username)) return false;
+    if (!userId.equals(that.userId)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = username.hashCode();
+    int result = userId.hashCode();
     result = 31 * result + (deviceId != null ? deviceId.hashCode() : 0);
     return result;
   }
@@ -73,7 +73,7 @@ public class MMXItemPublisher {
   @Override
   public String toString() {
     return "MMXItemPublisher{" +
-            "username='" + username + '\'' +
+            "userId='" + userId + '\'' +
             ", deviceId='" + deviceId + '\'' +
             '}';
   }

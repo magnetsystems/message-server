@@ -716,8 +716,7 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-//            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
-            List<MMXPubSubItemChannel> items = toPubSubItems(channelId, channelItemEntities);
+            List<MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
             return RestUtils.getOKJAXRSResp(result);
         } catch (MMXException e) {
@@ -741,6 +740,42 @@ public class ChannelResource {
         }
     }
 
+    public class MMXPubSubItemChannel2 {
+      private String itemId;
+      private String channelName;
+      private MMXItemPublisher publisher;
+      private Map<String, String> content;
+      private MMXPubSubPayload metaData;
+      
+      public MMXPubSubItemChannel2(MMXPubSubItemChannel item) {
+        itemId = item.getItemId();
+        channelName = item.getChannelName();
+        publisher = item.getPublisher();
+        content = item.getMeta();
+        metaData = item.getPayload();
+      }
+
+      public String getItemId() {
+        return itemId;
+      }
+
+      public String getChannelName() {
+        return channelName;
+      }
+
+      public MMXItemPublisher getPublisher() {
+        return publisher;
+      }
+
+      public Map<String, String> getContent() {
+        return content;
+      }
+
+      public MMXPubSubPayload getMetaData() {
+        return metaData;
+      }
+    }
+    
     /**
      * Get the published items by their ID's.  The channel name can be a public
      * channel or private channel.  The URL may look like:<br>
@@ -772,8 +807,7 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-//            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
-            List<MMXPubSubItemChannel> items = toPubSubItems(channelId, channelItemEntities);
+            List<MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
 
             return RestUtils.getOKJAXRSResp(result);
@@ -918,7 +952,7 @@ public class ChannelResource {
         return list;
     }
 
-    private List<MMXPubSubItemChannel> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+    private List<MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
@@ -930,7 +964,12 @@ public class ChannelResource {
                     ;
                 };
 
-        return Lists.transform(entityList, entityToItem);
+        List<MMXPubSubItemChannel> items = Lists.transform(entityList, entityToItem);
+        List<MMXPubSubItemChannel2> items2 = new ArrayList<MMXPubSubItemChannel2>(items.size());
+        for (MMXPubSubItemChannel item : items) {
+          items2.add(new MMXPubSubItemChannel2(item));
+        }
+        return items2;
     }
 
     protected ConnectionProvider getConnectionProvider() {

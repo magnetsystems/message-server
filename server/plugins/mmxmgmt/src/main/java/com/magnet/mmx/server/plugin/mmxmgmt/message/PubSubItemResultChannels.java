@@ -16,13 +16,15 @@ package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
 import java.util.List;
 
+import com.magnet.mmx.server.api.v2.ChannelResource.MMXPubSubItemChannel2;
+
 /**
  */
 public class PubSubItemResultChannels {
   int totalCount;
-  List<MMXPubSubItemChannel> items;
+  List<MMXPubSubItemChannel2> items;
 
-  public PubSubItemResultChannels(int totalCount, List<MMXPubSubItemChannel> list) {
+  public PubSubItemResultChannels(int totalCount, List<MMXPubSubItemChannel2> list) {
     this.totalCount = totalCount;
     this.items = list;
   }
@@ -31,7 +33,7 @@ public class PubSubItemResultChannels {
     return totalCount;
   }
 
-  public List<MMXPubSubItemChannel> getItems() {
+  public List<MMXPubSubItemChannel2> getItems() {
     return items;
   }
 }
