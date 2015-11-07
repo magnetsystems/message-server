@@ -380,3 +380,9 @@ insert into ofProperty values('xmpp.routing.strict', 'true');
 insert into ofProperty values('xmpp.client.idle', '-1');
 
 insert into ofProperty values('xmpp.client.idle.ping', 'false');
+
+insert into ofProperty values('xmpp.proxy.enabled', 'false');
+
+insert into ofProperty values('xmpp.auth.anonymous', 'false');
+
+insert into ofProperty values('route.all-resources', 'true');

@@ -382,7 +382,8 @@ public class DeviceEntity {
         .setStatus(entity.getStatus().name())
         .setVersionMajor(entity.getProtocolVersion().getMajor())
         .setVersionMinor(entity.getProtocolVersion().getMinor())
-        .setPushStatus(entity.getPushStatus() != null ? entity.getPushStatus().name():null);
+        .setPushStatus(entity.getPushStatus() != null ? entity.getPushStatus().name():null)
+        .setAppId(entity.getAppId());
     return devInfo;
   }
 

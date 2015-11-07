@@ -14,6 +14,24 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.tags;
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
@@ -24,19 +42,11 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.List;
 
 /**
+ * @deprecated ChannelResource
  */
+@Deprecated
 @Path("/topics/{" + MMXServerConstants.TOPICNAME_PATH_PARAM +"}/tags")
 public class MMXTopicTagsResource extends AbstractBaseResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXTopicTagsResource.class);

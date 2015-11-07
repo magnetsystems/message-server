@@ -12,9 +12,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.api.v1;
+package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
-@CheckAppId
-public class AppIdFilter {
+import java.util.List;
 
+/**
+ */
+public class PubSubItemResultChannels {
+  int totalCount;
+  List<MMXPubSubItemChannel> items;
+
+  public PubSubItemResultChannels(int totalCount, List<MMXPubSubItemChannel> list) {
+    this.totalCount = totalCount;
+    this.items = list;
+  }
+
+  public int getTotalCount() {
+    return totalCount;
+  }
+
+  public List<MMXPubSubItemChannel> getItems() {
+    return items;
+  }
 }

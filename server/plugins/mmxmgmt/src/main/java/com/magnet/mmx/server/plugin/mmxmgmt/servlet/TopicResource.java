@@ -14,6 +14,34 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.TopicAction.TopicInfoWithSubscriptionCount;
@@ -26,7 +54,11 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.TopicQuery;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TagDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSender;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSenderImpl;
@@ -40,25 +72,11 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
-import org.jivesoftware.openfire.pubsub.LeafNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.*;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+/**
+ * @deprecated ChannelResource
+ */
+@Deprecated
 @Path("topics/")
 public class TopicResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopicResource.class);
@@ -98,7 +116,7 @@ public class TopicResource {
     if (o instanceof AppEntity) {
       appEntity = (AppEntity) o;
     } else {
-      LOGGER.error("deleteTopics : appEntity is not set");
+      LOGGER.error("createTopics : appEntity is not set");
       return Response
               .status(Response.Status.INTERNAL_SERVER_ERROR)
               .build();
@@ -108,7 +126,8 @@ public class TopicResource {
       MMXTopicManager topicManager = MMXTopicManager.getInstance();
       MMXTopicManager.TopicActionResult result = topicManager.createTopic(appEntity, topicInfo);
       if(result.isSuccess()) {
-        return RestUtils.getCreatedJAXRSResp();
+        errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Channel created");
+        return RestUtils.getCreatedJAXRSResp(errorResponse);
       } else {
         if(result.getCode().equals(MMXTopicManager.TopicFailureCode.DUPLICATE)) {
           errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, "Channel already exists");
@@ -145,15 +164,17 @@ public class TopicResource {
       }
 
       MessageSender sender = new MessageSenderImpl();
-      TopicPostResult result = sender.postMessage(topic, appEntity.getAppId(), request);
+      TopicPostResult result = sender.postMessage(appEntity.getServerUserId(),
+          topic, appEntity.getAppId(), request);
       TopicPostResponse sendResponse = new TopicPostResponse();
       if (result.isError()) {
         LOGGER.info("Problem posting message:" + result.getErrorMessage());
         sendResponse.setMessage(result.getErrorMessage());
         sendResponse.setStatus(result.getStatus());
         throw new WebApplicationException(
-            Response
-                .status(result.getErrorCode() == ErrorCode.TOPIC_PUBLISH_FORBIDDEN.getCode() ? Response.Status.FORBIDDEN :Response.Status.BAD_REQUEST)
+            Response.status(
+                result.getErrorCode() == ErrorCode.TOPIC_PUBLISH_FORBIDDEN.getCode() ?
+                    Response.Status.FORBIDDEN : Response.Status.BAD_REQUEST)
                 .entity(sendResponse)
                 .build()
         );
@@ -220,9 +241,13 @@ public class TopicResource {
       PaginationInfo paginationInfo = PaginationInfo.build(size, offset);
 
       TopicQueryBuilder queryBuilder = new TopicQueryBuilder();
-      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(query, appId, paginationInfo, null);
+      QueryBuilderResult builtQuery = queryBuilder.buildPaginationQueryWithOrder(
+          query, appId, paginationInfo, null,
+          Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
-      SearchResult<TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), builtQuery, paginationInfo);
+      SearchResult<TopicInfoWithSubscriptionCount> topicList = 
+          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), 
+              builtQuery, paginationInfo);
 
       SearchResult<TopicNode> nodes = transform(appId, topicList);
 
@@ -386,11 +411,8 @@ public class TopicResource {
 
     for (TopicInfoWithSubscriptionCount object : objects) {
       TopicNode node = new TopicNode();
-      // TODO: hack to fix MOB-2516;display a user topic as userId/topicName.
-      if (object.getUserId() != null)
-        node.setTopicName(object.getUserId()+TopicHelper.TOPIC_DELIM+object.getName());
-      else
-        node.setTopicName(object.getName());
+      // TODO: hack to fix MOB-2516;display a user topic as userId#topicName.
+      node.setTopicName(idToName(object.getUserId(), object.getName()));
       node.setUserId(object.getUserId());
       node.setCollection(object.isCollection());
       node.setDescription(object.getDescription());
@@ -425,14 +447,23 @@ public class TopicResource {
     return infoList;
   }
   
-  // The hack allows the console to display user topics as userID/topicName.
-  // This method parses the global topic or user topic properly.
+  // The hack to fix MOB-2516 that allows the console to display user topics as
+  // userID#topicName.  This method parses the global topic or user topic properly.
   public static MMXTopicId nameToId(String topicName) {
-    int index = topicName.indexOf(TopicHelper.TOPIC_DELIM);
+    int index = topicName.indexOf(TopicHelper.TOPIC_SEPARATOR);
     if (index < 0) {
       return new MMXTopicId(topicName);
     } else {
       return new MMXTopicId(topicName.substring(0, index), topicName.substring(index+1));
+    }
+  }
+  
+  // The hack to fix MOB-2516 to convert a user topic to userId#topicName
+  public static String idToName(String userId, String topicName) {
+    if (userId == null) {
+      return topicName;
+    } else {
+      return userId + TopicHelper.TOPIC_SEPARATOR + topicName;
     }
   }
 }

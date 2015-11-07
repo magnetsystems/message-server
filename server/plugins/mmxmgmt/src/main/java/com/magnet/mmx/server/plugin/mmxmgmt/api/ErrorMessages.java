@@ -32,7 +32,7 @@ public final class ErrorMessages {
   public static final String ERROR_SEND_PING_INVALID_TARGET = "Request doesn't define valid targets";
   public static final String ERROR_SEND_PUSH_INVALID_TARGET = "Request doesn't define valid targets";
   public static final String ERROR_SEND_MESSAGE_INVALID_USER_ID_DEVICE_ID = "Request doesn't contain a valid " +
-      "user name/deviceId/target information";
+      "user/device/target information";
   public static final String ERROR_UNDELIVERABLE_TOKEN = "Push service has reported token as being undeliverable";
   public static final String ERROR_INVALID_DEVICE_ID = "Supplied deviceId is invalid or empty";
   public static final String ERROR_DEVICE_NOT_FOUND = "Device with supplied id not found";
@@ -42,13 +42,13 @@ public final class ErrorMessages {
   public static final String ERROR_INVALID_DEVICE_STATUS_VALUE = "Supplied status value:%s is invalid";
   public static final String ERROR_INVALID_REGISTERED_SINCE_VALUE = "Supplied registered since value:%s is invalid. It should be in ISO 8601 format";
   public static final String ERROR_INVALID_REGISTERED_UNTIL_VALUE = "Supplied registered until value:%s is invalid. It should be in ISO 8601 format";
-  public static final String ERROR_INVALID_USERNAME_VALUE = "Supplied username is empty";
+  public static final String ERROR_INVALID_USERNAME_VALUE = "Supplied user is empty";
   public static final String ERROR_USERNAME_INVALID_LENGTH= "Username must be %d to %d characters long";
   public static final String ERROR_INVALID_PASSWORD_VALUE = "Supplied user password is empty";
   public static final String ERROR_PASSWORD_INVALID_LENGTH= "User password must not exceed %d characters long";
   public static final String ERROR_TOPIC_NOT_FOUND = "Channel with name:%s not found";
-  public static final String ERROR_USERNAME_NOT_FOUND = "Username not found";
-  public static final String ERROR_USERNAME_LIST_TOO_LONG = "Supplied username list exceeds the maximum allowed. At the most %d names are permitted";
+  public static final String ERROR_USERNAME_NOT_FOUND = "User not found";
+  public static final String ERROR_USERNAME_LIST_TOO_LONG = "Supplied user list exceeds the maximum allowed. At the most %d names are permitted";
   public static final String ERROR_APNS_CERT_PASSWORD_MISSING = "APNS certificate password is empty or null. APNS certificate password is required";
   public static final String ERROR_TOPIC_PUBLISHING_NOT_ALLOWED = "Channel with name:%s doesn't allow publishing using API";
   public static final String ERROR_TOPIC_INVALID_CONTENT = "Channel message content can't be empty";

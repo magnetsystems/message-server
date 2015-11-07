@@ -14,13 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
-import com.magnet.mmx.server.common.data.AppEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants;
-import com.magnet.mmx.util.Base64;
-import org.jivesoftware.openfire.auth.AuthFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,6 +22,14 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants;
+import com.magnet.mmx.util.Base64;
 
 /**
  * Implementation of the AppDAO.
@@ -587,6 +588,135 @@ public class AppDAOImpl implements AppDAO {
         pstmt.setInt(ind++, 1);
       } else {
         pstmt.setInt(ind++, 0);
+      }
+      pstmt.setTimestamp(ind++, new Timestamp(new java.util.Date().getTime()));
+      pstmt.setString(ind++, appId);
+      int updatedCount = pstmt.executeUpdate();
+      pstmt.close();
+
+      if (updatedCount != 1) {
+        throw new AppDoesntExistException("No app found with appId = " + appId);
+      }
+    } catch (SQLException e) {
+      LOGGER.error(e.getMessage(), e);
+      throw new AppDoesntExistException(e);
+    } finally {
+      CloseUtil.close(LOGGER, rs, pstmt, con);
+    }
+  }
+  
+  @Override
+  public void updateApp(String appId, String appName, String googleApiKey, 
+      String googleProjectId, String apnsCertPwd, String ownerEmail, 
+      String guestSecret, boolean productionApnsCert, String serverUserId) throws
+      AppDoesntExistException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("UPDATE mmxApp SET ");
+    int count = 0;
+    if (appName != null) {
+      sb.append("appName = ?");
+      count++;
+    }
+    if (googleApiKey != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("googleApiKey = ?");
+      count++;
+    }
+    if (googleProjectId != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("googleProjectId = ?");
+      count++;
+    }
+    if (apnsCertPwd != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("apnsCertEncryptedPassword = ?");
+      count = count + 1;
+    }
+    if (ownerEmail != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("ownerEmail = ?");
+      count++;
+    }
+
+    if (guestSecret != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("guestSecret = ?");
+      count++;
+    }
+
+    if (count > 0) {
+      sb.append(", ");
+    }
+    sb.append("apnsCertProduction = ?");
+    count++;
+    
+    if (serverUserId != null) {
+      if (count > 0) {
+        sb.append(", ");
+      }
+      sb.append("serverUserId = ?");
+      count++;
+    }
+    
+    if (count > 0) {
+      sb.append(", ");
+    }
+    if (count > 0) {
+      sb.append("modificationDate = ? WHERE appId = ?");
+      count = count + 2;
+    }
+
+    if (count == 0) {
+      //nothing to do here.
+      return;
+    }
+
+    Connection con = null;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    try {
+      con = connectionProvider.getConnection();
+      pstmt = con.prepareStatement(sb.toString());
+      int ind = 1;
+      if (appName != null) {
+        pstmt.setString(ind++, appName);
+      }
+      if (googleApiKey != null) {
+        pstmt.setString(ind++, googleApiKey);
+      }
+      if (googleProjectId != null) {
+        pstmt.setString(ind++, googleProjectId);
+      }
+      if (apnsCertPwd != null) {
+        if (apnsCertPwd.isEmpty()) {
+          pstmt.setNull(ind++, Types.VARCHAR);
+        } else {
+          pstmt.setString(ind++, AuthFactory.encryptPassword(apnsCertPwd));
+        }
+      }
+      if (ownerEmail != null) {
+        pstmt.setString(ind++, ownerEmail);
+      }
+      if (guestSecret != null) {
+        pstmt.setString(ind++, guestSecret);
+      }
+      if (productionApnsCert) {
+        pstmt.setInt(ind++, 1);
+      } else {
+        pstmt.setInt(ind++, 0);
+      }
+      if (serverUserId != null) {
+        pstmt.setString(ind++, serverUserId);
       }
       pstmt.setTimestamp(ind++, new Timestamp(new java.util.Date().getTime()));
       pstmt.setString(ind++, appId);

@@ -13,3 +13,12 @@ insert into ofProperty values('xmpp.client.idle', '-1');
 
 delete from ofProperty where name='xmpp.client.idle.ping';
 insert into ofProperty values('xmpp.client.idle.ping', 'false');
+
+delete from ofProperty where name='route.all-resources';
+insert into ofProperty values('route.all-resources', 'true');
+
+delete from ofProperty where name='xmpp.proxy.enabled';
+insert into ofProperty values('xmpp.proxy.enabled', 'false');
+
+delete from ofProperty where name='xmpp.auth.anonymous';
+insert into ofProperty values('xmpp.auth.anonymous', 'false');

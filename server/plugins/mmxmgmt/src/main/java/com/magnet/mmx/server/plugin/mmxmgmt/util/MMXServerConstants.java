@@ -48,7 +48,8 @@ public final class MMXServerConstants {
   public static final String PUSH_CALLBACK_CONTEXT = "/mmxmgmt";
   public static final String PUSH_CALLBACK_ENDPOINT = "/v1/pushreply";
   public static final long DEFAULT_PUSH_CALLBACK_TOKEN_TTL = 24*60*60; // 24 hrs in seconds
-  public static final String PUBLIC_REST_API_MAPPING = "/api/v1/*";
+  public static final String PUBLIC_REST_API_V1_MAPPING = "/api/v1/*";
+  public static final String PUBLIC_REST_API_V2_MAPPING = "/api/v2/*";
   public static final String DEFAULT_PUBSUB_SERVICE_ID = "pubsub";
   public static final String MMX_MBEAN_NAME = "com.magnet.mmx.server.plugin.mmxmgmt:type=MMXManagedConfigurationMBean";
 
@@ -60,6 +61,7 @@ public final class MMXServerConstants {
   public static final String HTTP_HEADER_APP_ID = "X-mmx-app-id";
   public static final String HTTP_HEADER_REST_API_KEY = "X-mmx-api-key";
   public static final String HTTP_HEADER_ADMIN_APP_OWNER_KEY = "X-mmx-app-owner";
+  public static final String HTTP_HEADER_USER_ID = "X-mmx-user-id";
 
   public final static String REPLY_TO = "Reply-To";
 
@@ -79,8 +81,10 @@ public final class MMXServerConstants {
 
   public static final String SECURE_RANDOM_ALGORITHM = "SHA1PRNG";
 
-  public static final String PUBLIC_API_SERVLET_MAPPING_PREFIX = "/api/v1/";
-  public static final String ADMIN_API_SERVLET_MAPPING_PREFIX = "/rest/v1/";
+  public static final String PUBLIC_API_SERVLET_V1_MAPPING_PREFIX = "/api/v1/";
+  public static final String ADMIN_API_SERVLET_V1_MAPPING_PREFIX = "/rest/v1/";
+  public static final String PUBLIC_API_SERVLET_V2_MAPPING_PREFIX = "/api/v2/";
+  public static final String ADMIN_API_SERVLET_V2_MAPPING_PREFIX = "/rest/v2/";
 
   public static final String RESTEASY_SERVLET_MAPPING_PREFIX_KEY = "resteasy.servlet.mapping.prefix";
   public static final String RESTEASY_RESOURCES_KEY = "resteasy.resources";
@@ -92,7 +96,8 @@ public final class MMXServerConstants {
   public static final int ADMIN_API_PORT = 7070;
   public static final boolean ADMIN_API_ENABLE_HTTPS = true;
   public static final String ADMIN_API_CONTEXT = "/mmxadmin";
-  public static final String ADMIN_API_REST_MAPPING = "/rest/v1/*";
+  public static final String ADMIN_API_V1_REST_MAPPING = "/rest/v1/*";
+  public static final String ADMIN_API_V2_REST_MAPPING = "/rest/v2/*";
   public static final int ADMIN_API_HTTPS_PORT = 7077;
   public static final String ADMIN_REST_API_ACCESS_CONTROL_MODE_STRICT = "strict";
   public static final String ADMIN_REST_API_ACCESS_CONTROL_MODE_RELAXED = "relaxed";
@@ -118,6 +123,9 @@ public final class MMXServerConstants {
   public static final String SORT_ORDER_ASC = "asc";
   public static final String SORT_ORDER_DESC = "desc";
 
+  public final static String SINCE_PARAM = "since";
+  public final static String UNTIL_PARAM = "until";
+  
   public final static Integer DEFAULT_PAGE_SIZE = Integer.valueOf(100);
   public final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
   public final static String MMX_APP_ENTITY_PROPERTY = "mmxAppEntityProperty";
@@ -149,9 +157,11 @@ public final class MMXServerConstants {
   public final static String RPSLS_APP = "rpsls";
 
   public final static String DISTRIBUTED_KEY = "mmxdistributed";
-  public final static String SERVER_ACK_KEY = "serverack";
+  
   /**
    * Content is included in meta using the following key.
    */
   public static final String TEXT_CONTENT_KEY = "textContent";
+
+  public final static String TOPIC_ROLE_PUBLIC = "PUBLIC";
 }

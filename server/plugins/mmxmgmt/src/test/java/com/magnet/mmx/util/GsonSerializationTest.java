@@ -14,7 +14,7 @@
  */
 package com.magnet.mmx.util;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AppRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AppInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import org.apache.commons.lang3.StringUtils;
@@ -38,7 +38,7 @@ public class GsonSerializationTest {
   @Test
   public void testAppRequestSerialization() {
 
-    AppRequest request = new AppRequest();
+    AppInfo request = new AppInfo();
     request.setName("Cool App");
     request.setOwnerId("superuser");
     request.setGoogleApiKey("gapikey");

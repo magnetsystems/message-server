@@ -14,14 +14,7 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSender;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSenderImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.SendMessageResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -33,21 +26,33 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSender;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSenderImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.SendMessageResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
- * Resource that provides API related to message functions viz:
- * 1. send_message (XMPP message)
+ * Resource that provides API related to message functions via:
+ * 1. /send_message (XMPP message)
+ * The sender of the message is always from server user.
+ * @deprecated MessageSendResource
  */
+@Deprecated
 @Path("/send_message")
 public class MessageFunctionResource extends AbstractBaseResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(MessageFunctionResource.class);
 
-
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  public Response sendMessage(@Context HttpHeaders headers, SendMessageRequest request) {
+  public Response sendMessage(@Context HttpHeaders headers, SendMessageRequest1 request) {
     try {
       long startTime = System.nanoTime();
       MessageSender sender = new MessageSenderImpl();
@@ -61,7 +66,8 @@ public class MessageFunctionResource extends AbstractBaseResource {
       }
       MultivaluedMap<String, String> requestHeaders = headers.getRequestHeaders();
       String appId = requestHeaders.getFirst(MMXServerConstants.HTTP_HEADER_APP_ID);
-      SendMessageResult result = sender.send(appId, request);
+      AppEntity appEntity = appDAO.getAppForAppKey(appId);
+      SendMessageResult result = sender.send(appEntity.getServerUserId(), appId, request.toInternal());
       Response rv = null;
       if (result.isError()) {
         rv = Response
@@ -94,5 +100,4 @@ public class MessageFunctionResource extends AbstractBaseResource {
       );
     }
   }
-
 }

@@ -14,7 +14,23 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
 import com.magnet.mmx.protocol.MMXTopicId;
+import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
@@ -43,20 +59,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
 import com.magnet.mmx.util.TopicHelper;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 /**
  */
@@ -81,7 +83,8 @@ public class MessageSenderImpl implements MessageSender {
 
 
   @Override
-  public SendMessageResult send(String appId, com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request) {
+  public SendMessageResult send(String senderUserId, String appId,
+        com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest request) {
     ConnectionProvider provider = getConnectionProvider();
     AppDAO appDAO = new AppDAOImpl(provider);
     DeviceDAO deviceDAO = new DeviceDAOImpl(provider);
@@ -97,29 +100,35 @@ public class MessageSenderImpl implements MessageSender {
       int requested = 0;
       int sent = 0;
       int unsent = 0;
+      AppEntity appEntity = appDAO.getAppForAppKey(appId);
       List<SentMessageId> sentList = new LinkedList<SentMessageId>();
       List<UnsentMessage> unsentList = new LinkedList<UnsentMessage>();
       Count count = null;
 
-      if (request.getRecipientUsernames() != null && !request.getRecipientUsernames().isEmpty()) {
-        List<String> userList = request.getRecipientUsernames();
+      // Only one message ID as a multicast message.
+      String msgId = (new MessageIdGeneratorImpl()).generateItemIdentifier(appId);
+
+      if (request.getRecipientUserIds() != null && !request.getRecipientUserIds().isEmpty()) {
+        List<String> userList = request.getRecipientUserIds();
         UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
-        for (String username : userList) {
+        for (String userId : userList) {
           requested++;
-          String mmxUsername = Helper.getMMXUsername(username, appId);
+          String mmxUsername = Helper.getMMXUsername(userId, appId);
           UserEntity userEntity = userDAO.getUser(mmxUsername);
           if (userEntity == null) {
-            LOGGER.info("User with name:{} not found", username);
-            UnsentMessage badUser = new UnsentMessage(username, ErrorCode.INVALID_USER_NAME.getCode(), ErrorMessages.ERROR_USERNAME_NOT_FOUND);
+            LOGGER.info("User with id:{} not found", userId);
+            UnsentMessage badUser = new UnsentMessage(userId,
+                ErrorCode.INVALID_USER_NAME.getCode(), ErrorMessages.ERROR_USERNAME_NOT_FOUND);
             unsentList.add(badUser);
             unsent++;
           } else {
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(validationResult.getDeviceEntity())
-                .setUserId(username)
+                .setSenderId(senderUserId)
+                .setUserId(userId)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
@@ -127,7 +136,7 @@ public class MessageSenderImpl implements MessageSender {
             Message message = builder.build();
             String messageId = message.getID();
             routeMessage(message);
-            SentMessageId sentMessageId = new SentMessageId(username, null, messageId);
+            SentMessageId sentMessageId = new SentMessageId(userId, null, messageId);
             sentList.add(sentMessageId);
             sent++;
           }
@@ -143,10 +152,11 @@ public class MessageSenderImpl implements MessageSender {
       } else if (request.getDeviceId() != null) {
         MessageBuilder builder = new MessageBuilder();
         String recipient = validationResult.getDeviceEntity().getOwnerId();
-        builder.setAppEntity(validationResult.getAppEntity())
-            .setIdGenerator(new MessageIdGeneratorImpl())
+        builder.setAppId(appId)
+            .setId(msgId)
             .setUtcTime(System.currentTimeMillis())
             .setDeviceEntity(validationResult.getDeviceEntity())
+            .setSenderId(senderUserId)
             .setUserId(recipient)
             .setReplyTo(request.getReplyTo())
             .setMetadata(request.getContent())
@@ -179,12 +189,13 @@ public class MessageSenderImpl implements MessageSender {
           List<UserEntity> userEntityList = resolver.resolve(appId, target);
           requested = userEntityList.size();
           for (UserEntity ue : userEntityList) {
-            //get the bare user id.
+            //get the bared user id.
             String recipient = JIDUtil.getUserId(ue.getUsername());
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
+                .setSenderId(senderUserId)
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -215,10 +226,11 @@ public class MessageSenderImpl implements MessageSender {
             //get the bare user id.
             String recipient = de.getOwnerId();
             MessageBuilder builder = new MessageBuilder();
-            builder.setAppEntity(validationResult.getAppEntity())
-                .setIdGenerator(new MessageIdGeneratorImpl())
+            builder.setAppId(appId)
+                .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
                 .setDeviceEntity(de)
+                .setSenderId(senderUserId)
                 .setUserId(recipient)
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
@@ -253,13 +265,14 @@ public class MessageSenderImpl implements MessageSender {
   }
 
   /**
-   * Post errorMessage
+   * Post/publish a message to a topic
    *
    * @param request
    * @return SendMessageResult
    */
   @Override
-  public TopicPostResult postMessage(String topicName, String appId, TopicPostMessageRequest request) {
+  public TopicPostResult postMessage(String pubUserId, String topicName,
+      String appId, TopicPostMessageRequest request) {
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
     ConnectionProvider provider = getConnectionProvider();
     AppDAO appDAO = new AppDAOImpl(provider);
@@ -273,11 +286,12 @@ public class MessageSenderImpl implements MessageSender {
       Node topicNode = validationResult.getTopicNode();
       String domain = getDomain();
       PublisherModel publisherModel = validationResult.getTopicNode().getPublisherModel();
-      JID from = TopicMessageBuilder.buildFromJID(appEntity, domain);
+      JID from = new JID(JIDUtil.makeNode(pubUserId, appEntity.getAppId()), domain, null);
+
       boolean canPublish = publisherModel.canPublish(topicNode, from);
       if (!canPublish) {
         LOGGER.info("Server user:{} for app with id:{} is not allowed to publish to topic:{}",
-            validationResult.getAppEntity().getServerUserId(), appEntity.getAppId(), topicName);
+            pubUserId, appEntity.getAppId(), topicName);
         result = new TopicPostResult();
         result.setError(true);
         result.setErrorMessage(String.format(ErrorMessages.ERROR_TOPIC_PUBLISHING_NOT_ALLOWED, topicName));
@@ -286,13 +300,15 @@ public class MessageSenderImpl implements MessageSender {
         return result;
       }
 
-      // TODO: hack for MOB-2516 that user topic is shown as "userID/topicName"
+      // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName"
       MMXTopicId tid = TopicResource.nameToId(topicName);
       String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
       //ok validated.
       TopicMessageBuilder builder = new TopicMessageBuilder();
-      builder.setAppEntity(validationResult.getAppEntity())
-          .setIdGenerator(new MessageIdGeneratorImpl())
+      MessageIdGeneratorImpl idGen = new MessageIdGeneratorImpl();
+      String itemId = idGen.generateItemIdentifier(topicId);
+      builder.setPubUserId(pubUserId)
+          .setItemId(itemId)
           .setUtcTime(System.currentTimeMillis())
           .setRequest(request)
           .setDomain(domain)
@@ -305,11 +321,10 @@ public class MessageSenderImpl implements MessageSender {
         LOGGER.debug("Topic message:" + publishIQ.toXML());
       }
 
-      String messageId = publishIQ.getID();
       routeMessage(publishIQ);
       result = new TopicPostResult();
       result.setError(false);
-      result.setMessageId(messageId);
+      result.setMessageId(itemId);
       result.setStatus(SEND_MESSAGE_STATUS_OK);
     } else {
       LOGGER.info("topic post errorMessage validation failed");
@@ -333,7 +348,7 @@ public class MessageSenderImpl implements MessageSender {
       return result;
     }
 
-    List<String> userList = request.getRecipientUsernames();
+    List<String> userList = request.getRecipientUserIds();
     String deviceId = request.getDeviceId();
 
     if ((userList == null || userList.isEmpty()) && deviceId == null && request.getTarget() == null) {
@@ -387,7 +402,7 @@ public class MessageSenderImpl implements MessageSender {
       result.setValid(false, ERROR_INVALID_POST_MESSAGE_TOPIC);
       return result;
     }
-    // TODO: hack for MOB-2516 that user topic is shown as "userID/topicName".
+    // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName".
     MMXTopicId tid = TopicResource.nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
     Node topic = topicManager.getTopicNode(topicId);

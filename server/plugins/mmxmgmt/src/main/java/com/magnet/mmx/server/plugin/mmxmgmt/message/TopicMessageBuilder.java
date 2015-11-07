@@ -14,28 +14,28 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import java.util.Date;
+import java.util.Map;
+
+import org.dom4j.Element;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+
 import com.magnet.mmx.protocol.Constants;
-import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.bot.MMXMetaBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.TimeUtil;
-import org.dom4j.Element;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-
-import java.util.Date;
-import java.util.Map;
 
 /**
  */
 public class TopicMessageBuilder {
   private TopicPostMessageRequest request;
-  private AppEntity appEntity;
+  private String pubUserId;
   private long utcTime;
   private String domain;
-  private MessageIdGenerator idGenerator;
+  private String itemId;
   private String topicId;
   private String appId;
 
@@ -45,14 +45,13 @@ public class TopicMessageBuilder {
   static final String ATTRIBUTE_NODE = "node";
   static final String ITEM_NAME = "item";
 
-
   public TopicMessageBuilder setRequest(TopicPostMessageRequest request) {
     this.request = request;
     return this;
   }
 
-  public TopicMessageBuilder setAppEntity(AppEntity appEntity) {
-    this.appEntity = appEntity;
+  public TopicMessageBuilder setPubUserId(String pubUserId) {
+    this.pubUserId = pubUserId;
     return this;
   }
 
@@ -66,8 +65,8 @@ public class TopicMessageBuilder {
     return this;
   }
 
-  public TopicMessageBuilder setIdGenerator(MessageIdGenerator idGenerator) {
-    this.idGenerator = idGenerator;
+  public TopicMessageBuilder setItemId(String itemId) {
+    this.itemId = itemId;
     return this;
   }
 
@@ -113,10 +112,10 @@ public class TopicMessageBuilder {
 
     IQ message = new IQ();
 
-    String id = idGenerator.generateTopicMessageId(appId, topicId);
+    // This is the IQ id.
+    String id = itemId+'-'+Long.toHexString(utcTime);
     String toAddress = "pubsub." + domain;
-    String serverUser = appEntity.getServerUserId();
-    JID from = buildFromJID(appEntity, domain);
+    JID from = new JID(JIDUtil.makeNode(pubUserId, appId), domain, null);
 
     message.setType(IQ.Type.set);
     message.setID(id);
@@ -128,7 +127,7 @@ public class TopicMessageBuilder {
     publishElement.addAttribute(ATTRIBUTE_NODE, topicId);
     Element itemElement = publishElement.addElement(ITEM_NAME);
     //we need to have an id attribute for the item element
-    itemElement.addAttribute(Constants.XMPP_ATTR_ID, idGenerator.generateItemIdentifier(topicId));
+    itemElement.addAttribute(Constants.XMPP_ATTR_ID, itemId);
     Element mmxElement = itemElement.addElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
 
     Map<String, String> meta = request.getContent();
@@ -137,7 +136,7 @@ public class TopicMessageBuilder {
     metaElement.setText(metaJSON);
 
     Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
-    String mmxMetaJSON = MMXMetaBuilder.buildFrom(JIDUtil.getUserId(serverUser), null);
+    String mmxMetaJSON = MMXMetaBuilder.buildFrom(JIDUtil.getUserId(pubUserId), null);
     mmxMetaElement.setText(mmxMetaJSON);
 
     Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
@@ -151,13 +150,5 @@ public class TopicMessageBuilder {
     payloadElement.addAttribute(Constants.MMX_ATTR_CHUNK, MessageBuilder.buildChunkAttributeValue(text));
 
     return message;
-  }
-
-
-  public static JID buildFromJID(AppEntity appEntity, String domain) {
-    String serverUser = appEntity.getServerUserId();
-    String appId = appEntity.getAppId();
-    JID toJID = new JID(JIDUtil.makeNode(serverUser, appId), domain, null);
-    return toJID;
   }
 }

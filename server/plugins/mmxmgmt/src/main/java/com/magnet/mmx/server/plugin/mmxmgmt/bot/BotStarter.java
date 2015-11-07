@@ -56,6 +56,7 @@ public class BotStarter extends MMXClusterableTask implements Runnable {
 
   @Override
   public void run() {
+
     if (!canExecute()) {
       LOGGER.warn("BotStarter.run() : Unable to acquire clustered lock, not running");
       return;

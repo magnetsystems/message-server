@@ -14,31 +14,41 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.CONTENT_TYPE_JSON;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_APP_ID;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_OFFSET;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SEARCH_BY;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SEARCH_VALUE;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SEARCH_VALUE2;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SIZE;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SORT_BY;
+import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.KEY_SORT_ORDER;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.jivesoftware.admin.AuthCheckFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.MessageEntityPostProcessor;
+import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PostProcessor;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.MessageSearchOption;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.MessageSearchValidator;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.MessageSortOption;
-import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.web.ValueHolder;
 import com.magnet.mmx.util.GsonData;
-import org.jivesoftware.admin.AuthCheckFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import static com.magnet.mmx.server.plugin.mmxmgmt.servlet.WebConstants.*;
 /**
  */
 public class MessageServlet extends AbstractSecureServlet {

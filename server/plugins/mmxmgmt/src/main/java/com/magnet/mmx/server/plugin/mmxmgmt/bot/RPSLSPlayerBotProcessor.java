@@ -15,8 +15,24 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.bot;
 
 
+import java.security.SecureRandom;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+
+import org.dom4j.Element;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+
 import com.google.gson.annotations.SerializedName;
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.MMXid;
+import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageIdGenerator;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageIdGeneratorImpl;
@@ -26,19 +42,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.JSONifiable;
 import com.magnet.mmx.util.Utils;
-import org.dom4j.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-
-import java.security.SecureRandom;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
 
 /**
  * Bot processor that processes and responds with RPSLS messages
@@ -170,12 +173,16 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
 
     Element mmx = message.addChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
 
+    //mmx meta
     Element internalMeta = mmx.addElement(Constants.MMX_MMXMETA);
     String userId = JIDUtil.getUserId(toJID);
-    String devId = fromJID.getResource();
-    //mmx meta
-    String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
-    internalMeta.setText(mmxMetaJSON);
+    String devId = toJID.getResource();
+    String senderId = JIDUtil.getUserId(fromJID);
+    String senderDevId = fromJID.getResource();
+    MmxHeaders mmxMeta = new MmxHeaders();
+    mmxMeta.setTo(new MMXid[] {new MMXid(userId, devId, null)});
+    mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
+    internalMeta.setText(GsonData.getGson().toJson(mmxMeta));
 
     Element meta = mmx.addElement(Constants.MMX_META);
     AcceptanceRPSLSGameInfo acceptance = new AcceptanceRPSLSGameInfo();
@@ -225,12 +232,17 @@ public class RPSLSPlayerBotProcessor implements AutoResponseProcessor {
     choiceMessage.setFrom(fromJID);
 
     Element mmx = choiceMessage.addChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+    
+    //mmx meta
     Element internalMeta = mmx.addElement(Constants.MMX_MMXMETA);
     String userId = JIDUtil.getUserId(toJID);
-    String devId = fromJID.getResource();
-    //mmx meta
-    String mmxMetaJSON = MMXMetaBuilder.build(userId, devId);
-    internalMeta.setText(mmxMetaJSON);
+    String devId = toJID.getResource();
+    String senderId = JIDUtil.getUserId(fromJID);
+    String senderDevId = fromJID.getResource();
+    MmxHeaders mmxMeta = new MmxHeaders();
+    mmxMeta.setTo(new MMXid[] {new MMXid(userId, devId, null)});
+    mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
+    internalMeta.setText(GsonData.getGson().toJson(mmxMeta));
 
     Element meta = mmx.addElement(Constants.MMX_META);
     ChoiceRPSLSGameInfo choice = new ChoiceRPSLSGameInfo();

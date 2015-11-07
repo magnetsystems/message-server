@@ -14,16 +14,16 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
+
 /**
+ * This is used as internal protocol.
  */
 public class SendMessageRequest {
-  private List<String> recipientUsernames;
+  private List<String> recipientUserIds;
   private String deviceId;
   private Map<String, String> content;
   private boolean receipt;
@@ -31,12 +31,13 @@ public class SendMessageRequest {
   private Target target;
 
 
-  public List<String> getRecipientUsernames() {
-    return recipientUsernames;
+  public List<String> getRecipientUserIds() {
+    return recipientUserIds;
   }
 
-  public void setRecipientUsernames(List<String> recipientUsername) {
-    this.recipientUsernames = recipientUsername;
+  // recipientUserIds should not contain the %appID.
+  public void setRecipientUserIds(List<String> recipientUserIds) {
+    this.recipientUserIds = recipientUserIds;
   }
 
   public String getDeviceId() {
@@ -84,7 +85,7 @@ public class SendMessageRequest {
   public String toString() {
     final StringBuilder sb = new StringBuilder("SendMessageRequest{");
     sb.append("content=").append(content);
-    sb.append(", recipientUsernames=").append(recipientUsernames);
+    sb.append(", recipientUserIds=").append(recipientUserIds);
     sb.append(", deviceId='").append(deviceId).append('\'');
     sb.append(", receipt=").append(receipt);
     sb.append(", replyTo='").append(replyTo).append('\'');

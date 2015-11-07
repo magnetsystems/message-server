@@ -96,7 +96,7 @@ public class DeviceDAOImpl implements DeviceDAO {
   }
 
   @Override
-  public int addDevice(String ownerId, String appId, DevReg request) throws DbInteractionException {
+  public int addDevice(String ownerId, String appId, com.magnet.mmx.protocol.DeviceInfo request) throws DbInteractionException {
     Connection con = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
@@ -280,7 +280,7 @@ public class DeviceDAOImpl implements DeviceDAO {
   }
 
   @Override
-  public int updateDevice(String deviceId, OSType type, String appId, DevReg request,
+  public int updateDevice(String deviceId, OSType type, String appId, com.magnet.mmx.protocol.DeviceInfo request,
                           String ownerId, DeviceStatus status) throws DbInteractionException {
     Connection con = null;
     PreparedStatement pstmt = null;

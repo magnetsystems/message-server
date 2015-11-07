@@ -14,29 +14,8 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.topics;
 
-import com.google.common.base.Function;
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
-import com.magnet.mmx.protocol.TopicAction;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubItem;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.PubSubItemResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import com.magnet.mmx.util.TopicHelper;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.PubSubService;
-import org.jivesoftware.util.StringUtils;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import java.util.Date;
+import java.util.List;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -50,12 +29,39 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.util.Date;
-import java.util.List;
+
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubService;
+import org.jivesoftware.util.StringUtils;
+import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+import com.magnet.mmx.protocol.MMXTopicId;
+import com.magnet.mmx.protocol.TopicAction;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubItem;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.PubSubItemResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.util.TopicHelper;
 
 /**
+ * REST entry point for the published items.  The URL is 
+ * .../topics/{topicName}/items?size={maxsize}&since={datetime}&until={datetime}
+ * @deprecated ChannelResource#fetchItems
  */
-
 @Path("/topics/{" + MMXServerConstants.TOPICNAME_PATH_PARAM + "}/items")
 public class MMXTopicsItemsResource extends AbstractBaseResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXTopicsItemsResource.class);
@@ -64,7 +70,7 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
   public static final String UNTIL_PARAM = "until";
   public static final String ID_KEY = "id";
   private static final String DEFAULT_MAX_ITEMS = "200";
-
+  
   @GET
   @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
   public Response getItems(@Context HttpHeaders headers,
@@ -108,7 +114,7 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
         dateUntil = new DateTime(until).toDate();
       } catch (Exception e) {
         return new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT.getCode(),
-                "\"until\" date param is not a valid ISO-8601 date").toJaxRSResponse();
+                "\"until\" param is not a valid ISO-8601 date").toJaxRSResponse();
       }
     }
 
@@ -121,8 +127,10 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
     } else {
       order = MMXServerConstants.SORT_ORDER_ASCENDING;
     }
-
-    String nodeId = TopicHelper.makeTopic(appId, null, topicName);
+    
+    // MMX-3207 to handle user topic
+    MMXTopicId topicId = TopicResource.nameToId(topicName);
+    String nodeId = TopicHelper.makeTopic(appId, topicId.getEscUserId(), topicId.getName());
 
     LOGGER.trace("getItems : constructed nodeId={}", nodeId);
 
@@ -139,7 +147,7 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
     }
 
     List<MMXPubSubItem> items = getPublishedItems(appId, topicItemEntities);
-    PubSubItemResult pubsubItemResult = getPubsubItemResult(nodeId, items);
+    PubSubItemResult pubsubItemResult = getPubsubItemResult(nodeId, items, dateSince, dateUntil);
 
     return Response.status(Response.Status.OK).entity(pubsubItemResult).build();
   }
@@ -164,7 +172,9 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
       }
       PubSubService pubSubService = getPubSubService();
       String topic = TopicHelper.normalizePath(topicName);
-      String realTopic = TopicHelper.makeTopic(appId, null, topic);
+      // MMX-3207 handle user topic.
+      MMXTopicId topicId = TopicResource.nameToId(topicName);
+      String realTopic = TopicHelper.makeTopic(appId, topicId.getEscUserId(), topicId.getName());
       Node node = pubSubService.getNode(realTopic);
       if (node == null || node.isCollectionNode()) {
         LOGGER.info("Topic with name:{} not found", topicName);
@@ -223,8 +233,11 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
     return Lists.transform(entityList, entityToItem);
   }
 
-  private PubSubItemResult getPubsubItemResult(String nodeId, List<MMXPubSubItem> items) {
-    int count = DBUtil.getTopicItemDAO().getCount(MMXServerConstants.DEFAULT_PUBSUB_SERVICE_ID, nodeId);
+  private PubSubItemResult getPubsubItemResult(String nodeId, List<MMXPubSubItem> items, Date since, Date until) {
+    String sinceDateStr = (since == null) ? null : StringUtils.dateToMillis(since);
+    String untilDateStr = (until == null) ? null : StringUtils.dateToMillis(until);
+    int count = DBUtil.getTopicItemDAO().getCount(
+        MMXServerConstants.DEFAULT_PUBSUB_SERVICE_ID, nodeId, sinceDateStr, untilDateStr);
     return new PubSubItemResult(count, items);
   }
 

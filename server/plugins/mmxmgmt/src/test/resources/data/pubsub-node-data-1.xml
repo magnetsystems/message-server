@@ -8,4 +8,11 @@
   <ofPubsubNode serviceID="pubsub" nodeID="/7wmi73wxin9/*/restaurants" leaf="1" creationDate="001426029387061" modificationDate="001426029387061" parent="7wmi73wxin9" deliverPayloads="1" maxPayloadSize="2097152" persistItems="1" maxItems="43200" notifyConfigChanges="1" notifyDelete="1" notifyRetract="0" presenceBased="0" sendItemSubscribe="1" publisherModel="open" subscriptionEnabled="1" configSubscription="0" accessModel="open" payloadType=" " bodyXSLT=" " dataformXSLT="  " creator="3tfv0e38uq31%7wmi73wxin9@localhost" description="Restaurants in the area" language="English" name="Restaurants" replyPolicy="owner" maxLeafNodes="0"/>
   <ofPubsubNode serviceID="pubsub" nodeID="/7wmi73wxin9/*/sports" leaf="1" creationDate="001426029489600" modificationDate="001426029489600" parent="7wmi73wxin9" deliverPayloads="1" maxPayloadSize="2097152" persistItems="1" maxItems="43200" notifyConfigChanges="1" notifyDelete="1" notifyRetract="0" presenceBased="0" sendItemSubscribe="1" publisherModel="open" subscriptionEnabled="1" configSubscription="0" accessModel="open" payloadType=" " bodyXSLT=" " dataformXSLT="  " creator="3tfv0e38uq31%7wmi73wxin9@localhost" description="Football, Cricket, Soccer, Basketball" language="English" name="Sport Topic" replyPolicy="owner" maxLeafNodes="0"/>
 
+  <mmxTopicRole id="12" serviceID="pubsub" nodeID="/7wmi73wxin9/*/com.magnet.os" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="13" serviceID="pubsub" nodeID="/7wmi73wxin9/*/com.magnet.os/android" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="14" serviceID="pubsub" nodeID="/7wmi73wxin9/*/com.magnet.os/android/_all_" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="15" serviceID="pubsub" nodeID="/7wmi73wxin9/*/com.magnet.os/ios" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="16" serviceID="pubsub" nodeID="/7wmi73wxin9/*/com.magnet.os/ios/_all_" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="17" serviceID="pubsub" nodeID="/7wmi73wxin9/*/restaurants" role="public" creationDate="2015-06-12 15:21:36.0"/>
+  <mmxTopicRole id="18" serviceID="pubsub" nodeID="/7wmi73wxin9/*/sports" role="sportfan" creationDate="2015-06-12 15:21:36.0"/>
 </dataset>

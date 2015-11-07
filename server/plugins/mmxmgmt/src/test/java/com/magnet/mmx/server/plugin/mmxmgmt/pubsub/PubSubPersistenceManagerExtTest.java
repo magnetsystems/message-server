@@ -23,6 +23,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UnitTestDSProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
@@ -37,6 +38,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -88,7 +90,7 @@ public class PubSubPersistenceManagerExtTest {
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
-    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
+    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo, Collections.singletonList("sportfan"));
 
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
 
@@ -116,7 +118,7 @@ public class PubSubPersistenceManagerExtTest {
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
-    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
+    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo, Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
 
@@ -144,7 +146,7 @@ public class PubSubPersistenceManagerExtTest {
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
-    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
+    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo, Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC, "sportfan"));
 
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
 
@@ -172,7 +174,7 @@ public class PubSubPersistenceManagerExtTest {
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
     PaginationInfo paginationInfo = PaginationInfo.build(100, 0);
-    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo);
+    QueryBuilderResult builtQueries = builder.buildPaginationQuery(query, appId, paginationInfo, Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC, "sportfan"));
 
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
 
@@ -206,7 +208,7 @@ public class PubSubPersistenceManagerExtTest {
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
     PaginationInfo paginationInfo = PaginationInfo.build(expectedSize, 0);
-    QueryBuilderResult builtQueries = builder.buildPaginationQuery(searchRequest, appId, paginationInfo, null);
+    QueryBuilderResult builtQueries = builder.buildPaginationQuery(searchRequest, appId, paginationInfo, null, Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC, "sportfan"));
 
     SearchResult<TopicAction.TopicInfoWithSubscriptionCount> topicList = PubSubPersistenceManagerExt.getTopicWithPagination(new BasicDataSourceConnectionProvider(ds), builtQueries, paginationInfo);
 

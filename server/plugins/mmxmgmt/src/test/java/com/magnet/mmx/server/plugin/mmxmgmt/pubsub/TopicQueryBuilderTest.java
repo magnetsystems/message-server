@@ -20,10 +20,13 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.query.TopicQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryParam;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -38,20 +41,23 @@ public class TopicQueryBuilderTest {
     topicQuery.setTopicName("fastfood");
     String appId = "i1s3wtx3m0d";
 
+    List<String> roles = Collections.emptyList();
+
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0));
+    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0), Arrays.asList("public"));
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
     String expected =
-        "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where " +
-        "s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) " +
-        "as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = " +
+            "ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' " +
+            "FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? AND (EXISTS ( SELECT id from mmxTopicRole WHERE " +
+            "mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.nodeID LIKE ? " +
+            "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
   }
 
   @Test
@@ -59,9 +65,10 @@ public class TopicQueryBuilderTest {
     TopicQuery topicQuery = new TopicQuery();
     topicQuery.setDescription("fast food joint");
     String appId = "i1s3wtx3m0d";
+    List<String> roles = Collections.emptyList();
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0));
+    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0), roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
@@ -78,9 +85,10 @@ public class TopicQueryBuilderTest {
     String[] tags = {"local", "city", "food"};
     topicQuery.setTags(Arrays.asList(tags));
     String appId = "i1s3wtx3m0d";
+    List<String> roles = Collections.emptyList();
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0));
+    QueryBuilderResult result = builder.buildPaginationQuery(topicQuery, appId, PaginationInfo.build(100, 0), roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
@@ -106,18 +114,15 @@ public class TopicQueryBuilderTest {
     String appId = "i1s3wtx3m0d";
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0),null);
+    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0),null, Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
-    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
-        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
-        "ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?  AND (EXISTS ( SELECT id from mmxTopicRole WHERE mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
   }
 
   @Test
@@ -129,9 +134,9 @@ public class TopicQueryBuilderTest {
     searchRequest.setTopicName("food", SearchAction.Match.PREFIX);
 
     String appId = "i1s3wtx3m0d";
-
+    List<String> roles = Collections.emptyList();
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null);
+    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0),null, roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
@@ -171,7 +176,8 @@ public class TopicQueryBuilderTest {
     String appId = "i1s3wtx3m0d";
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null);
+    List<String> roles = Collections.emptyList();
+    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null, roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
@@ -208,9 +214,10 @@ public class TopicQueryBuilderTest {
     searchRequest.setTopicName("food", SearchAction.Match.EXACT);
 
     String appId = "i1s3wtx3m0d";
+    List<String> roles = Collections.emptyList();
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null);
+    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null, roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
@@ -249,7 +256,9 @@ public class TopicQueryBuilderTest {
     String appId = "i1s3wtx3m0d";
 
     TopicQueryBuilder builder = new TopicQueryBuilder();
-    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null);
+    List<String> roles = Collections.emptyList();
+
+    QueryBuilderResult result = builder.buildPaginationQuery(searchRequest, appId, PaginationInfo.build(10, 0), null, roles);
     assertNotNull(result);
 
     String resultQuery = result.getQuery();

@@ -14,6 +14,10 @@
  */
 package com.magnet.mmx.server.api.v1.protocol;
 
+import java.util.List;
+
+import com.magnet.mmx.protocol.TopicAction.PublisherType;
+
 /**
  * Request object describing a topic create request.
  */
@@ -21,9 +25,11 @@ public class TopicCreateInfo {
   private int maxItems = -1;
   private String topicName;
   private String description;
+  private boolean personalTopic;
   private boolean subscriptionEnabled = true;
   private boolean subscribeOnCreate;
-
+  private List<String> roles;
+  private PublisherType publishPermission;
 
   public TopicCreateInfo() {
   }
@@ -36,7 +42,14 @@ public class TopicCreateInfo {
     this.maxItems = maxItems;
   }
 
-
+  public boolean isPersonalTopic() {
+    return personalTopic;
+  }
+  
+  public void setPersonalTopic(boolean personalTopic) {
+    this.personalTopic = personalTopic;
+  }
+  
   public String getTopicName() {
     return topicName;
   }
@@ -69,14 +82,33 @@ public class TopicCreateInfo {
     this.subscribeOnCreate = subscribeOnCreate;
   }
 
+  public List<String> getRoles() {
+    return roles;
+  }
+  
+  public void setRoles(List<String> roles) {
+    this.roles = roles;
+  }
+  
+  public PublisherType getPublishPermission() {
+    return publishPermission;
+  }
+
+  public void setPublishPermission(PublisherType permission) {
+    this.publishPermission = permission;
+  }
+  
   @Override
   public String toString() {
     return "TopicInfo{" +
             "maxItems=" + maxItems +
             ", topicName='" + topicName + '\'' +
             ", description='" + description + '\'' +
+            ", personalTopic='" + personalTopic + '\'' +
+            ", roles='" + roles + '\'' +
             ", subscriptionEnabled=" + subscriptionEnabled +
             ", subscribeOnCreate=" + subscribeOnCreate +
+            ", publishPermission=" + publishPermission +
             '}';
   }
 }

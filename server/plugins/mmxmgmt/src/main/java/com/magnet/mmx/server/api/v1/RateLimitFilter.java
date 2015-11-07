@@ -14,6 +14,16 @@
  */
 package com.magnet.mmx.server.api.v1;
 
+import java.io.IOException;
+
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.base.Strings;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
@@ -21,22 +31,17 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.event.MMXHttpRateExceededEvent;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterDescriptor;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterService;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Priority;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.Provider;
-import java.io.IOException;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertEventsManager;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 
 /**
  * Created by sdatar on 6/2/15.
  */
 @Provider
-@Priority(MMXServerConstants.MMX_RATE_LIMIT_PRIORITY)
+//@Priority(MMXServerConstants.MMX_RATE_LIMIT_PRIORITY)
 public class RateLimitFilter implements ContainerRequestFilter {
   private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitFilter.class);
   @Override
@@ -46,10 +51,11 @@ public class RateLimitFilter implements ContainerRequestFilter {
       AppEntity appEntity = (AppEntity) prop;
       String appId = appEntity.getAppId();
       if(!Strings.isNullOrEmpty(appEntity.getAppId())) {
-        int rate = MMXConfiguration.getConfiguration().getInt(MMXConfigKeys.MAX_HTTP_RATE, MMXServerConstants.DEFAULT_MAX_HTTP_RATE);
+        int rate = MMXConfiguration.getConfiguration().getInt(
+            MMXConfigKeys.MAX_HTTP_RATE, MMXServerConstants.DEFAULT_MAX_HTTP_RATE);
 
-        RateLimiterDescriptor descriptor = new RateLimiterDescriptor(MMXServerConstants.HTTP_RATE_TYPE, appId,
-                                                                     rate);
+        RateLimiterDescriptor descriptor = new RateLimiterDescriptor(
+            MMXServerConstants.HTTP_RATE_TYPE, appId, rate);
         if(!RateLimiterService.isAllowed(descriptor)){
           LOGGER.error("filter : Rate limit exceeded for appId : {}", appId);
           ErrorResponse mmxErrorResponse = new ErrorResponse(ErrorCode.RATE_LIMIT_EXCEEDED,
@@ -63,7 +69,8 @@ public class RateLimitFilter implements ContainerRequestFilter {
         sendErrorResponse(containerRequestContext);
       }
     } else {
-      sendErrorResponse(containerRequestContext);
+      LOGGER.warn("filter: appEntity is not available");
+//      sendErrorResponse(containerRequestContext);
     }
   }
 

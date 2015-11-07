@@ -20,7 +20,7 @@ import java.util.Date;
 
 /**
 */
-class JSONFriendlyAppEntityDecorator {
+public class JSONFriendlyAppEntityDecorator {
 
   private AppEntity entity;
 

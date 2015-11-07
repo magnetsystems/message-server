@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
 import com.google.gson.Gson;
+import com.magnet.mmx.server.api.v2.MMXVersionResource;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXVersion;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXTopicTagsResourceTest;
@@ -45,7 +46,7 @@ import static org.junit.Assert.assertEquals;
 */
 public class MMXVersionResourceTest extends BaseJAXRSTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXVersionResourceTest.class);
-  private static final String baseUri = "http://localhost:8086/mmxmgmt/api/v1/mmx/version";
+  private static final String baseUri = "http://localhost:8086/mmxmgmt/api/v2/mmx/version";
   private static BasicDataSource ds;
   private static AppEntity appEntity;
   public MMXVersionResourceTest() {
