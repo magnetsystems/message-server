@@ -42,22 +42,29 @@ public class MessageBuilder {
   private static Logger LOGGER = LoggerFactory.getLogger(MessageBuilder.class);
 
   private String appId;
-  private DeviceEntity deviceEntity;
+  private DeviceEntity deviceEntity;  // @deprecated
   private long utcTime;
   private String domain;
   private String messageId;
-  private String senderId;
-  private String userId;
-  private String replyTo;
-  private Map<String, String> metadata;
+  private String userId;              // @deprecated
+  private String msgType;
+  private String contentType;
+  private MmxHeaders mmxMeta = new MmxHeaders();
+  private Map<String, String> metadata = new HashMap<String, String>();
   private boolean receipt;
   private static final String EMPTY = "";
-  
+
   public MessageBuilder setAppId(String appId) {
     this.appId = appId;
     return this;
   }
 
+  /**
+   * Set the end-point of the recipient.
+   * @param deviceEntity
+   * @return
+   * @deprecated {@link #setRecipientIds(MMXid[])}
+   */
   public MessageBuilder setDeviceEntity(DeviceEntity deviceEntity) {
     this.deviceEntity = deviceEntity;
     return this;
@@ -78,18 +85,37 @@ public class MessageBuilder {
     return this;
   }
 
+  /**
+   * Set the user ID of the sender.
+   * @param senderId
+   * @return
+   * @deprecated {@link #setSenderId(MMXid)}
+   */
   public MessageBuilder setSenderId(String senderId) {
-    this.senderId = senderId;
+    setSenderId(new MMXid(senderId, null));
     return this;
   }
 
+  /**
+   * Set the user ID of the recipient.
+   * @param userId
+   * @return
+   * @deprecated {@link #setRecipientIds(MMXid[])}
+   */
   public MessageBuilder setUserId(String userId) {
     this.userId = userId;
     return this;
   }
 
+  /**
+   * This feature should not be used.
+   * @param replyTo The user ID to be used when replying to.
+   * @return
+   */
   public MessageBuilder setReplyTo(String replyTo) {
-    this.replyTo = replyTo;
+    if (replyTo != null) {
+      metadata.put(MMXServerConstants.REPLY_TO, (new MMXid(replyTo, null)).toJson());
+    }
     return this;
   }
 
@@ -103,43 +129,65 @@ public class MessageBuilder {
     return this;
   }
 
+  public MessageBuilder setMsgType(String msgType) {
+    this.msgType = msgType;
+    return this;
+  }
+
+  public MessageBuilder setContentType(String contentType) {
+    this.contentType = contentType;
+    return this;
+  }
+
+  public MessageBuilder setSenderId(MMXid senderId) {
+    this.mmxMeta.setFrom(senderId);
+    return this;
+  }
+
+  public MessageBuilder setRecipientId(MMXid recipientId) {
+    this.mmxMeta.setTo(new MMXid[] { recipientId });
+    return this;
+  }
+
+  public MessageBuilder setRecipientIds(MMXid[] recipientIds) {
+    this.mmxMeta.setTo(recipientIds);
+    return this;
+  }
+
   public Message build() {
     Message message = new Message();
-    JID from = new JID(JIDUtil.makeNode(senderId, appId), domain, null);
     message.setID(messageId);
     Element mmxElement = message.addChildElement(Constants.MMX,
         Constants.MMX_NS_MSG_PAYLOAD);
 
-   // construct the <mmxmeta> stanza with To and From.
-    MmxHeaders mmxMeta = new MmxHeaders();
-    if (senderId != null) {
-      mmxMeta.setFrom(new MMXid(senderId, null));
-    }
+    // construct the "mmxmeta" stanza with To with the old userID/deviceEntity.
     if (userId != null) {
-      mmxMeta.setTo(new MMXid[] {new MMXid(userId, null)});
+      mmxMeta.setTo(new MMXid[] { new MMXid(userId, (deviceEntity == null) ?
+          null : deviceEntity.getDeviceId()) });
+    } else if (deviceEntity != null) {
+      mmxMeta.setTo(new MMXid[] { new MMXid(deviceEntity.getOwnerId(),
+          deviceEntity.getDeviceId()) });
     }
-    String mmxMetaJSON = GsonData.getGson().toJson(mmxMeta);
-    Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
-    mmxMetaElement.setText(mmxMetaJSON);
-
-    if (replyTo != null) {
-      if (metadata == null) {
-        metadata = new HashMap<String, String>();
-      }
-      metadata.put(MMXServerConstants.REPLY_TO, formatReplyTo(replyTo));
-    }
-
-    if (metadata == null) {
-      metadata = new HashMap<String, String>();
+    if (!mmxMeta.isEmpty()) {
+      String mmxMetaJSON = GsonData.getGson().toJson(mmxMeta);
+      Element mmxMetaElement = mmxElement.addElement(Constants.MMX_MMXMETA);
+      mmxMetaElement.setText(mmxMetaJSON);
     }
 
-    Map<String, String> meta = metadata;
-    String metaJSON = GsonData.getGson().toJson(meta);
-    Element metaElement = mmxElement.addElement(Constants.MMX_META);
-    metaElement.setText(metaJSON);
+    if (!metadata.isEmpty()) {
+      Map<String, String> meta = metadata;
+      String metaJSON = GsonData.getGson().toJson(meta);
+      Element metaElement = mmxElement.addElement(Constants.MMX_META);
+      metaElement.setText(metaJSON);
+    }
 
     Element payloadElement = mmxElement.addElement(Constants.MMX_PAYLOAD);
-
+    if (msgType != null) {
+      payloadElement.addAttribute(Constants.MMX_ATTR_MTYPE, msgType);
+    }
+    if (contentType != null) {
+      payloadElement.addAttribute(Constants.MMX_ATTR_CTYPE, contentType);
+    }
     DateFormat fmt = Utils.buildISO8601DateFormat();
     String formattedDateTime = fmt.format(new Date(utcTime));
     payloadElement.addAttribute(Constants.MMX_ATTR_STAMP, formattedDateTime);
@@ -149,7 +197,7 @@ public class MessageBuilder {
         buildChunkAttributeValue(text));
 
     message.setType(Message.Type.chat);
-    message.setFrom(from);
+    message.setFrom(buildFromJID());
     message.setTo(buildToJID());
     if (receipt) {
       // add the element for requesting read receipt
@@ -162,14 +210,30 @@ public class MessageBuilder {
     return message;
   }
 
+  private JID buildFromJID() {
+    MMXid sender = (MMXid) mmxMeta.getHeader(MmxHeaders.FROM, null);
+    if (sender == null)
+      return null;
+    return new JID(JIDUtil.makeNode(sender.getUserId(), appId), domain, null);
+  }
+  
   private JID buildToJID() {
-    // Fix for MOB-839
-    if (userId.indexOf('@') >= 0) {
-      userId = JID.escapeNode(userId);
+    MMXid[] tos = (MMXid[]) mmxMeta.getHeader(MmxHeaders.TO, null);
+    if (tos == null || tos.length == 0) {
+      return null;
     }
-    JID toJID = new JID(userId + JIDUtil.APP_ID_DELIMITER + appId, domain,
-        deviceEntity != null ? deviceEntity.getDeviceId() : null);
-    return toJID;
+    String userId, devId;
+    if (tos.length > 1) {
+      userId = Constants.MMX_MULTICAST;
+      devId = null;
+    } else {
+      userId = tos[0].getUserId();
+      devId = tos[0].getDeviceId();
+      if (userId.indexOf('@') >= 0) {
+        userId = JID.escapeNode(userId);
+      }
+    }
+    return new JID(JIDUtil.makeNode(userId, appId), domain, devId);
   }
 
   /**
@@ -188,25 +252,4 @@ public class MessageBuilder {
     }
     return 0 + "/" + byteCount + "/" + byteCount;
   }
-
-  private String formatReplyTo(String replyTo) {
-    String extractedAppId = JIDUtil.getAppId(replyTo);
-    if (extractedAppId == null) {
-      StringBuilder builder = new StringBuilder();
-      // Fix for MOB-839.
-      builder.append((replyTo.indexOf('@') >= 0) ? JID.escapeNode(replyTo)
-          : replyTo);
-      builder.append(JIDUtil.APP_ID_DELIMITER);
-      builder.append(appId);
-      builder.append("@");
-      builder.append(domain);
-      return builder.toString();
-    } else {
-      if (!extractedAppId.equalsIgnoreCase(appId)) {
-        throw new IllegalArgumentException("Bad reply-to address specified");
-      }
-      return replyTo;
-    }
-  }
-
 }

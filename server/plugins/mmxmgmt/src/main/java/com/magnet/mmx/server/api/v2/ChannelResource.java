@@ -38,15 +38,21 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.ChannelNode;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
+import com.magnet.mmx.util.TimeUtil;
 import com.magnet.mmx.util.Utils;
+
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.util.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -661,6 +667,116 @@ public class ChannelResource {
         }
     }
 
+    public static class InviteInfo {
+      private String invitationText;
+      private List<String> invitees;
+      
+      public void setInvitationText(String invitationText) {
+        this.invitationText = invitationText;
+      }
+      /**
+       * Set the user ID's of the invitees
+       * @param invitees
+       */
+      public void setInvitees(List<String> invitees) {
+        this.invitees = invitees;
+      }
+    }
+
+    @POST
+    @Path("{" + CHANNEL_NAME + "}/invite")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response inviteUsers(@Context HttpHeaders headers,
+                              @PathParam(CHANNEL_NAME) String channelName,
+                              InviteInfo inviteInfo) {
+      TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+      if (tokenInfo == null) {
+          return RestUtils.getUnauthJAXRSResp();
+      }
+      if (inviteInfo.invitees == null || inviteInfo.invitees.isEmpty()) {
+        ErrorResponse errorResponse = new ErrorResponse(
+            ErrorCode.INVALID_USER_NAME.getCode(),
+            ErrorMessages.ERROR_INVALID_USERNAME_VALUE);
+        return RestUtils.getBadReqJAXRSResp(errorResponse);
+      }
+
+      try {
+        int i = 0;
+        String appId = tokenInfo.getMmxAppId();
+        JID from = RestUtils.createJID(tokenInfo);
+        MMXChannelId channelId = nameToId(channelName);
+        MMXChannelManager channelMgr = MMXChannelManager.getInstance();
+        com.magnet.mmx.protocol.ChannelInfo channelInfo = channelMgr.getChannel(
+            from, appId, channelId);
+
+        MessageBuilder builder = new MessageBuilder();
+        MMXid[] recipients = new MMXid[inviteInfo.invitees.size()];
+        for (String recipient : inviteInfo.invitees) {
+          recipients[i] = new MMXid(recipient, null);
+        }
+        String msgId = new MessageIdGeneratorImpl().generateTopicMessageId(
+            appId, channelName);
+        Message message = builder.setId(msgId)
+            .setAppId(appId)
+            .setDomain(XMPPServer.getInstance().getServerInfo().getXMPPDomain())
+            .setMsgType(MSG_TYPE_INVITATION)
+            .setReceipt(false)
+            .setSenderId(new MMXid(tokenInfo.getUserId(), null))
+            .setRecipientIds(recipients)
+            .setMetadata(buildInviteContent(channelInfo, inviteInfo))
+            .build();
+        PacketRouter router = XMPPServer.getInstance().getPacketRouter();
+        router.route(message);
+        return RestUtils.getOKJAXRSResp();
+      } catch (MMXException e) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        if (e.getCode() == StatusCode.NOT_FOUND) {
+          String message = String.format(ErrorMessages.ERROR_TOPIC_NOT_FOUND,
+                  channelName);
+          errorResponse.setMessage(message);
+          return RestUtils.getJAXRSResp(Response.Status.fromStatusCode(
+              e.getCode()), errorResponse);
+        } else if (e.getCode() == StatusCode.BAD_REQUEST) {
+          errorResponse.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+          errorResponse.setMessage(e.getMessage());
+          return RestUtils.getBadReqJAXRSResp(errorResponse);
+        } else {
+          errorResponse.setCode(ErrorCode.UNKNOWN_ERROR.getCode());
+          errorResponse.setMessage(e.getMessage());
+          return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+        }
+      }
+    }
+    
+    private static final String MSG_TYPE_INVITATION = "invitation";
+    private static final String KEY_TEXT = "text";
+    private static final String KEY_CHANNEL_NAME = "channelName";
+    private static final String KEY_CHANNEL_SUMMARY = "channelSummary";
+    private static final String KEY_CHANNEL_IS_PUBLIC = "channelIsPublic";
+    private static final String KEY_CHANNEL_OWNER_ID = "channelOwnerId";
+    private static final String KEY_CHANNEL_CREATION_DATE = "channelCreationDate";
+    private static final String KEY_CHANNEL_PUBLISH_PERMISSIONS = "channelPublishPermissions";
+    
+    protected final HashMap<String, String> buildInviteContent(
+                                    ChannelInfo channel, InviteInfo invInfo) {
+      HashMap<String,String> content = new HashMap<String, String>();
+      if (invInfo.invitationText != null) {
+        content.put(KEY_TEXT, invInfo.invitationText);
+      }
+      content.put(KEY_CHANNEL_NAME, channel.getName());
+      if (channel.getDescription() != null) {
+        content.put(KEY_CHANNEL_SUMMARY, channel.getDescription());
+      }
+      content.put(KEY_CHANNEL_IS_PUBLIC, String.valueOf(!channel.isUserChannel()));
+      content.put(KEY_CHANNEL_OWNER_ID, JIDUtil.getReadableUserId(channel.getCreator()));
+      if (channel.getCreationDate() != null) {
+        content.put(KEY_CHANNEL_CREATION_DATE, TimeUtil.toString(channel.getCreationDate()));
+      }
+      content.put(KEY_CHANNEL_PUBLISH_PERMISSIONS, channel.getPublishPermission().name());
+      return content;
+    }
+    
     /**
      * Fetch the published items using a date range filter with pagination.  The
      * URL looks like:<br>

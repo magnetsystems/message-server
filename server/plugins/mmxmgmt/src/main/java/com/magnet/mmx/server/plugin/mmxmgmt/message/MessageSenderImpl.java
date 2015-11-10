@@ -14,6 +14,7 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.magnet.mmx.protocol.MMXTopicId;
-import com.magnet.mmx.server.api.v2.ChannelResource;
+import com.magnet.mmx.protocol.MMXid;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
@@ -100,14 +101,14 @@ public class MessageSenderImpl implements MessageSender {
       int requested = 0;
       int sent = 0;
       int unsent = 0;
-      AppEntity appEntity = appDAO.getAppForAppKey(appId);
+
       List<SentMessageId> sentList = new LinkedList<SentMessageId>();
       List<UnsentMessage> unsentList = new LinkedList<UnsentMessage>();
       Count count = null;
 
       // Only one message ID as a multicast message.
       String msgId = (new MessageIdGeneratorImpl()).generateItemIdentifier(appId);
-
+      ArrayList<MMXid> recipients = new ArrayList<MMXid>();
       if (request.getRecipientUserIds() != null && !request.getRecipientUserIds().isEmpty()) {
         List<String> userList = request.getRecipientUserIds();
         UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
@@ -115,6 +116,8 @@ public class MessageSenderImpl implements MessageSender {
           requested++;
           String mmxUsername = Helper.getMMXUsername(userId, appId);
           UserEntity userEntity = userDAO.getUser(mmxUsername);
+          // Although it is redundant to verify the user ID (the intercepter
+          // will validate it), the REST response has the unsent list.
           if (userEntity == null) {
             LOGGER.info("User with id:{} not found", userId);
             UnsentMessage badUser = new UnsentMessage(userId,
@@ -122,24 +125,25 @@ public class MessageSenderImpl implements MessageSender {
             unsentList.add(badUser);
             unsent++;
           } else {
-            MessageBuilder builder = new MessageBuilder();
-            builder.setAppId(appId)
-                .setId(msgId)
-                .setUtcTime(System.currentTimeMillis())
-                .setDeviceEntity(validationResult.getDeviceEntity())
-                .setSenderId(senderUserId)
-                .setUserId(userId)
-                .setReplyTo(request.getReplyTo())
-                .setMetadata(request.getContent())
-                .setDomain(domain)
-                .setReceipt(request.isReceipt());
-            Message message = builder.build();
-            String messageId = message.getID();
-            routeMessage(message);
-            SentMessageId sentMessageId = new SentMessageId(userId, null, messageId);
+            recipients.add(new MMXid(userId, null));
+            SentMessageId sentMessageId = new SentMessageId(userId, null, msgId);
             sentList.add(sentMessageId);
             sent++;
           }
+        }
+        if (sent > 0) {
+          MessageBuilder builder = new MessageBuilder();
+          Message message = builder.setAppId(appId)
+              .setDomain(domain)
+              .setId(msgId)
+              .setUtcTime(System.currentTimeMillis())
+              .setSenderId(new MMXid(senderUserId, null))
+              .setRecipientIds(recipients.toArray(new MMXid[sent]))
+              .setReplyTo(request.getReplyTo())
+              .setMetadata(request.getContent())
+              .setReceipt(request.isReceipt())
+              .build();
+          routeMessage(message);
         }
         //prepare the response
         count = new Count(requested, sent, unsent);
@@ -150,14 +154,15 @@ public class MessageSenderImpl implements MessageSender {
         internalResult.setCount(count);
         result = internalResult;
       } else if (request.getDeviceId() != null) {
+        String devId = (validationResult.getDeviceEntity() == null) ? null :
+          validationResult.getDeviceEntity().getDeviceId();
         MessageBuilder builder = new MessageBuilder();
         String recipient = validationResult.getDeviceEntity().getOwnerId();
         builder.setAppId(appId)
             .setId(msgId)
             .setUtcTime(System.currentTimeMillis())
-            .setDeviceEntity(validationResult.getDeviceEntity())
-            .setSenderId(senderUserId)
-            .setUserId(recipient)
+            .setSenderId(new MMXid(senderUserId, null))
+            .setRecipientId(new MMXid(recipient, devId))
             .setReplyTo(request.getReplyTo())
             .setMetadata(request.getContent())
             .setDomain(domain)
@@ -195,8 +200,8 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppId(appId)
                 .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
-                .setSenderId(senderUserId)
-                .setUserId(recipient)
+                .setSenderId(new MMXid(senderUserId, null))
+                .setRecipientId(new MMXid(recipient, null))
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
@@ -229,9 +234,8 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppId(appId)
                 .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
-                .setDeviceEntity(de)
-                .setSenderId(senderUserId)
-                .setUserId(recipient)
+                .setSenderId(new MMXid(senderUserId, null))
+                .setRecipientId(new MMXid(recipient, de.getDeviceId()))
                 .setReplyTo(request.getReplyTo())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
