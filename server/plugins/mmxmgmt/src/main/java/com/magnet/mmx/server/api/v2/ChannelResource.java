@@ -835,6 +835,13 @@ public class ChannelResource {
             List<MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
             return RestUtils.getOKJAXRSResp(result);
+        } catch (IllegalArgumentException e) {
+          String message = String.format(ErrorMessages.ERROR_DATE_BAD_FORMAT,
+                  e.getMessage());
+          ErrorResponse errorResponse = new ErrorResponse();
+          errorResponse.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+          errorResponse.setMessage(message);
+          return RestUtils.getBadReqJAXRSResp(errorResponse);
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
             if (e.getCode() == StatusCode.NOT_FOUND) {

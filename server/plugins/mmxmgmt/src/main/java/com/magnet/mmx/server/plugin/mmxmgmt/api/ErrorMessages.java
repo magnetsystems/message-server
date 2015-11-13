@@ -58,4 +58,5 @@ public final class ErrorMessages {
   public static final String ERROR_CONFIG_BAD_KEY = "Configuration contains an invalid key";
   public static final String ERROR_CONFIG_BAD_VALUE = "Configuration contains an invalid value";
   public static final String ERROR_ITEM_ID_LIST_INVALID = "Supplied channel item id list is invalid";
+  public static final String ERROR_DATE_BAD_FORMAT = "Expecting ISO 8601 date/time.  %s";
 }
