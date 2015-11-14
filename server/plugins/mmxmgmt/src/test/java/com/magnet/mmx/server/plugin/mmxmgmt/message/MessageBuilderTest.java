@@ -56,6 +56,7 @@ public class MessageBuilderTest {
     contentMap.put("content", message);
 
     request.setReceipt(true);
+    request.setContent(contentMap);
 
     AppEntity app = new AppEntity();
     app.setAppId("testapp");
@@ -89,6 +90,7 @@ public class MessageBuilderTest {
     Map<String, String> contentMap = new HashMap<String, String>();
     contentMap.put("content", message);
     contentMap.put("contentType", "text");
+    request.setContent(contentMap);
     request.setReceipt(true);
 
     AppEntity app = new AppEntity();

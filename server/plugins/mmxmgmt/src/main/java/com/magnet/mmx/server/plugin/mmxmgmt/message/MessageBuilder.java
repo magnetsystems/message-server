@@ -120,7 +120,9 @@ public class MessageBuilder {
   }
 
   public MessageBuilder setMetadata(Map<String, String> metadata) {
-    this.metadata = metadata;
+    if (metadata != null) {
+      this.metadata.putAll(metadata);
+    }
     return this;
   }
 
@@ -175,8 +177,7 @@ public class MessageBuilder {
     }
 
     if (!metadata.isEmpty()) {
-      Map<String, String> meta = metadata;
-      String metaJSON = GsonData.getGson().toJson(meta);
+      String metaJSON = GsonData.getGson().toJson(metadata);
       Element metaElement = mmxElement.addElement(Constants.MMX_META);
       metaElement.setText(metaJSON);
     }
