@@ -210,7 +210,8 @@ public class MMXAppManager {
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     String userName = appEntity.getServerUserId();
     if (userName != null) {
-      User user = server.getUserManager().getUser(userName);
+      String userId = JIDUtil.makeNode(userName,appId);
+      User user = server.getUserManager().getUser(userId);
       if (user != null) {
         // delete the OS topic and its children.
         MMXTopicManager topicManager =  MMXTopicManager.getInstance();
