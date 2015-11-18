@@ -14,11 +14,20 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXStatus;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.PushMessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
+
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -45,25 +54,58 @@ public class MMXPushNSHandler extends IQHandler {
     Element element = iq.getChildElement();
     String command = element.attributeValue(Constants.MMX_ATTR_COMMAND);
     String toJID = element.attributeValue(Constants.MMX_ATTR_DST);
-    String deviceId = new JID(toJID).getResource();
-    LOGGER.trace("handleIQ : toJID={}, deviceId={}", toJID, deviceId);
+    String userId = JIDUtil.getUserId(toJID);
+    String devId = new JID(toJID).getResource();
+    LOGGER.trace("handleIQ : toJID={}, deviceId={}", toJID, devId);
 
+    boolean abortOnFailure;
+    List<String> deviceIds = new ArrayList<String>();
+    if (devId != null) {
+      // Push message to an end-point.
+      abortOnFailure = true;
+      deviceIds.add(devId);
+    } else {
+      // Push message to a user; get all the devices registered to the user.
+      abortOnFailure = false;
+      DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
+      List<DeviceEntity> deList = deviceDAO.getDevices(appId, userId, DeviceStatus.ACTIVE);
+      for (DeviceEntity de : deList) {
+        deviceIds.add(de.getDeviceId());
+      }
+    }
+
+    int count = 0;
     MMXPushMessageValidator validator = new IQPushMessageValidator();
-    MMXPushValidationResult validationResult = validator.validate(appId, JIDUtil.getUserId(new JID(toJID).getNode()), deviceId);
+    for (String deviceId : deviceIds) {
+      MMXPushValidationResult validationResult = validator.validate(appId,
+          userId, deviceId);
+      if (validationResult instanceof MMXPushValidationFailure) {
+        if (abortOnFailure) {
+          return getRespIQ(iq, validationResult.getCode());
+        } else {
+          continue;
+        }
+      }
 
-    if(validationResult instanceof MMXPushValidationFailure)
-      return getRespIQ(iq, validationResult.getCode());
+      String pushMessageId = PushUtil.generateId(appId, deviceId);
+      MMXPayload mmxPayload = new MMXPushPayload(command, element.getText());
+      PushSender sender =  new PushMessageSender();
+      PushResult pushResult = sender.push(appId, deviceId, mmxPayload,
+          ((MMXPushValidationSuccess)validationResult).getContext());
 
-    String pushMessageId = PushUtil.generateId(appId, deviceId);
-    MMXPayload mmxPayload = new MMXPushPayload(command, element.getText());
-    PushSender sender =  new PushMessageSender();
-    PushResult pushResult = sender.push(appId, deviceId, mmxPayload, ((MMXPushValidationSuccess)validationResult).getContext());
+      if (pushResult.isError()) {
+        if (abortOnFailure) {
+          return getRespIQ(iq, PushStatusCode.ERROR_SENDING_PUSH);
+        } else {
+          continue;
+        }
+      }
 
-    if(pushResult.isError())
-      return getRespIQ(iq, PushStatusCode.ERROR_SENDING_PUSH);
-
-    storeMessage(pushMessageId, deviceId, appId);
-    return getRespIQ(iq, PushStatusCode.SUCCESSFUL);
+      storeMessage(pushMessageId, deviceId, appId);
+      ++count;
+    }
+    return getRespIQ(iq, (count == 0) ?
+        PushStatusCode.NO_DEVICES_FOUND : PushStatusCode.SUCCESSFUL);
   }
 
   private void storeMessage(String messageId, String deviceId, String appId) {
@@ -75,6 +117,7 @@ public class MMXPushNSHandler extends IQHandler {
     message.setType(PushMessageEntity.PushMessageType.IQ_PUSH);
     DBUtil.getPushMessageDAO().add(message);
   }
+
   private IQ getRespIQ(IQ iq, PushStatusCode code) {
     switch(code) {
       case SUCCESSFUL:
@@ -89,6 +132,5 @@ public class MMXPushNSHandler extends IQHandler {
   @Override
   public IQHandlerInfo getInfo() {
     return new IQHandlerInfo(Constants.MMX, Constants.MMX_NS_MSG_PUSH);
-
   }
 }

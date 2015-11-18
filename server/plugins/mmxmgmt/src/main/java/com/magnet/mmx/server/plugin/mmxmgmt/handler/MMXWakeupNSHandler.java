@@ -14,14 +14,23 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.MMXStatus;
 import com.magnet.mmx.protocol.PingPong;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.PushMessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
+
 import org.apache.commons.lang3.EnumUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
@@ -44,49 +53,78 @@ public class MMXWakeupNSHandler extends IQHandler {
 
   @Override
   public IQ handleIQ(IQ iq) throws UnauthorizedException {
-
     LOGGER.debug("handleIQ : {}", iq);
 
     JID fromJID = iq.getFrom();
     String appId = JIDUtil.getAppId(fromJID);
-
     Element element = iq.getChildElement();
     String command = element.attributeValue(Constants.MMX_ATTR_COMMAND);
-
-    if(!isValidCommand(command))
+    if(!isValidCommand(command)) {
       return getRespIQ(iq, PushStatusCode.BAD_COMMAND_VALUE);
+    }
+    Constants.PingPongCommand cmd = Constants.PingPongCommand.valueOf(command.toLowerCase());
 
     String toJID = element.attributeValue(Constants.MMX_ATTR_DST);
-    String deviceId =new JID(toJID).getResource();
-    LOGGER.trace("handleIQ : toJID={}, deviceId={}", toJID, deviceId);
+    String userId = JIDUtil.getUserId(toJID);
+    String devId =new JID(toJID).getResource();
+    LOGGER.trace("handleIQ : toJID={}, deviceId={}", toJID, devId);
 
-    MMXPushMessageValidator validator = new IQPushMessageValidator();
-    MMXPushValidationResult validationResult = validator.validate(appId, JIDUtil.getUserId(new JID(toJID).getNode()), deviceId);
-
-    if(validationResult instanceof  MMXPushValidationFailure)
-      return getRespIQ(iq, validationResult.getCode());
-
-    String pushMessageId = PushUtil.generateId(appId, deviceId);
-    PingPong pingpong = new Gson().fromJson(element.getText(), PingPong.class);
-
-    if(command.toLowerCase().equals(Constants.PingPongCommand.ping.name())) {
-      LOGGER.trace("handleIQ : command is ping command checking url");
-      if(Strings.isNullOrEmpty(pingpong.getUrl())) {
-        String callbackUrl = CallbackUrlUtil.buildCallBackURL(pushMessageId);
-        pingpong.setUrl(callbackUrl);
-        LOGGER.trace("handleIQ : built url={} for messageID={}", callbackUrl, pushMessageId);
+    boolean abortOnFailure;
+    List<String> deviceIds = new ArrayList<String>();
+    if (devId != null) {
+      // Push message to an end-point.
+      abortOnFailure = true;
+      deviceIds.add(devId);
+    } else {
+      // Push message to a user; get all the devices registered to the user.
+      abortOnFailure = false;
+      DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
+      List<DeviceEntity> deList = deviceDAO.getDevices(appId, userId, DeviceStatus.ACTIVE);
+      for (DeviceEntity de : deList) {
+        deviceIds.add(de.getDeviceId());
       }
-
     }
 
-    MMXPayload mmxPayload = new MMXWakeupPayload(command, new Gson().toJson(pingpong));
-    PushSender sender = new PushMessageSender();
-    PushResult pushResult = sender.push(appId, deviceId, mmxPayload, ((MMXPushValidationSuccess)validationResult).getContext());
-    if(pushResult.isError())
-      return getRespIQ(iq, PushStatusCode.ERROR_SENDING_PUSH);
+    int count = 0;
+    MMXPushMessageValidator validator = new IQPushMessageValidator();
+    for (String deviceId : deviceIds) {
+      MMXPushValidationResult validationResult = validator.validate(appId, userId, deviceId);
+      if(validationResult instanceof  MMXPushValidationFailure) {
+        if (abortOnFailure) {
+          return getRespIQ(iq, validationResult.getCode());
+        } else {
+          continue;
+        }
+      }
 
-    storeMessage(pushMessageId, deviceId, appId, Constants.PingPongCommand.valueOf(command.toLowerCase()));
-    return getRespIQ(iq, PushStatusCode.SUCCESSFUL);
+      String pushMessageId = PushUtil.generateId(appId, deviceId);
+      PingPong pingpong = new Gson().fromJson(element.getText(), PingPong.class);
+      if (cmd == Constants.PingPongCommand.ping) {
+        LOGGER.trace("handleIQ : command is ping command checking url");
+        if(Strings.isNullOrEmpty(pingpong.getUrl())) {
+          String callbackUrl = CallbackUrlUtil.buildCallBackURL(pushMessageId);
+          pingpong.setUrl(callbackUrl);
+          LOGGER.trace("handleIQ : built url={} for messageID={}", callbackUrl, pushMessageId);
+        }
+      }
+
+      MMXPayload mmxPayload = new MMXWakeupPayload(command, new Gson().toJson(pingpong));
+      PushSender sender = new PushMessageSender();
+      PushResult pushResult = sender.push(appId, deviceId, mmxPayload,
+          ((MMXPushValidationSuccess)validationResult).getContext());
+      if (pushResult.isError()) {
+        if (abortOnFailure) {
+          return getRespIQ(iq, PushStatusCode.ERROR_SENDING_PUSH);
+        } else {
+          continue;
+        }
+      }
+
+      storeMessage(pushMessageId, deviceId, appId, cmd);
+      ++count;
+    }
+    return getRespIQ(iq, (count == 0) ?
+        PushStatusCode.NO_DEVICES_FOUND : PushStatusCode.SUCCESSFUL);
   }
 
   @Override

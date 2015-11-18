@@ -27,7 +27,8 @@ public enum PushStatusCode {
   INVALID_PUSH_SERVICE_KEY(403, "Push service key not found for specified app"),
   INVALID_TOKEN_FOR_DEVICE (403, "Device not push capable"),
   ERROR_SENDING_PUSH(405, "Push service error"),
-  EXCEEDED_PUSH_MESSAGE_RATE(403, "Push message rate exceeded")
+  EXCEEDED_PUSH_MESSAGE_RATE(403, "Push message rate exceeded"),
+  NO_DEVICES_FOUND (404, "No devices are enabled to receive push messages")
   ;
   private int code;
   private String message;
