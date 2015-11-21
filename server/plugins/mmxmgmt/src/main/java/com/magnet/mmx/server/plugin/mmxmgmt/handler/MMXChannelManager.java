@@ -711,6 +711,12 @@ public class MMXChannelManager {
         .setMessage(count+" channel"+((count==1)?" is":"s are")+" deleted");
     return status;
   }
+
+
+  public ChannelInfo getChannel(String appId, MMXChannelId channel)
+          throws MMXException {
+        return getChannel( null,appId,channel);
+  }
   
   public ChannelInfo getChannel(JID from, String appId, MMXChannelId channel)
                           throws MMXException {
