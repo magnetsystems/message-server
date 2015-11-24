@@ -45,10 +45,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Channel admin REST API using auth token.  Accessing this resource must be
@@ -74,25 +71,27 @@ public class IntegrationChannelResource {
                                       CreateChannelRequest channelInfo) {
 
         ErrorResponse errorResponse = null;
+        CreateChannelResponse chatChannelResponse = null;
 
         if (channelInfo == null) {
-            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
-                    "Channel information not set");
-            return RestUtils.getBadReqJAXRSResp(errorResponse);
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.ILLEGAL_ARGUMENT.getCode(),"Channel information not set");
+            return RestUtils.getOKJAXRSResp(chatChannelResponse);
         }
 
         if (!ChannelHelper.validateApplicationChannelName(channelInfo.getChannelName())) {
-            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.ILLEGAL_ARGUMENT.getCode(),
                     MMXChannelManager.StatusCode.INVALID_CHANNEL_NAME.getMessage());
-            return RestUtils.getBadReqJAXRSResp(errorResponse);
+            return RestUtils.getOKJAXRSResp(chatChannelResponse);
         }
 
         if (!Strings.isNullOrEmpty(channelInfo.getDescription())
                 && channelInfo.getDescription().length() > MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN) {
-            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.ILLEGAL_ARGUMENT.getCode(),
                     "channel description too long, max length = " +
                             MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN);
-            return RestUtils.getBadReqJAXRSResp(errorResponse);
+
+            return RestUtils.getOKJAXRSResp(chatChannelResponse);
         }
 
         // Attempt to create or Fetch Channel
@@ -100,7 +99,7 @@ public class IntegrationChannelResource {
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         channelInfo.setChannelName(channelName);
-        channelInfo.setPrivateChannel(true);
+        channelInfo.setPrivateChannel(channelInfo.isPrivateChannel());
         JID from = RestUtils.createJID(channelInfo.getUserId(),
                 channelInfo.getMmxAppId(),
                 channelInfo.getDeviceId());
@@ -109,37 +108,40 @@ public class IntegrationChannelResource {
             channelManager.createChannel(from, channelInfo.getMmxAppId(), rqt);
 
         } catch (MMXException e) {
-            if (e.getCode() != StatusCode.CONFLICT) {
-                if (e.getCode() == StatusCode.FORBIDDEN) {
-                    errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
-                            .getMessage());
-                } else if (e.getCode() == StatusCode.BAD_REQUEST) {
-                    errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
-                            .getMessage());
-                } else {
-                    errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e
-                            .getMessage());
-                    return RestUtils.getInternalErrorJAXRSResp(errorResponse);
-                }
-            }else{
-                CreateChannelResponse response = new CreateChannelResponse();
-                response.setCode("200");
-                response.setMessage("Chat channel already exist");
-                return RestUtils.getOKJAXRSResp(response);
+            if (e.getCode() == StatusCode.CONFLICT) {
+                errorResponse = new ErrorResponse(ErrorCode.TOPIC_EXISTS,
+                        "Channel already exists");
+            } else if (e.getCode() == StatusCode.FORBIDDEN) {
+                errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
+                        .getMessage());
+            } else if (e.getCode() == StatusCode.BAD_REQUEST) {
+                errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
+                        .getMessage());
+            } else {
+                errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e
+                        .getMessage());
             }
 
+            chatChannelResponse = new CreateChannelResponse(errorResponse.getCode(),
+                    errorResponse.getMessage());
+             return RestUtils.getOKJAXRSResp(chatChannelResponse);
+
         } catch (Throwable e) {
-            errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e.getMessage());
-            return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.UNKNOWN_ERROR.getCode(),
+                    e.getMessage());
+            return RestUtils.getOKJAXRSResp(chatChannelResponse);
+
+
         }
 
         // auto subscribe recipients to this channel
-        List <SentMessageId> sentList =  new ArrayList<SentMessageId>();
+        Map<String,ChannelAction.SubscribeResponse> subResponseMap =  new HashMap<String,ChannelAction.SubscribeResponse>();
 
         try {
             MMXChannelId channelId = nameToId(channelName,channelInfo.getUserId());
-            ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
-            errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
+            //ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
+            //errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
 
             ChannelAction.SubscribeRequest rqt = new ChannelAction.SubscribeRequest(
                     channelId.getEscUserId(), channelId.getName(), null);
@@ -150,19 +152,27 @@ public class IntegrationChannelResource {
                         from.getDomain(), null);
                 resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
                         Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
-                sentList.add(new SentMessageId(subscriber,"",null));
+                subResponseMap.put(subscriber,resp);
 
             }
 
         } catch (MMXException e) {
-            LOGGER.error("Throwable during createChatChannel request", e);
-            errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e.getMessage());
-            return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+            LOGGER.error("Exception during createChannel request", e);
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.UNKNOWN_ERROR.getCode(),
+                    e.getMessage());
+            chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+            return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
         }
-        CreateChannelResponse response = new CreateChannelResponse();
-        response.setCode("200");
-        response.setMessage("Chat channel created successfully");
-        return RestUtils.getOKJAXRSResp(response);
+
+
+        chatChannelResponse = new CreateChannelResponse(ErrorCode.NO_ERROR.getCode(),
+                "Channel created");
+        chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+        return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
 
 
     }
@@ -171,7 +181,7 @@ public class IntegrationChannelResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/chat/publish/")
-    public Response publishToChatChannel(@Context HttpHeaders headers,
+    public Response publishToChannel(@Context HttpHeaders headers,
                                   PublishMessageToChatRequest channelInfo) {
 
         ErrorResponse errorResponse = null;

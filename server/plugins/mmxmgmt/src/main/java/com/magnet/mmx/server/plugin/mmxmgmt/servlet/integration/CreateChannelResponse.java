@@ -1,27 +1,47 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
 
+import com.magnet.mmx.protocol.ChannelAction;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class CreateChannelResponse {
 
-    private String code;
+    private int code;
     private String message;
 
+    private Map<String,ChannelAction.SubscribeResponse> subscribeResponse =
+                new HashMap<String,ChannelAction.SubscribeResponse>();
 
-    public String getCode() {
+    public CreateChannelResponse(){
+        this.code = 200;
+    }
+    public CreateChannelResponse(int code,String message){
+        this.code = code;
+        this.message = message;
+    }
+    public int getCode() {
         return code;
     }
 
-    public CreateChannelResponse setCode(String code) {
+    public void setCode(int code) {
         this.code = code;
-        return this;
     }
 
     public String getMessage() {
         return message;
     }
 
-    public CreateChannelResponse setMessage(String message) {
+    public void setMessage(String message) {
         this.message = message;
-        return this;
+    }
+
+    public Map<String, ChannelAction.SubscribeResponse> getSubscribeResponse() {
+        return subscribeResponse;
+    }
+
+    public void setSubscribeResponse(Map<String, ChannelAction.SubscribeResponse> subscribeResponse) {
+        this.subscribeResponse = subscribeResponse;
     }
 }
