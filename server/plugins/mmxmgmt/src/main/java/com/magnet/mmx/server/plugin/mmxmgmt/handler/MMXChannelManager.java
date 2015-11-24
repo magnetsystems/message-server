@@ -832,7 +832,7 @@ public class MMXChannelManager {
       throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
-    
+
     JID owner = from.asBareJID();
     // The subscriber can specify a different resource or without resource.
     JID subscriber = new JID(from.getNode(), from.getDomain(), rqt.getDevId());

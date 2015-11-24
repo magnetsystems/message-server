@@ -12,14 +12,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.magnet.mmx.server.api.v2;
+package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.*;
-
-import com.magnet.mmx.protocol.ChannelInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
-import com.magnet.mmx.server.api.v1.protocol.*;
+import com.magnet.mmx.server.api.v1.protocol.ChannelCreateInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
@@ -34,9 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
-import com.magnet.mmx.util.Base64;
 import com.magnet.mmx.util.ChannelHelper;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +45,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Channel admin REST API using auth token.  Accessing this resource must be
@@ -70,9 +69,9 @@ public class IntegrationChannelResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/chat/publish/")
-    public Response publishToChatChannel(@Context HttpHeaders headers,
-                                  PublishMessageToChatRequest channelInfo) {
+    @Path("/create")
+    public Response createChannel(@Context HttpHeaders headers,
+                                      CreateChannelRequest channelInfo) {
 
         ErrorResponse errorResponse = null;
 
@@ -97,9 +96,112 @@ public class IntegrationChannelResource {
         }
 
         // Attempt to create or Fetch Channel
+        String channelName = channelInfo.getChannelName();
+
+        MMXChannelManager channelManager = MMXChannelManager.getInstance();
+        channelInfo.setChannelName(channelName);
+        channelInfo.setPrivateChannel(true);
+        JID from = RestUtils.createJID(channelInfo.getUserId(),
+                channelInfo.getMmxAppId(),
+                channelInfo.getDeviceId());
+        try {
+            ChannelAction.CreateRequest rqt = toCreateRequest(channelInfo);
+            channelManager.createChannel(from, channelInfo.getMmxAppId(), rqt);
+
+        } catch (MMXException e) {
+            if (e.getCode() != StatusCode.CONFLICT) {
+                if (e.getCode() == StatusCode.FORBIDDEN) {
+                    errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
+                            .getMessage());
+                } else if (e.getCode() == StatusCode.BAD_REQUEST) {
+                    errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT, e
+                            .getMessage());
+                } else {
+                    errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e
+                            .getMessage());
+                    return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+                }
+            }else{
+                CreateChannelResponse response = new CreateChannelResponse();
+                response.setCode("200");
+                response.setMessage("Chat channel already exist");
+                return RestUtils.getOKJAXRSResp(response);
+            }
+
+        } catch (Throwable e) {
+            errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+            return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+        }
+
+        // auto subscribe recipients to this channel
+        List <SentMessageId> sentList =  new ArrayList<SentMessageId>();
+
+        try {
+            MMXChannelId channelId = nameToId(channelName,channelInfo.getUserId());
+            ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
+            errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
+
+            ChannelAction.SubscribeRequest rqt = new ChannelAction.SubscribeRequest(
+                    channelId.getEscUserId(), channelId.getName(), null);
+            ChannelAction.SubscribeResponse resp = null;
+
+            for (String subscriber : channelInfo.getSubscribers()) {
+                JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
+                        from.getDomain(), null);
+                resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
+                        Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
+                sentList.add(new SentMessageId(subscriber,"",null));
+
+            }
+
+        } catch (MMXException e) {
+            LOGGER.error("Throwable during createChatChannel request", e);
+            errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e.getMessage());
+            return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+        }
+        CreateChannelResponse response = new CreateChannelResponse();
+        response.setCode("200");
+        response.setMessage("Chat channel created successfully");
+        return RestUtils.getOKJAXRSResp(response);
+
+
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/chat/publish/")
+    public Response publishToChatChannel(@Context HttpHeaders headers,
+                                  PublishMessageToChatRequest channelInfo) {
+
+        ErrorResponse errorResponse = null;
+
+        if (channelInfo == null) {
+            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+                    "Channel information not set");
+            return RestUtils.getBadReqJAXRSResp(errorResponse);
+        }
+
+//        if (!ChannelHelper.validateApplicationChannelName(channelInfo.getChannelName())) {
+//            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+//                    MMXChannelManager.StatusCode.INVALID_CHANNEL_NAME.getMessage());
+//            return RestUtils.getBadReqJAXRSResp(errorResponse);
+//        }
+
+        if (!Strings.isNullOrEmpty(channelInfo.getDescription())
+                && channelInfo.getDescription().length() > MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN) {
+            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+                    "channel description too long, max length = " +
+                            MMXServerConstants.MAX_TOPIC_DESCRIPTION_LEN);
+            return RestUtils.getBadReqJAXRSResp(errorResponse);
+        }
+
+        // Attempt to create or Fetch Channel
         String channelHash = generateHash(channelInfo);
         String channelName = constructChannelName(channelInfo.getChannelName(), channelHash);
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
+        channelInfo.setChannelName(channelName);
+        channelInfo.setPrivateChannel(true);
         JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
         try {
             ChannelAction.CreateRequest rqt = toCreateRequest(channelInfo);
@@ -121,6 +223,7 @@ public class IntegrationChannelResource {
             }
 
         } catch (Throwable e) {
+            LOGGER.error("Throwable during publishToChatChannel request", e);
             errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, e.getMessage());
             return RestUtils.getInternalErrorJAXRSResp(errorResponse);
         }
@@ -128,7 +231,7 @@ public class IntegrationChannelResource {
         List <SentMessageId> sentList =  new ArrayList<SentMessageId>();
         // auto subscribe recipients to this channel
         try {
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = nameToId(channelName,channelInfo.getUserId());
             ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
             errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
 
@@ -159,7 +262,7 @@ public class IntegrationChannelResource {
             tpm.setContentType(channelInfo.getContentType());
             tpm.setMessageType(channelInfo.getMessageType());
 
-            TopicPostResult result = sender.postMessage(channelInfo.getUserId(), channelName,
+            TopicPostResult result = sender.postMessage(channelInfo.getUserId(), channelInfo.getUserId() + "#" + channelName,
                     channelInfo.getMmxAppId(), tpm);
 
             TopicPostResponse sendResponse = new TopicPostResponse();
@@ -196,11 +299,6 @@ public class IntegrationChannelResource {
                     "Error processing request");
             return RestUtils.getInternalErrorJAXRSResp(error);
         }
-
-        // finally send Message to Channel
-
-
-
 
     }
 
@@ -329,10 +427,10 @@ public class IntegrationChannelResource {
     // The hack to fix MOB-2516 that allows the console to display user channels as
     // userID#channelName. This method parses the global channel or user channel
     // properly.
-    public static MMXChannelId nameToId(String channelName) {
+    public static MMXChannelId nameToId(String channelName,String userId) {
         int index = channelName.indexOf(ChannelHelper.CHANNEL_SEPARATOR);
         if (index < 0) {
-            return new MMXChannelId(channelName);
+            return new MMXChannelId(userId,channelName);
         } else {
             return new MMXChannelId(channelName.substring(0, index), channelName
                     .substring(index + 1));
@@ -371,7 +469,7 @@ public class IntegrationChannelResource {
 
         if(recipients!=null && recipients.size()>0) {
             //order recipients
-            java.util.Collections.sort(recipients);
+            Collections.sort(recipients);
             String signature = StringUtils.join(recipients, ",");
             MessageDigest md5 = null;
             try {
@@ -391,7 +489,8 @@ public class IntegrationChannelResource {
 
 
     private static String constructChannelName(String channelName,String hash) {
-        return "chat/"+ hash;
+        //return "chat/"+ hash;
+        return hash;
     }
 
 

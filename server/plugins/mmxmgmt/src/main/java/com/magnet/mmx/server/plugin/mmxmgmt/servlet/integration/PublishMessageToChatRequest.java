@@ -1,4 +1,4 @@
-package com.magnet.mmx.server.api.v2;
+package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
 import com.magnet.mmx.server.api.v1.protocol.ChannelCreateInfo;
 
