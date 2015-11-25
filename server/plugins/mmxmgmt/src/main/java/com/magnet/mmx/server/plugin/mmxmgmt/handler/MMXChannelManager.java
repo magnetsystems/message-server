@@ -711,6 +711,12 @@ public class MMXChannelManager {
         .setMessage(count+" channel"+((count==1)?" is":"s are")+" deleted");
     return status;
   }
+
+
+  public ChannelInfo getChannel(String appId, MMXChannelId channel)
+          throws MMXException {
+        return getChannel( null,appId,channel);
+  }
   
   public ChannelInfo getChannel(JID from, String appId, MMXChannelId channel)
                           throws MMXException {
@@ -826,7 +832,7 @@ public class MMXChannelManager {
       throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
-    
+
     JID owner = from.asBareJID();
     // The subscriber can specify a different resource or without resource.
     JID subscriber = new JID(from.getNode(), from.getDomain(), rqt.getDevId());
