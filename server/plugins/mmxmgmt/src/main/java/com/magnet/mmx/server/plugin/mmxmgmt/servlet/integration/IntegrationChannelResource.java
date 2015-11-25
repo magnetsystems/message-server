@@ -139,7 +139,13 @@ public class IntegrationChannelResource {
         Map<String,ChannelAction.SubscribeResponse> subResponseMap =  new HashMap<String,ChannelAction.SubscribeResponse>();
 
         try {
-            MMXChannelId channelId = nameToId(channelName,channelInfo.getUserId());
+            //MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId;
+            if(channelInfo.isPrivateChannel()){
+                channelId = new MMXChannelId(channelInfo.getUserId(),channelInfo.getChannelName());
+            }else{
+                channelId = new MMXChannelId(channelInfo.getChannelName());
+            }
             //ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
             //errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
 
@@ -241,7 +247,7 @@ public class IntegrationChannelResource {
         List <SentMessageId> sentList =  new ArrayList<SentMessageId>();
         // auto subscribe recipients to this channel
         try {
-            MMXChannelId channelId = nameToId(channelName,channelInfo.getUserId());
+            MMXChannelId channelId = nameToId(channelName);
             ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
             errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
 
@@ -437,10 +443,10 @@ public class IntegrationChannelResource {
     // The hack to fix MOB-2516 that allows the console to display user channels as
     // userID#channelName. This method parses the global channel or user channel
     // properly.
-    public static MMXChannelId nameToId(String channelName,String userId) {
+    public static MMXChannelId nameToId(String channelName) {
         int index = channelName.indexOf(ChannelHelper.CHANNEL_SEPARATOR);
         if (index < 0) {
-            return new MMXChannelId(userId,channelName);
+            return new MMXChannelId(channelName);
         } else {
             return new MMXChannelId(channelName.substring(0, index), channelName
                     .substring(index + 1));
