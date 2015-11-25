@@ -141,6 +141,11 @@ public class MessageBuilder {
     return this;
   }
 
+  public MessageBuilder setNoAck(boolean noAck) {
+    this.mmxMeta.setNoAck(noAck);
+    return this;
+  }
+  
   public MessageBuilder setSenderId(MMXid senderId) {
     this.mmxMeta.setFrom(senderId);
     return this;

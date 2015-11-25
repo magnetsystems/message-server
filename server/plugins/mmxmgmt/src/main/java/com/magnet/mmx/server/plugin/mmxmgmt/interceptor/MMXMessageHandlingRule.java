@@ -176,100 +176,103 @@ public class MMXMessageHandlingRule {
      * 
      */
 
-    {
-      LOGGER.trace(
-          "handle : handling unprocessed, incoming, non-receipt message with fullJID messageId={}",
-          input.getMessage().getID());
+    LOGGER.trace(
+        "handle : handling unprocessed, incoming, non-receipt message with fullJID messageId={}",
+        input.getMessage().getID());
 
-      Message mmxMessage = input.getMessage();
-      String appId = JIDUtil.getAppId(mmxMessage.getFrom());
+    Message mmxMessage = input.getMessage();
+    String appId = JIDUtil.getAppId(mmxMessage.getFrom());
 
-      int rate = MMXConfiguration.getConfiguration()
-          .getInt(MMXConfigKeys.MAX_XMPP_RATE,
-              MMXServerConstants.DEFAULT_MAX_XMPP_RATE);
-      RateLimiterDescriptor descriptor = new RateLimiterDescriptor(
-          MMXServerConstants.XMPP_RATE_TYPE, appId, rate);
-      LOGGER.trace("handle : checking rate limit for descriptor={}",
-          descriptor);
-      if (!RateLimiterService.isAllowed(descriptor)) {
-        LOGGER.error("handle : Max xmpp message rate reached : {}, appId : {}",
-            rate, appId);
-        AlertEventsManager.post(new MMXXmppRateExceededEvent(appId, AlertsUtil
-            .getMaxXmppRate()));
-        throw new PacketRejectedException("Max message rate has been reached");
+    int rate = MMXConfiguration.getConfiguration()
+        .getInt(MMXConfigKeys.MAX_XMPP_RATE,
+            MMXServerConstants.DEFAULT_MAX_XMPP_RATE);
+    RateLimiterDescriptor descriptor = new RateLimiterDescriptor(
+        MMXServerConstants.XMPP_RATE_TYPE, appId, rate);
+    LOGGER.trace("handle : checking rate limit for descriptor={}",
+        descriptor);
+    if (!RateLimiterService.isAllowed(descriptor)) {
+      LOGGER.error("handle : Max xmpp message rate reached : {}, appId : {}",
+          rate, appId);
+      AlertEventsManager.post(new MMXXmppRateExceededEvent(appId, AlertsUtil
+          .getMaxXmppRate()));
+      throw new PacketRejectedException("Max message rate has been reached");
+    }
+
+    String deviceId = mmxMessage.getTo().getResource();
+    DeviceEntity deviceEntity = null;
+    if (!Strings.isNullOrEmpty(deviceId) && !Strings.isNullOrEmpty(appId)) {
+      try {
+        DeviceDAO deviceDao = DBUtil.getDeviceDAO();
+        deviceEntity = deviceDao.getDevice(appId, deviceId);
+      } catch (SQLException e) {
+        LOGGER.error(
+                "isValidDistributableMessage : No device found for appId={}, deviceId={}, sending error message",
+                appId, deviceId, e);
+      } catch (DeviceNotFoundException e) {
+        LOGGER.error(
+            "isValidDistributableMessage : No device found for appId={}, deviceId={}, sending error message",
+            appId, deviceId, e);
       }
+    }
 
-      String deviceId = mmxMessage.getTo().getResource();
-      DeviceEntity deviceEntity = null;
-      if (!Strings.isNullOrEmpty(deviceId) && !Strings.isNullOrEmpty(appId)) {
-        try {
-          DeviceDAO deviceDao = DBUtil.getDeviceDAO();
-          deviceEntity = deviceDao.getDevice(appId, deviceId);
-        } catch (SQLException e) {
-          LOGGER.error(
-                  "isValidDistributableMessage : No device found for appId={}, deviceId={}, sending error message",
-                  appId, deviceId, e);
-        } catch (DeviceNotFoundException e) {
-          LOGGER.error(
-              "isValidDistributableMessage : No device found for appId={}, deviceId={}, sending error message",
-              appId, deviceId, e);
-        }
-      }
-
-      // Send the ack or nack if unicast message, or end-ack for last recipient
-      // if multicast message which is a direct message to a full JID and not
-      // a distributed message.
-      MessageAnnotator annotator = new MessageDistributedAnnotator();
-      boolean isDistributed = annotator.isAnnotated(mmxMessage);
-      if (!isDistributed) {
+    // Send the ack or nack if unicast message, or end-ack for last recipient
+    // if multicast message which is a direct message to a full JID and not
+    // a distributed message.
+    MessageAnnotator annotator = new MessageDistributedAnnotator();
+    boolean isDistributed = annotator.isAnnotated(mmxMessage);
+    if (!isDistributed) {
+      PacketExtension payload = mmxMessage.getExtension(Constants.MMX,
+          Constants.MMX_NS_MSG_PAYLOAD);
+      if (payload == null || !(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK,
+          Boolean.FALSE)) {
         if (isMMXMulticastMessage(mmxMessage)) {
           sendEndAckMessageOnce(mmxMessage, appId, (deviceEntity == null));
         } else {
           sendServerAckMessage(mmxMessage, appId, (deviceEntity == null));
         }
       }
-      if (deviceEntity == null) {
-        // Abort the send because no device is found.
-        throw new PacketRejectedException("Invalid deviceId : " + deviceId);
-      }
-      
-      MessageEntity messageEntity = getMessageEntity(input.getMessage());
-      MMXPresenceFinder presenceFinder = new MMXPresenceFinderImpl();
-      boolean isOnline = presenceFinder.isOnline(input.getMessage().getTo());
-      if (!isOnline) {
-        MMXOfflineStorageUtil.storeMessage(input.getMessage());
-        /**
-         * Check if the device has a valid client token that can be used for
-         * wakeup. If it doesn't then we set the message state to PENDING.
-         */
-        boolean wakeupPossible = canBeWokenUp(deviceEntity);
-        if (wakeupPossible) {
-          AppDAO appDAO = DBUtil.getAppDAO();
-          AppEntity appEntity = appDAO.getAppForAppKey(appId);
-          messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
-          WakeupUtil.queueWakeup(appEntity, deviceEntity,
-              messageEntity.getMessageId());
-        } else {
-          if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(
-                "isValidDistributableMessage : wakeup not possible for device with id:{}",
-                deviceId);
-          }
-          messageEntity.setState(MessageEntity.MessageState.PENDING);
-        }
-        DBUtil.getMessageDAO().persist(messageEntity);
+    }
+    if (deviceEntity == null) {
+      // Abort the send because no device is found.
+      throw new PacketRejectedException("Invalid deviceId : " + deviceId);
+    }
+    
+    MessageEntity messageEntity = getMessageEntity(input.getMessage());
+    MMXPresenceFinder presenceFinder = new MMXPresenceFinderImpl();
+    boolean isOnline = presenceFinder.isOnline(input.getMessage().getTo());
+    if (!isOnline) {
+      MMXOfflineStorageUtil.storeMessage(input.getMessage());
+      /**
+       * Check if the device has a valid client token that can be used for
+       * wakeup. If it doesn't then we set the message state to PENDING.
+       */
+      boolean wakeupPossible = canBeWokenUp(deviceEntity);
+      if (wakeupPossible) {
+        AppDAO appDAO = DBUtil.getAppDAO();
+        AppEntity appEntity = appDAO.getAppForAppKey(appId);
+        messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
+        WakeupUtil.queueWakeup(appEntity, deviceEntity,
+            messageEntity.getMessageId());
       } else {
-        messageEntity.setState(MessageEntity.MessageState.DELIVERY_ATTEMPTED);
-        DBUtil.getMessageDAO().persist(messageEntity);
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug(
+              "isValidDistributableMessage : wakeup not possible for device with id:{}",
+              deviceId);
+        }
+        messageEntity.setState(MessageEntity.MessageState.PENDING);
       }
+      DBUtil.getMessageDAO().persist(messageEntity);
+    } else {
+      messageEntity.setState(MessageEntity.MessageState.DELIVERY_ATTEMPTED);
+      DBUtil.getMessageDAO().persist(messageEntity);
+    }
 
-      if (!isOnline) {
-        // stop further processing of the message by throwing packet rejected
-        // exception since the user is not online.
-        throw new PacketRejectedException(
-            "Device offline, stopping processing for the message addressed to fullJID="
-                + input.getMessage().getTo());
-      }
+    if (!isOnline) {
+      // stop further processing of the message by throwing packet rejected
+      // exception since the user is not online.
+      throw new PacketRejectedException(
+          "Device offline, stopping processing for the message addressed to fullJID="
+              + input.getMessage().getTo());
     }
   }
 
@@ -300,12 +303,13 @@ public class MMXMessageHandlingRule {
     sendSignalMessage(serverAck);
   }
 
-  // Send the begin ack message for multicast msg.
+  // Send the begin ack message for multicast msg.  If the numOfRecipients is
+  // less than 1, just send an ack with an error.  The client must not expect
+  // the end ack message.
   private void sendBeginAckMessageOnce(Message mmxMessage, String appId,
-      ErrorCode errorCode) {
-    Counter counter = mMulticastMsgs.get(mmxMessage.getID());
-    if (counter == null) {
-      return;
+      int numOfRecipients, ErrorCode errorCode) {
+    if (numOfRecipients > 0) {
+      mMulticastMsgs.put(mmxMessage.getID(), new Counter(numOfRecipients));
     }
     ServerAckMessageBuilder serverAckMessageBuilder = new ServerAckMessageBuilder(
         mmxMessage, appId, ServerAckMessageBuilder.Type.BATCH_BEGIN)
@@ -359,7 +363,9 @@ public class MMXMessageHandlingRule {
         Constants.MMX_NS_MSG_PAYLOAD);
     if (payload == null) {
       LOGGER.warn("Dropping a malformed MMX multicast message.");
-      sendBeginAckMessageOnce(message, appId, ErrorCode.SEND_MESSAGE_MALFORMED);
+      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+        sendBeginAckMessageOnce(message, appId, 0, ErrorCode.SEND_MESSAGE_MALFORMED);
+      }
       throw new PacketRejectedException(
           "Stop processing for malformed multicast message");
     }
@@ -367,12 +373,17 @@ public class MMXMessageHandlingRule {
     MMXid[] recipients = getRecipients(payload);
     if (recipients == null || recipients.length == 0) {
       LOGGER.warn("No recipients found in MMX multicast message");
+      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+        sendBeginAckMessageOnce(message, appId, 0, ErrorCode.SEND_MESSAGE_NO_TARGET);
+      }
     } else {
       // Save a recipient counter for the multicast message and send a begin
-      // ack. The count will be decremented when each routed message is handled.
-      // When the count reaches zero, the end ack will be sent.
-      mMulticastMsgs.put(message.getID(), new Counter(recipients.length));
-      sendBeginAckMessageOnce(message, appId, ErrorCode.NO_ERROR);
+      // ack. The count will be decremented when each routed message is handled
+      // later.  When the count reaches zero, the end ack will be sent.  Note,
+      // the packet routing in the for-loop is done asynchronously.
+      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+        sendBeginAckMessageOnce(message, appId, recipients.length, ErrorCode.NO_ERROR);
+      }
 
       PacketRouter pktRouter = XMPPServer.getInstance().getPacketRouter();
       for (MMXid recipient : recipients) {
@@ -410,6 +421,20 @@ public class MMXMessageHandlingRule {
       recipients[i++] = MMXid.fromMap(map);
     }
     return recipients;
+  }
+  
+  private Object getMmxMeta(PacketExtension payload, String key, Object defVal) {
+    Element mmxElement = payload.getElement();
+    if (mmxElement == null) {
+      return defVal;
+    }
+    Element element = mmxElement.element(Constants.MMX_MMXMETA);
+    if (element == null) {
+      return defVal;
+    }
+    MmxHeaders mmxMeta = GsonData.getGson().fromJson(element.getText(),
+        MmxHeaders.class);
+    return mmxMeta.getHeader(key, defVal);
   }
 
   private void handleBareJID(Message message) {
@@ -457,12 +482,17 @@ public class MMXMessageHandlingRule {
               message, userId);
     }
 
-    if (isMMXMulticastMessage(message)) {
-      // Send end-ack for the last recipient in the multicast message.
-      sendEndAckMessageOnce(message, appEntity.getAppId(), result.noDevices());
-    } else {
-      // Send ack or nack for the unicast message.
-      sendServerAckMessage(message, appEntity.getAppId(), result.noDevices());
+    PacketExtension payload = message.getExtension(Constants.MMX,
+        Constants.MMX_NS_MSG_PAYLOAD);
+    if (payload == null || !(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK,
+        Boolean.FALSE)) {
+      if (isMMXMulticastMessage(message)) {
+        // Send end-ack for the last recipient in the multicast message.
+        sendEndAckMessageOnce(message, appEntity.getAppId(), result.noDevices());
+      } else {
+        // Send ack or nack for the unicast message.
+        sendServerAckMessage(message, appEntity.getAppId(), result.noDevices());
+      }
     }
   }
 

@@ -31,6 +31,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.handler.MessageStateHandler;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MsgAckIQHandler;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXMessageHandlingRule;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXPacketInterceptor;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXManagedConfiguration;
@@ -202,6 +203,9 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     adminAPIServer = new MMXAdminAPIServer();
     adminAPIServer.start();
 
+    // Add pub/sub wakeup capability
+    server.getPubSubModule().setWakeupProvider(new PubSubWakeupProvider());
+    
     if(!ClusterManager.isClusteringEnabled()) {
       Log.info("clustering is disabled and hence initializing bots.");
       initializeBots();
@@ -233,6 +237,9 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     APNSConnectionPoolImpl.teardown();
     adminAPIServer.stop();
     publicAPIServer.stop();
+
+    // disable the pub/sub wakeup
+    server.getPubSubModule().setWakeupProvider(null);
 
     try {
       ObjectName mbeanName = new ObjectName(MMXServerConstants.MMX_MBEAN_NAME);

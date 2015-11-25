@@ -18,6 +18,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.GCMPayload;
+import com.magnet.mmx.protocol.PushMessage;
+
 import org.junit.Test;
 
 import java.util.LinkedHashMap;
@@ -33,18 +36,20 @@ public class MMXPushGCMPayloadBuilderTest {
 
   @Test
   public void testBuild() throws Exception {
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
+    MMXPushHeader header = new MMXPushHeader(Constants.MMX,
+        PushMessage.Action.PUSH.getCode(), "pickup");
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(header);
     builder.setBody("Your order is ready for pickup at 465 E El Camino Real, Palo Alto, CA");
     builder.setTitle("Order status");
-    MMXPushHeader header = new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_PUSH);
-    builder.setType(header);
+
+    builder.setCustomType("pickup-type");
     builder.setId("261ty171890");
     builder.setCallBackURL("http://preview.magnet.com:5221/mmxmgmt/v1/pushreply?pushmessageid=261ty171890");
 
     Map<String, String> custom = new LinkedHashMap<String, String>();
     custom.put("action", "doSomething");
     custom.put("url" ,"http://live.sports.espn.com");
-    builder.setCustomDictionary(custom);
+    builder.setCustom(custom);
 
     String json = builder.buildJSON();
     assertNotNull("json is null", json);
@@ -62,7 +67,8 @@ public class MMXPushGCMPayloadBuilderTest {
 
   @Test
   public void testBuildWithNoMMXValuesSet() {
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.PUSH);
     builder.setBody("Your order is ready for pickup at 465 E El Camino Real, Palo Alto, CA");
     builder.setTitle("Order status");
     boolean gotException = false;
@@ -80,7 +86,9 @@ public class MMXPushGCMPayloadBuilderTest {
   public void testWakeupPayload() {
     String payload = MMXPushGCMPayloadBuilder.wakeupPayload();
 
-    String prefix = new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.retrieve.name()).toString();
+    String prefix = new MMXPushHeader(Constants.MMX,
+        Constants.MMX_ACTION_CODE_WAKEUP,
+        Constants.PingPongCommand.retrieve.name()).toString();
     int index = payload.indexOf(prefix);
     String json = payload.substring(index+prefix.length());
 
@@ -94,6 +102,6 @@ public class MMXPushGCMPayloadBuilderTest {
     JsonElement tye = mmx.get("ty");
     String value = tye.getAsString();
     assertNotNull(value);
-    assertEquals("Didn't get expected value of type", "mmx:w:retrieve", value);
+    assertEquals("Didn't get expected value of type", "", value);
   }
 }

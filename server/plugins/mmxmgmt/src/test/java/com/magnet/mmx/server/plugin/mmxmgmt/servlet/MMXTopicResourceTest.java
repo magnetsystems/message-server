@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.google.gson.Gson;
+import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.server.api.v1.protocol.TopicSubscription;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubItem;
@@ -70,13 +71,13 @@ public class MMXTopicResourceTest extends BaseJAXRSTest {
     new MockUp<TopicResource>() {
 
       @Mock
-      protected List<TopicSubscription> getTopicSubscriptions (String appId, String topicName) {
-        LOGGER.trace("MOCKED getTopicSubscriptions : appid={}, topicName={}", appId, topicName);
-        String topicId = TopicHelper.makeTopic(appId, null, topicName);
+      protected List<TopicSubscription> getTopicSubscriptions (String appId, MMXTopicId tid) {
+        LOGGER.trace("MOCKED getTopicSubscriptions : appid={}, tid={}", appId, tid);
+        String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
         List<TopicSubscription> list = new ArrayList<TopicSubscription>(10);
         for (int i=0; i < 100; i++) {
           StubTopicSubscription subscription = new StubTopicSubscription();
-          subscription.setTopic(topicName);
+          subscription.setTopic(tid.getName());
           subscription.setUsername(RandomStringUtils.randomAlphanumeric(3));
           subscription.setSubscriptionId(RandomStringUtils.randomAlphanumeric(10));
           if (i%3 ==0 ) {

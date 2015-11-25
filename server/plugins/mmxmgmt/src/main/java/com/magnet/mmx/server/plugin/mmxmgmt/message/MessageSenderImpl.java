@@ -30,13 +30,13 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import com.magnet.mmx.protocol.Count;
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SentMessageId;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DeviceQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.UserQuery;
@@ -140,6 +140,7 @@ public class MessageSenderImpl implements MessageSender {
               .setSenderId(new MMXid(senderUserId, null))
               .setRecipientIds(recipients.toArray(new MMXid[sent]))
               .setReplyTo(request.getReplyTo())
+              .setNoAck(true)
               .setMetadata(request.getContent())
               .setReceipt(request.isReceipt())
               .build();
@@ -164,6 +165,7 @@ public class MessageSenderImpl implements MessageSender {
             .setSenderId(new MMXid(senderUserId, null))
             .setRecipientId(new MMXid(recipient, devId, null))
             .setReplyTo(request.getReplyTo())
+            .setNoAck(true)
             .setMetadata(request.getContent())
             .setDomain(domain)
             .setReceipt(request.isReceipt());
@@ -203,6 +205,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setSenderId(new MMXid(senderUserId, null))
                 .setRecipientId(new MMXid(recipient, null))
                 .setReplyTo(request.getReplyTo())
+                .setNoAck(true)
                 .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
@@ -237,6 +240,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setSenderId(new MMXid(senderUserId, null))
                 .setRecipientId(new MMXid(recipient, de.getDeviceId(), null))
                 .setReplyTo(request.getReplyTo())
+                .setNoAck(true)
                 .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());

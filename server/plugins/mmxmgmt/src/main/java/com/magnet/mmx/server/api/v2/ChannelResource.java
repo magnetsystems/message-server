@@ -31,18 +31,15 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.topic.ChannelNode;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
 import com.magnet.mmx.util.TimeUtil;
-import com.magnet.mmx.util.Utils;
 
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -59,7 +56,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -432,7 +428,9 @@ public class ChannelResource {
 
         try {
             long startTime = System.nanoTime();
-            List<ChannelSubscription> infoList = getChannelSubscriptions(appId, channelName);
+            MMXChannelId channelId = nameToId(channelName);
+            List<ChannelSubscription> infoList = getChannelSubscriptions(appId,
+                                                                    channelId);
             long endTime = System.nanoTime();
             LOGGER.info(
                     "Completed processing getSubscriptionsForChannels in {} milliseconds",
@@ -721,6 +719,7 @@ public class ChannelResource {
             .setAppId(appId)
             .setDomain(XMPPServer.getInstance().getServerInfo().getXMPPDomain())
             .setMsgType(MSG_TYPE_INVITATION)
+            .setNoAck(true)
             .setReceipt(false)
             .setSenderId(new MMXid(tokenInfo.getUserId(), null))
             .setRecipientIds(recipients)
@@ -1134,10 +1133,9 @@ public class ChannelResource {
 //    }
 
     protected List<ChannelSubscription> getChannelSubscriptions(String appId,
-                                                            String channelName) {
-        MMXChannelId tid = nameToId(channelName);
-        String channelId = ChannelHelper.makeChannel(appId, tid.getEscUserId(), tid
-                .getName());
+                                                         MMXChannelId cid) {
+        String channelId = ChannelHelper.makeChannel(appId, cid.getEscUserId(),
+            cid.getName());
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         List<NodeSubscription> subscriptions = channelManager
                 .listSubscriptionsForChannel(channelId);

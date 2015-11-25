@@ -14,14 +14,14 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.apns;
 
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushResult;
+import com.magnet.mmx.protocol.PushResult.PushIdTuple;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Options;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushIdTuple;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Unsent;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
@@ -62,7 +62,8 @@ public class APNSPushMessageSender {
     this (appEntity, null);
   }
 
-  public PushResult sendPush(List<DeviceEntity> deviceList, MMXPushAPNSPayloadBuilder builder) {
+  public PushResult sendPush(List<DeviceEntity> deviceList,
+                              MMXPushAPNSPayloadBuilder builder) {
 
     APNSConnection connection = null;
     int sentCount = 0;

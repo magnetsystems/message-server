@@ -26,11 +26,9 @@ public class SendPushMessageRequest {
   private String body;
   private String title;
   private String sound;
-
-  private Map<String, String> custom;
+  private Map<String, Object> custom;
 
   private IOSSpecific ios;
-
   private AndroidSpecific android;
 
   public Target getTarget() {
@@ -73,11 +71,11 @@ public class SendPushMessageRequest {
     this.sound = sound;
   }
 
-  public Map<String, String> getCustom() {
+  public Map<String, Object> getCustom() {
     return custom;
   }
 
-  public void setCustom(Map<String, String> custom) {
+  public void setCustom(Map<String, Object> custom) {
     this.custom = custom;
   }
 

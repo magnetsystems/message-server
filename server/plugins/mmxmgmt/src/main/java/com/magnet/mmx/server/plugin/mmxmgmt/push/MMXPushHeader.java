@@ -19,12 +19,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * The GCM header that the <code>type</code> is optional.
  */
 public class MMXPushHeader {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXPushHeader.class);
   String namespace;
   String actionCode;
-  String type = "";
+  String type;
 
   public MMXPushHeader(String namespace, String actionCode, String type) {
     LOGGER.trace("MMXPushHeader : namespace={}, actionCode={}, type={}", new Object[]{namespace, actionCode, type});

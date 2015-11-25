@@ -252,7 +252,7 @@ public class PushMessageSender implements PushSender {
     MMXPushAPNSPayloadBuilder payloadBuilder = new MMXPushAPNSPayloadBuilder();
     payloadBuilder.setBody(body);
     payloadBuilder.setCallBackURL(callBackUrl);
-    payloadBuilder.setType(new MMXPushHeader(PushMessage.Action.PUSH.name(), PushConstants.PUSH_MESSAGE_TYPE));
+    payloadBuilder.setCustomType(PushConstants.PUSH_MESSAGE_TYPE);
     payloadBuilder.setId(pushMessageId);
     return payloadBuilder.build();
   }

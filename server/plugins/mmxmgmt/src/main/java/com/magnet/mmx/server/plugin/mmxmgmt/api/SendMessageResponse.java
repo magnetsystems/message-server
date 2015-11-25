@@ -14,7 +14,7 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
+import com.magnet.mmx.protocol.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.UnsentMessage;
 
 import java.util.List;

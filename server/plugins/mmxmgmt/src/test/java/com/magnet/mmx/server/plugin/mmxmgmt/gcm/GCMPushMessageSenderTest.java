@@ -18,9 +18,10 @@ import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Sender;
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.protocol.PushResult;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
@@ -104,9 +105,10 @@ public class GCMPushMessageSenderTest {
     AppDAO appDAO = new AppDAOImpl(new BasicDataSourceConnectionProvider(ds));
     GCMPushMessageSender sender = new GCMPushMessageSender(appDAO.getAppForAppKey(appId));
 
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.PUSH);
     builder.setTitle("Unit test");
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_PUSH));
+    builder.setCustomType("none");
     PushResult result = sender.sendPush(iosDevices, builder);
     assertNotNull("Expected not null result", result);
     int request = result.getCount().getRequested();
@@ -132,9 +134,10 @@ public class GCMPushMessageSenderTest {
     appEntity.setGoogleAPIKey(null);
     GCMPushMessageSender sender = new GCMPushMessageSender(appDAO.getAppForAppKey(appId));
 
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.PUSH);
     builder.setTitle("Unit test");
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_PUSH));
+    builder.setCustomType("none");
     PushResult result = sender.sendPush(iosDevices, builder);
     assertNotNull("Expected not null result", result);
     int request = result.getCount().getRequested();

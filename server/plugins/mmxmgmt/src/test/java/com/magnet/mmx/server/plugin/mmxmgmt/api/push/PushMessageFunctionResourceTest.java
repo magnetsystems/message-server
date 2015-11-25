@@ -14,6 +14,8 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.server.api.v1.DevicesResourceValidationTest;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DeviceQuery;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;

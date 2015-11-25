@@ -15,6 +15,11 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.protocol.PushResult;
+import com.magnet.mmx.protocol.PushResult.PushIdTuple;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
@@ -171,7 +176,8 @@ public class PushMessageFunctionResource extends AbstractBaseResource {
 
 
   protected MMXPushAPNSPayloadBuilder builder(SendPushMessageRequest request) {
-    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder();
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(
+        PushMessage.Action.PUSH);
     builder.setBody(request.getBody())
         .setTitle(request.getTitle());
 
@@ -184,21 +190,22 @@ public class PushMessageFunctionResource extends AbstractBaseResource {
     }
     builder.setCustomDictionary(request.getCustom())
         .setSound(request.getSound())
-        .setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_PUSH));
+        .setCustomType(null);
     return builder;
   }
 
   protected MMXPushGCMPayloadBuilder gcmBuilder(SendPushMessageRequest request) {
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.PUSH);
     builder.setBody(request.getBody())
         .setTitle(request.getTitle());
 
     if (request.getAndroid() != null) {
       builder.setIcon(request.getAndroid().getIcon());
     }
-    builder.setCustomDictionary(request.getCustom())
+    builder.setCustom(request.getCustom())
         .setSound(request.getSound())
-        .setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_PUSH));
+        .setCustomType(null);
     return builder;
   }
 }
