@@ -124,6 +124,37 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>copy-server</id>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${user.home}/.magnet/message" />
+                                <!--<delete includeemptydirs="true">-->
+                                    <!--<fileset dir="${user.home}/.magnet/message" includes="**/*" />-->
+                                <!--</delete>-->
+                                <unzip src="${project.build.directory}/${project.artifactId}-${project.version}.zip" dest="${user.home}/.magnet/message">
+                                </unzip>
+                                <chmod dir="${user.home}/.magnet/message/${project.artifactId}-${project.version}/bin" perm="ugo+rx" includes="**/*.sh" />
+                                <echo>Restarting the server...</echo>
+
+                                <exec dir="${user.home}/.magnet/message/${project.artifactId}-${project.version}/bin" executable="./mmx-server-debug.sh">
+                                    <arg line="restart &amp;"/>
+                                </exec>
+
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
