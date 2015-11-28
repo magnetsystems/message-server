@@ -151,14 +151,15 @@ public class IntegrationChannelResource {
             ChannelAction.SubscribeRequest rqt = new ChannelAction.SubscribeRequest(
                     channelId.getEscUserId(), channelId.getName(), null);
             ChannelAction.SubscribeResponse resp = null;
+            if(channelInfo.getSubscribers() != null) {
+                for (String subscriber : channelInfo.getSubscribers()) {
+                    JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
+                            from.getDomain(), null);
+                    resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
+                            Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
+                    subResponseMap.put(subscriber, resp);
 
-            for (String subscriber : channelInfo.getSubscribers()) {
-                JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
-                        from.getDomain(), null);
-                resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
-                        Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
-                subResponseMap.put(subscriber,resp);
-
+                }
             }
 
         } catch (MMXException e) {
