@@ -176,31 +176,9 @@ public class MMXPushManager {
       Map<String, Object> map = GsonData.getGson().fromJson(
           jsonPayload, HashMap.class);
       MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(action);
-      // Extract APNS specific elements from the request.
-      ApsPayload apsPayload = GsonData.fromMap(map, ApsPayload.class);
-      if (apsPayload.mAlert == null &&
-          (map.get(Constants.PAYLOAD_PUSH_TITLE) != null ||
-           map.get(Constants.PAYLOAD_PUSH_BODY) != null)) {
-        ApsAlert alert = new ApsAlert();
-        alert.mTitle = (String) map.get(Constants.PAYLOAD_PUSH_TITLE);
-        alert.mBody = (String) map.get(Constants.PAYLOAD_PUSH_BODY);
-        apsPayload.mAlert = alert;
-      }
+      // Extract the APNS elements from the custom fields.
+      ApsPayload apsPayload = extractApsFromMap(builder, map);
       builder.setAps(apsPayload);
-      // Remove the APNS elements from the custom fields.
-      if (apsPayload.mAlert != null) {
-        map.remove(Constants.PAYLOAD_PUSH_TITLE);
-        map.remove(Constants.PAYLOAD_PUSH_BODY);
-      }
-      if (apsPayload.mSound != null) {
-        map.remove(Constants.PAYLOAD_PUSH_SOUND);
-      }
-      if (apsPayload.mBadge != null) {
-        map.remove("badge");
-      }
-      if (apsPayload.mCategory != null) {
-        map.remove("category");
-      }
       builder.setCustomType(customType);
       builder.setCustomDictionary(map);
       APNSPushMessageSender sender = new APNSPushMessageSender(appEntity);
@@ -214,22 +192,9 @@ public class MMXPushManager {
       Map<String, Object> map = GsonData.getGson().fromJson(
           jsonPayload, HashMap.class);
       MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(action, customType);
-      GcmPayload gcmPayload = GsonData.fromMap(map, GcmPayload.class);
-//      // Extract a set of Magnet pre-defined elements for GCM.
-//      builder.setGcm(gcmPayload);
-//      // TODO: leave the pre-defined elements in the custom payload?
-//      if (gcmPayload.mTitle != null) {
-//        map.remove(Constants.PAYLOAD_PUSH_TITLE);
-//      }
-//      if (gcmPayload.mBody != null) {
-//        map.remove(Constants.PAYLOAD_PUSH_BODY);
-//      }
-//      if (gcmPayload.mIcon != null) {
-//        map.remove(Constants.PAYLOAD_PUSH_ICON);
-//      }
-//      if (gcmPayload.mSound != null) {
-//        map.remove(Constants.PAYLOAD_PUSH_SOUND);
-//      }
+      // Extract Magnet pre-defined GCM elements from the custom fields.
+      GcmPayload gcmPayload = extractGcmFromMap(builder, map);
+      builder.setGcm(gcmPayload);
       builder.setCustomType(customType);
       builder.setCustom(map);
       GCMPushMessageSender sender = new GCMPushMessageSender(appEntity);
@@ -241,6 +206,53 @@ public class MMXPushManager {
       }
     }
     return result;
+  }
+
+  private ApsPayload extractApsFromMap(MMXPushAPNSPayloadBuilder builder,
+                                        Map<String, Object> map) {
+    ApsPayload apsPayload = GsonData.fromMap(map, ApsPayload.class);
+    // Remove the APS elements from teh custom fields.
+    if (apsPayload.mAlert == null &&
+        (map.get(Constants.PAYLOAD_PUSH_TITLE) != null ||
+         map.get(Constants.PAYLOAD_PUSH_BODY) != null)) {
+      ApsAlert alert = new ApsAlert();
+      alert.mTitle = (String) map.get(Constants.PAYLOAD_PUSH_TITLE);
+      alert.mBody = (String) map.get(Constants.PAYLOAD_PUSH_BODY);
+      apsPayload.mAlert = alert;
+    }
+    if (apsPayload.mAlert != null) {
+      map.remove(Constants.PAYLOAD_PUSH_TITLE);
+      map.remove(Constants.PAYLOAD_PUSH_BODY);
+    }
+    if (apsPayload.mSound != null) {
+      map.remove(Constants.PAYLOAD_PUSH_SOUND);
+    }
+    if (apsPayload.mBadge != null) {
+      map.remove("badge");
+    }
+    if (apsPayload.mCategory != null) {
+      map.remove("category");
+    }
+    return apsPayload;
+  }
+
+  private GcmPayload extractGcmFromMap(MMXPushGCMPayloadBuilder builder,
+                                        Map<String, Object> map) {
+    GcmPayload gcmPayload = GsonData.fromMap(map, GcmPayload.class);
+    // Remove the pre-defined elements from the custom fields.
+    if (gcmPayload.mTitle != null) {
+      map.remove(Constants.PAYLOAD_PUSH_TITLE);
+    }
+    if (gcmPayload.mBody != null) {
+      map.remove(Constants.PAYLOAD_PUSH_BODY);
+    }
+    if (gcmPayload.mIcon != null) {
+      map.remove(Constants.PAYLOAD_PUSH_ICON);
+    }
+    if (gcmPayload.mSound != null) {
+      map.remove(Constants.PAYLOAD_PUSH_SOUND);
+    }
+    return gcmPayload;
   }
 
   // Add two results.
