@@ -55,6 +55,7 @@ public class MMXPushGCMPayloadBuilder {
     setBody(gcm.mBody);
     setIcon(gcm.mIcon);
     setSound(gcm.mSound);
+    setBadge(gcm.mBadge);
     return this;
   }
   
@@ -82,6 +83,13 @@ public class MMXPushGCMPayloadBuilder {
   public MMXPushGCMPayloadBuilder setIcon(String icon) {
     if (icon != null) {
       payload.setIcon(icon);
+    }
+    return this;
+  }
+
+  public MMXPushGCMPayloadBuilder setBadge(Integer badge) {
+    if (badge != null) {
+      payload.setBadge(badge);
     }
     return this;
   }

@@ -14,7 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.handler;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.DbInteractionException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceNotFoundException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.gcm.GCMPushMessageSender;
@@ -110,6 +108,14 @@ public class MMXPushManager {
     public String mIcon;
     @SerializedName("sound")
     public String mSound;
+    @SerializedName("badge")
+    public Integer mBadge;
+
+    @Override
+    public String toString() {
+      return "{title="+mTitle+", body="+mBody+", badge="+mBadge+", sound="+
+              mSound+", icon="+mIcon+"}";
+    }
   }
 
   public static MMXPushManager getInstance() {
@@ -251,6 +257,9 @@ public class MMXPushManager {
     }
     if (gcmPayload.mSound != null) {
       map.remove(Constants.PAYLOAD_PUSH_SOUND);
+    }
+    if (gcmPayload.mBadge != null) {
+      map.remove(Constants.PAYLOAD_PUSH_BADGE);
     }
     return gcmPayload;
   }
