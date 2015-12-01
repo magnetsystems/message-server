@@ -155,7 +155,7 @@ public class MMXPushGCMPayloadBuilder {
   public static String wakeupPayload() {
     MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
         PushMessage.Action.WAKEUP, Constants.PingPongCommand.retrieve.name());
-    builder.setCustomType("");
+    builder.setCustomType(null);
     return builder.build();
   }
 }
