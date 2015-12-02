@@ -1971,6 +1971,11 @@ public class MMXTopicManager {
         }
         //TODO: Improve this
         UserEntity userEntity = userDAO.getUser(username);
+        if (userEntity == null) {
+          // Skip any invalid users.
+          --index;
+          continue;
+        }
         com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
         userInfoList.add(userInfo);
         addedCount++;

@@ -28,6 +28,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -100,8 +101,7 @@ public class MMXPushGCMPayloadBuilderTest {
     assertNotNull("Didn't find aps object", mmxElement);
     assertTrue("mmx is not a JSON object", mmxElement.isJsonObject());
     JsonElement tye = mmx.get("ty");
-    String value = tye.getAsString();
-    assertNotNull(value);
-    assertEquals("Didn't get expected value of type", "", value);
+    // There is no "ty" for "retrieve" in GCM only.
+    assertNull(tye);
   }
 }
