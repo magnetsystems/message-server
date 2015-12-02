@@ -72,12 +72,14 @@ public class PubSubWakeupProvider implements WakeupProvider {
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
-            userOrDev.getResource()), PushMessage.Action.WAKEUP,
+            userOrDev.getResource(), null), PushMessage.Action.WAKEUP,
             PubSubNotification.getType(), pubsubPayload);
         if (result.getCount().getRequested() != result.getCount().getSent()) {
           Unsent unsent = result.getUnsentList().get(0);
-          LOGGER.warn("@@@ Cannot wake up device for pubsub; devId={}, code={}, msg={}",
-              unsent.getDeviceId(), unsent.getCode(), unsent.getMessage());
+          LOGGER.warn(
+              "pubsub wake up failed; count={}, devId={}, code={}, msg={}",
+              result.getCount(), unsent.getDeviceId(), unsent.getCode(),
+              unsent.getMessage());
         }
 //        // It is possible that a device is subscribed to a node, but the
 //        // device is no longer owned by the user.
@@ -96,12 +98,14 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (sessionMgr.getSession(devJID) == null) {
           // Wake up each disconnected device
           PushResult result = pushMsgMgr.send(fromJID, appId,
-              new MMXid(userId, de.getDeviceId()), PushMessage.Action.WAKEUP,
+              new MMXid(userId, de.getDeviceId(), null), PushMessage.Action.WAKEUP,
               PubSubNotification.getType(), pubsubPayload);
           if (result.getCount().getRequested() != result.getCount().getSent()) {
             Unsent unsent = result.getUnsentList().get(0);
-            LOGGER.warn("@@@ Cannot wake up device for pubsub; devId={}, code={}, msg={}",
-                unsent.getDeviceId(), unsent.getCode(), unsent.getMessage());
+            LOGGER.warn(
+                "pubsub wake up failed; count={}, devId={}, code={}, msg={}",
+                result.getCount(), unsent.getDeviceId(), unsent.getCode(),
+                unsent.getMessage());
           }
         }
       }

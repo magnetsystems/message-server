@@ -187,10 +187,12 @@ public class MMXPushManager {
       builder.setAps(apsPayload);
       builder.setCustomType(customType);
       builder.setCustomDictionary(map);
+//      LOGGER.debug("@@@ APNS to # of devices={}, devices={}", apnsDevices.size(), apnsDevices);
       APNSPushMessageSender sender = new APNSPushMessageSender(appEntity);
       result = sender.sendPush(apnsDevices, builder);
       if (result.getCount().getRequested() != result.getCount().getSent() &&
           abortOnError) {
+        LOGGER.trace("APNS pushResult: count={}", result.getCount());
         return result;
       }
     }
@@ -204,13 +206,16 @@ public class MMXPushManager {
       builder.setCustomType(customType);
       builder.setCustom(map);
       GCMPushMessageSender sender = new GCMPushMessageSender(appEntity);
+//      LOGGER.debug("@@@ GCM to # of devices={}, devices={}", gcmDevices.size(), gcmDevices);
       PushResult gcmRes = sender.sendPush(gcmDevices, builder);
       result = addResults(gcmRes, result);
       if (result.getCount().getRequested() != result.getCount().getSent() &&
           abortOnError) {
+        LOGGER.trace("GCM pushResult: count={}", gcmRes.getCount());
         return result;
       }
     }
+  LOGGER.debug("@@@ GCM+APNS to # of devices={}", result.getCount());
     return result;
   }
 

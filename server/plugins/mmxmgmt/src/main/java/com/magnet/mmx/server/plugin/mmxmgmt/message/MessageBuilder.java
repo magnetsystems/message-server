@@ -92,7 +92,7 @@ public class MessageBuilder {
    * @deprecated {@link #setSenderId(MMXid)}
    */
   public MessageBuilder setSenderId(String senderId) {
-    setSenderId(new MMXid(senderId, null));
+    setSenderId(new MMXid(senderId, null, null));
     return this;
   }
 
@@ -114,7 +114,7 @@ public class MessageBuilder {
    */
   public MessageBuilder setReplyTo(String replyTo) {
     if (replyTo != null) {
-      metadata.put(MMXServerConstants.REPLY_TO, (new MMXid(replyTo, null)).toJson());
+      metadata.put(MMXServerConstants.REPLY_TO, (new MMXid(replyTo, null, null)).toJson());
     }
     return this;
   }
@@ -170,10 +170,10 @@ public class MessageBuilder {
     // construct the "mmxmeta" stanza with To with the old userID/deviceEntity.
     if (userId != null) {
       mmxMeta.setTo(new MMXid[] { new MMXid(userId, (deviceEntity == null) ?
-          null : deviceEntity.getDeviceId()) });
+          null : deviceEntity.getDeviceId(), null) });
     } else if (deviceEntity != null) {
       mmxMeta.setTo(new MMXid[] { new MMXid(deviceEntity.getOwnerId(),
-          deviceEntity.getDeviceId()) });
+          deviceEntity.getDeviceId(), null) });
     }
     if (!mmxMeta.isEmpty()) {
       String mmxMetaJSON = GsonData.getGson().toJson(mmxMeta);

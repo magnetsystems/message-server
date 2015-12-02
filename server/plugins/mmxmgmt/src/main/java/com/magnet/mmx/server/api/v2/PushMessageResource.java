@@ -143,7 +143,7 @@ public class PushMessageResource {
     }
     
     MMXPushManager pushMgr = MMXPushManager.getInstance();
-    PushResult result = pushMgr.send(from, appId, new MMXid(userId, null),
+    PushResult result = pushMgr.send(from, appId, new MMXid(userId, null, null),
         rqt.getAction(), rqt.getName(), ((rqt.getPayload() == null) ?
             null : GsonData.getGson().toJson(rqt.getPayload())));
     long endTime = System.nanoTime();
@@ -186,7 +186,7 @@ public class PushMessageResource {
     
     MMXPushManager pushMgr = MMXPushManager.getInstance();
     PushResult result = pushMgr.send(from, appId,
-        new MMXid(de.getOwnerId(), deviceId), rqt.getAction(),
+        new MMXid(de.getOwnerId(), deviceId, null), rqt.getAction(),
         rqt.getName(), ((rqt.getPayload() == null) ?
             null : GsonData.getGson().toJson(rqt.getPayload())));
     long endTime = System.nanoTime();

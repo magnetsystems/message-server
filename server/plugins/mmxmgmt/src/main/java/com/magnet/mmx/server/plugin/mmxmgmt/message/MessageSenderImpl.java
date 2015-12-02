@@ -125,7 +125,7 @@ public class MessageSenderImpl implements MessageSender {
             unsentList.add(badUser);
             unsent++;
           } else {
-            recipients.add(new MMXid(userId, null));
+            recipients.add(new MMXid(userId, null, null));
             SentMessageId sentMessageId = new SentMessageId(userId, null, msgId);
             sentList.add(sentMessageId);
             sent++;
@@ -137,7 +137,7 @@ public class MessageSenderImpl implements MessageSender {
               .setDomain(domain)
               .setId(msgId)
               .setUtcTime(System.currentTimeMillis())
-              .setSenderId(new MMXid(senderUserId, null))
+              .setSenderId(new MMXid(senderUserId, null, null))
               .setRecipientIds(recipients.toArray(new MMXid[sent]))
               .setReplyTo(request.getReplyTo())
               .setNoAck(true)
@@ -162,7 +162,7 @@ public class MessageSenderImpl implements MessageSender {
         builder.setAppId(appId)
             .setId(msgId)
             .setUtcTime(System.currentTimeMillis())
-            .setSenderId(new MMXid(senderUserId, null))
+            .setSenderId(new MMXid(senderUserId, null, null))
             .setRecipientId(new MMXid(recipient, devId, null))
             .setReplyTo(request.getReplyTo())
             .setNoAck(true)
@@ -202,8 +202,8 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppId(appId)
                 .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
-                .setSenderId(new MMXid(senderUserId, null))
-                .setRecipientId(new MMXid(recipient, null))
+                .setSenderId(new MMXid(senderUserId, null, null))
+                .setRecipientId(new MMXid(recipient, null, null))
                 .setReplyTo(request.getReplyTo())
                 .setNoAck(true)
                 .setMetadata(request.getContent())
@@ -237,7 +237,7 @@ public class MessageSenderImpl implements MessageSender {
             builder.setAppId(appId)
                 .setId(msgId)
                 .setUtcTime(System.currentTimeMillis())
-                .setSenderId(new MMXid(senderUserId, null))
+                .setSenderId(new MMXid(senderUserId, null, null))
                 .setRecipientId(new MMXid(recipient, de.getDeviceId(), null))
                 .setReplyTo(request.getReplyTo())
                 .setNoAck(true)

@@ -711,7 +711,7 @@ public class ChannelResource {
         MessageBuilder builder = new MessageBuilder();
         MMXid[] recipients = new MMXid[inviteInfo.invitees.size()];
         for (String recipient : inviteInfo.invitees) {
-          recipients[i] = new MMXid(recipient, null);
+          recipients[i] = new MMXid(recipient, null, null);
         }
         String msgId = new MessageIdGeneratorImpl().generateTopicMessageId(
             appId, channelName);
@@ -721,7 +721,7 @@ public class ChannelResource {
             .setMsgType(MSG_TYPE_INVITATION)
             .setNoAck(true)
             .setReceipt(false)
-            .setSenderId(new MMXid(tokenInfo.getUserId(), null))
+            .setSenderId(new MMXid(tokenInfo.getUserId(), null, null))
             .setRecipientIds(recipients)
             .setMetadata(buildInviteContent(channelInfo, inviteInfo))
             .build();
