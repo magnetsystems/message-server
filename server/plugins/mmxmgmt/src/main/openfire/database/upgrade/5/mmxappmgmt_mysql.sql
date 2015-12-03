@@ -14,3 +14,7 @@ ALTER TABLE mmxTopicRole ADD UNIQUE KEY `mmxTopicRole_uk` (serviceID, nodeID, ro
 
 INSERT INTO mmxTopicRole (serviceID, nodeID, role, creationDate)
 SELECT serviceID,nodeID,'PUBLIC', now() FROM ofPubsubNode WHERE nodeID IS NOT NULL;
+
+/* Allow pubsub to send item to all devices of a user */
+INSERT INTO ofProperty VALUES('route.all-resources', 'true') ON DUPLICATE KEY UPDATE propValue='true';
+
