@@ -139,6 +139,10 @@ public final class MMXServerConstants {
 
   public final static int MMX_MAX_PASSWORD_LEN = 32;
 
+  /**
+   * If the "retrieve" wakeup msg could not be sent before, not allow any
+   * wakeup msg for this period of time.
+   */
   public final static int WAKEUP_MUTE_PERIOD_MINUTES_DEFAULT = 30;
 
   public final static String HTTP_RATE_TYPE = "HTTP";
