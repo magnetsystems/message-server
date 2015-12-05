@@ -1,7 +1,7 @@
 UPDATE ofVersion SET version=5 WHERE name = 'mmxappmgmt';
 
 /* Table for mapping topics to roles that are allowed access to the topic */
-CREATE TABLE mmxTopicRole (
+CREATE TABLE IF NOT EXISTS mmxTopicRole (
     id           INT             NOT NULL AUTO_INCREMENT PRIMARY KEY,
     serviceID    VARCHAR(100)    NOT NULL,
     nodeID       VARCHAR(100)    NOT NULL,
