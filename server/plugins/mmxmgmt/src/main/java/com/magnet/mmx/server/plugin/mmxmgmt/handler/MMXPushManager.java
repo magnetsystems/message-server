@@ -215,20 +215,21 @@ public class MMXPushManager {
         return result;
       }
     }
-  LOGGER.debug("@@@ GCM+APNS to # of devices={}", result.getCount());
+  LOGGER.debug("@@@ GCM+APNS to # of devices={}", result == null ?
+      null : result.getCount());
     return result;
   }
 
   private ApsPayload extractApsFromMap(MMXPushAPNSPayloadBuilder builder,
                                         Map<String, Object> map) {
     ApsPayload apsPayload = GsonData.fromMap(map, ApsPayload.class);
-    // Remove the APS elements from teh custom fields.
+    // Remove the APS elements from the custom fields.
     if (apsPayload.mAlert == null &&
         (map.get(Constants.PAYLOAD_PUSH_TITLE) != null ||
          map.get(Constants.PAYLOAD_PUSH_BODY) != null)) {
       ApsAlert alert = new ApsAlert();
-      alert.mTitle = (String) map.get(Constants.PAYLOAD_PUSH_TITLE);
-      alert.mBody = (String) map.get(Constants.PAYLOAD_PUSH_BODY);
+      alert.mTitle = (String) map.get(Constants.PAYLOAD_PUSH_TITLE);  // required
+      alert.mBody = (String) map.get(Constants.PAYLOAD_PUSH_BODY);    // required
       apsPayload.mAlert = alert;
     }
     if (apsPayload.mAlert != null) {
