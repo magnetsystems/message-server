@@ -183,6 +183,129 @@ public class IntegrationChannelResource {
 
     }
 
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/subscribers/add")
+    public Response addSubscribersToChannel(@Context HttpHeaders headers,
+                                  CreateChannelRequest channelInfo) {
+
+        ErrorResponse errorResponse = null;
+        CreateChannelResponse chatChannelResponse = null;
+
+        MMXChannelManager channelManager = MMXChannelManager.getInstance();
+        JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
+
+        // auto subscribe recipients to this channel
+        Map<String,ChannelAction.SubscribeResponse> subResponseMap =  new HashMap<String,ChannelAction.SubscribeResponse>();
+
+        try {
+            //MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId;
+            if(channelInfo.isPrivateChannel()){
+                channelId = new MMXChannelId(channelInfo.getUserId(),channelInfo.getChannelName());
+            }else{
+                channelId = new MMXChannelId(channelInfo.getChannelName());
+            }
+            //ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
+            //errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
+
+            ChannelAction.SubscribeRequest rqt = new ChannelAction.SubscribeRequest(
+                    channelId.getEscUserId(), channelId.getName(), null);
+            ChannelAction.SubscribeResponse resp = null;
+            if(channelInfo.getSubscribers() != null) {
+                for (String subscriber : channelInfo.getSubscribers()) {
+                    JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
+                            from.getDomain(), null);
+                    resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
+                            Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
+                    subResponseMap.put(subscriber, resp);
+
+                }
+            }
+
+        } catch (MMXException e) {
+            LOGGER.error("Exception during addSubscribersToChannel request", e);
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.UNKNOWN_ERROR.getCode(),
+                    e.getMessage());
+            chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+            return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
+        }
+
+
+        chatChannelResponse = new CreateChannelResponse(ErrorCode.NO_ERROR.getCode(),
+                "Subscribers added");
+        chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+        return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
+
+    }
+
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/subscribers/remove")
+    public Response removeSubscribersToChannel(@Context HttpHeaders headers,
+                                            CreateChannelRequest channelInfo) {
+
+        ErrorResponse errorResponse = null;
+        CreateChannelResponse chatChannelResponse = null;
+
+        MMXChannelManager channelManager = MMXChannelManager.getInstance();
+        JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
+
+        // auto subscribe recipients to this channel
+        Map<String,MMXStatus> subResponseMap =  new HashMap<String,MMXStatus>();
+
+        try {
+            //MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId;
+            if(channelInfo.isPrivateChannel()){
+                channelId = new MMXChannelId(channelInfo.getUserId(),channelInfo.getChannelName());
+            }else{
+                channelId = new MMXChannelId(channelInfo.getChannelName());
+            }
+            //ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
+            //errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
+
+            ChannelAction.UnsubscribeRequest rqt = new ChannelAction.UnsubscribeRequest(
+                    channelId.getEscUserId(), channelId.getName(), null);
+            MMXStatus resp = null;
+            if(channelInfo.getSubscribers() != null) {
+                for (String subscriber : channelInfo.getSubscribers()) {
+                    JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
+                            from.getDomain(), null);
+                    resp = channelManager.unsubscribeChannel(sub, channelInfo.getMmxAppId(), rqt);
+                    subResponseMap.put(subscriber, resp);
+
+                }
+            }
+
+        } catch (MMXException e) {
+            LOGGER.error("Exception during addSubscribersToChannel request", e);
+            chatChannelResponse = new CreateChannelResponse(ErrorCode.UNKNOWN_ERROR.getCode(),
+                    e.getMessage());
+            //chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+            return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
+        }
+
+
+        chatChannelResponse = new CreateChannelResponse(ErrorCode.NO_ERROR.getCode(),
+                "Subscribers removed");
+        //chatChannelResponse.setSubscribeResponse(subResponseMap);
+
+        return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
+
+
+    }
+
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
