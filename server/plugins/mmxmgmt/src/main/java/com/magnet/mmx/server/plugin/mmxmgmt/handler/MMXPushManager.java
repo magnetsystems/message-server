@@ -125,6 +125,54 @@ public class MMXPushManager {
   private MMXPushManager() {
   }
   
+  /**
+   * Send a push message to a list of validated devices.
+   * @param from
+   * @param appId
+   * @param devices
+   * @param action
+   * @param customType
+   * @param jsonPayload
+   * @return
+   */
+  public PushResult send(JID from, String appId, List<DeviceEntity> devices,
+                        Action action, String customType, String jsonPayload) {
+    LOGGER.trace("@@@ send() from="+from+", devs="+devices+", action="+action+
+        ", customType="+customType+", payload="+jsonPayload);
+    List<DeviceEntity> gcmDevices = new ArrayList<DeviceEntity>(1);
+    List<DeviceEntity> apnsDevices = new ArrayList<DeviceEntity>(1);
+    for (DeviceEntity de : devices) {
+      if (de.getTokenType() == PushType.APNS) {
+        apnsDevices.add(de);
+      } else if (de.getTokenType() == PushType.GCM) {
+        gcmDevices.add(de);
+      }
+    }
+
+    PushResult result = null;
+    AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
+    AppEntity appEntity = appDAO.getAppForAppKey(appId);
+    if (apnsDevices.size() > 0) {
+      result = sendAPNS(appEntity, apnsDevices, action, customType, jsonPayload);
+    }
+    if (gcmDevices.size() > 0) {
+      PushResult gcmRes = sendGCM(appEntity, gcmDevices, action, customType,
+                                  jsonPayload);
+      result = addResults(gcmRes, result);
+    }
+    return result;
+  }
+
+  /**
+   * Send a push message to a user or an endpoint.
+   * @param from
+   * @param appId
+   * @param to
+   * @param action
+   * @param customType
+   * @param jsonPayload
+   * @return
+   */
   public PushResult send(JID from, String appId, MMXid to, Action action,
                           String customType, String jsonPayload) {
     LOGGER.trace("@@@ send() from="+from+", to="+to+", action="+action+
@@ -179,17 +227,8 @@ public class MMXPushManager {
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     if (apnsDevices.size() > 0) {
-      Map<String, Object> map = GsonData.getGson().fromJson(
-          jsonPayload, HashMap.class);
-      MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(action);
-      // Extract the APNS elements from the custom fields.
-      ApsPayload apsPayload = extractApsFromMap(builder, map);
-      builder.setAps(apsPayload);
-      builder.setCustomType(customType);
-      builder.setCustomDictionary(map);
-//      LOGGER.debug("@@@ APNS to # of devices={}, devices={}", apnsDevices.size(), apnsDevices);
-      APNSPushMessageSender sender = new APNSPushMessageSender(appEntity);
-      result = sender.sendPush(apnsDevices, builder);
+      result = sendAPNS(appEntity, apnsDevices, action, customType,
+                          jsonPayload);
       if (result.getCount().getRequested() != result.getCount().getSent() &&
           abortOnError) {
         LOGGER.trace("APNS pushResult: count={}", result.getCount());
@@ -197,17 +236,8 @@ public class MMXPushManager {
       }
     }
     if (gcmDevices.size() > 0) {
-      Map<String, Object> map = GsonData.getGson().fromJson(
-          jsonPayload, HashMap.class);
-      MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(action, customType);
-      // Extract Magnet pre-defined GCM elements from the custom fields.
-      GcmPayload gcmPayload = extractGcmFromMap(builder, map);
-      builder.setGcm(gcmPayload);
-      builder.setCustomType(customType);
-      builder.setCustom(map);
-      GCMPushMessageSender sender = new GCMPushMessageSender(appEntity);
-//      LOGGER.debug("@@@ GCM to # of devices={}, devices={}", gcmDevices.size(), gcmDevices);
-      PushResult gcmRes = sender.sendPush(gcmDevices, builder);
+      PushResult gcmRes = sendGCM(appEntity, gcmDevices, action, customType,
+                                    jsonPayload);
       result = addResults(gcmRes, result);
       if (result.getCount().getRequested() != result.getCount().getSent() &&
           abortOnError) {
@@ -215,8 +245,50 @@ public class MMXPushManager {
         return result;
       }
     }
-  LOGGER.debug("@@@ GCM+APNS to # of devices={}", result == null ?
-      null : result.getCount());
+    LOGGER.debug("@@@ GCM+APNS to # of devices={}", result == null ?
+                null : result.getCount());
+    return result;
+  }
+
+  private PushResult sendAPNS(AppEntity appEntity, List<DeviceEntity> devices,
+                        Action action, String customType, String jsonPayload) {
+    Map<String, Object> map = GsonData.getGson().fromJson(jsonPayload, HashMap.class);
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(action);
+    // Extract the APNS elements from the custom fields.
+    ApsPayload apsPayload = extractApsFromMap(builder, map);
+    builder.setAps(apsPayload);
+    if (apsPayload.mCategory != null) {
+      // Map "category" (if exists) to "ty"; workaround for hardcoded "notify" type in iOS SDK
+      builder.setCustomType(apsPayload.mCategory);
+    } else {
+      // Map "ty" to "category" (if missing) because they have the same purpose.
+      apsPayload.mCategory = customType;
+      builder.setCustomType(customType);
+    }
+    builder.setCustomDictionary(map);
+//    LOGGER.debug("@@@ APNS to # of devices={}, devices={}", apnsDevices.size(), apnsDevices);
+    APNSPushMessageSender sender = new APNSPushMessageSender(appEntity);
+    PushResult result = sender.sendPush(devices, builder);
+    return result;
+  }
+
+  private PushResult sendGCM(AppEntity appEntity, List<DeviceEntity> devices,
+                        Action action, String customType, String jsonPayload) {
+    Map<String, Object> map = GsonData.getGson().fromJson(jsonPayload, HashMap.class);
+    String category = (String) map.get("category");
+    if (category != null) {
+      // Map "category" (if exists) to "ty"; workaround for hardcoded "notify" type in iOS SDK.
+      customType = category;
+    }
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(action, customType);
+    // Extract Magnet pre-defined GCM elements from the custom fields.
+    GcmPayload gcmPayload = extractGcmFromMap(builder, map);
+    builder.setGcm(gcmPayload);
+    builder.setCustomType(customType);
+    builder.setCustom(map);
+    GCMPushMessageSender sender = new GCMPushMessageSender(appEntity);
+//    LOGGER.debug("@@@ GCM to # of devices={}, devices={}", gcmDevices.size(), gcmDevices);
+    PushResult result = sender.sendPush(devices, builder);
     return result;
   }
 
