@@ -65,8 +65,7 @@ public class MsgAckIQHandler extends IQHandler {
       String appId = JIDUtil.getAppId(to);
       String deviceId = JIDUtil.getResource(to);
       MessageDAO messageDAO = getMessageDAO();
-      int count = messageDAO.messageDelivered(appId, deviceId, messageId,
-                                              packet.getFrom().toBareJID());
+      int count = messageDAO.messageDelivered(appId, deviceId, messageId);
       if (count == 0) {
         LOGGER.warn(String.format("No message updated for appId:%s deviceId:%s messageId:%s", appId, deviceId, messageId));
       }
