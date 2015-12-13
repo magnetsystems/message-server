@@ -37,9 +37,9 @@ public class QueryChannelRequest  {
 
 
     public enum MatchType {
-        exact_match,
-        subset_match,
-        any_match
+        EXACT_MATCH,
+        SUBSET_MATCH,
+        ANY_MATCH
     }
 
     public List<String> getSubscribers() {

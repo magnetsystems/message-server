@@ -351,7 +351,7 @@ public class IntegrationChannelResource {
 
             List<String> filteredChannels = new ArrayList<String>(3);
 
-            if(!queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.any_match)) {
+            if(!queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.ANY_MATCH)) {
                 //Populate the subscription count
                 for (String channelName : channelCountMap.keySet()) {
                     String countSql = "SELECT count(*) FROM ofPubsubSubscription where state = 'subscribed' AND " +
@@ -363,14 +363,14 @@ public class IntegrationChannelResource {
                     while (rs.next()) {
                         int totalSubscriptionCount = rs.getInt(1);
                         int matchingSubscriptionCount = channelCountMap.get(channelName);
-                        if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+                        if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.EXACT_MATCH)) {
 
                             if (matchingSubscriptionCount == totalSubscriptionCount &&
                                     matchingSubscriptionCount == queryChannelRequest.getSubscribers().size()) {
                                 filteredChannels.add(channelName);
                             }
 
-                        } else if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                        } else if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.SUBSET_MATCH)) {
                             if (totalSubscriptionCount >= matchingSubscriptionCount &&
                                     matchingSubscriptionCount >= queryChannelRequest.getSubscribers().size()) {
                                 filteredChannels.add(channelName);
@@ -457,7 +457,7 @@ public class IntegrationChannelResource {
             List<String> filteredChannels = new ArrayList<String>(3);
             for(String channelName:channelCountMap.keySet()) {
 
-                if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+                if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.EXACT_MATCH)) {
                     if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
                         //Get the subscriber count
                         List<NodeSubscription> subs = channelManager.listSubscriptionsForChannel(channelName);
@@ -469,7 +469,7 @@ public class IntegrationChannelResource {
                             filteredChannels.add(channelName);
                         }
                     }
-                }else if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                }else if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.SUBSET_MATCH)) {
                     if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
                         filteredChannels.add(channelName);
                     }
