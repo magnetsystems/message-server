@@ -28,6 +28,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
@@ -708,26 +710,25 @@ public class ChannelResource {
         com.magnet.mmx.protocol.ChannelInfo channelInfo = channelMgr.getChannel(
             from, appId, channelId);
 
-        MessageBuilder builder = new MessageBuilder();
-        MMXid[] recipients = new MMXid[inviteInfo.invitees.size()];
-        for (String recipient : inviteInfo.invitees) {
-          recipients[i] = new MMXid(recipient, null, null);
+        SendMessageRequest request = new SendMessageRequest();
+        request.setRecipientUserIds(inviteInfo.invitees);
+        request.setReceipt(false);
+        request.setMessageType(MSG_TYPE_INVITATION);
+        request.setContent(buildInviteContent(channelInfo, inviteInfo));
+
+        MessageSender sender = new MessageSenderImpl();
+        SendMessageResult result = sender.send(tokenInfo.getUserId(), appId, request);
+        if (result.isError()) {
+          ErrorResponse response = new ErrorResponse(result.getErrorCode(),
+                                                     result.getErrorMessage());
+          return RestUtils.getBadReqJAXRSResp(response);
+        } else {
+          SendMessageResponse response = new SendMessageResponse();
+          response.setCount(result.getCount());
+          response.setSentList(result.getSentList());
+          response.setUnsentList(result.getUnsentList());
+          return RestUtils.getOKJAXRSResp(response);
         }
-        String msgId = new MessageIdGeneratorImpl().generateTopicMessageId(
-            appId, channelName);
-        Message message = builder.setId(msgId)
-            .setAppId(appId)
-            .setDomain(XMPPServer.getInstance().getServerInfo().getXMPPDomain())
-            .setMsgType(MSG_TYPE_INVITATION)
-            .setNoAck(true)
-            .setReceipt(false)
-            .setSenderId(new MMXid(tokenInfo.getUserId(), null, null))
-            .setRecipientIds(recipients)
-            .setMetadata(buildInviteContent(channelInfo, inviteInfo))
-            .build();
-        PacketRouter router = XMPPServer.getInstance().getPacketRouter();
-        router.route(message);
-        return RestUtils.getOKJAXRSResp();
       } catch (MMXException e) {
         ErrorResponse errorResponse = new ErrorResponse();
         if (e.getCode() == StatusCode.NOT_FOUND) {

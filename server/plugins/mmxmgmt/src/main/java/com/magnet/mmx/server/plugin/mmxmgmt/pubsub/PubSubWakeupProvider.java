@@ -14,6 +14,7 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.pubsub;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -93,20 +94,23 @@ public class PubSubWakeupProvider implements WakeupProvider {
       JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
           domain, null);
       List<DeviceEntity> deList = deviceDAO.getDevices(appId, userId, DeviceStatus.ACTIVE);
+      List<DeviceEntity> devices = new ArrayList<DeviceEntity>(deList.size());
       for (DeviceEntity de : deList) {
         JID devJID = new JID(userName, domain, de.getDeviceId(), false);
         if (sessionMgr.getSession(devJID) == null) {
-          // Wake up each disconnected device
-          PushResult result = pushMsgMgr.send(fromJID, appId,
-              new MMXid(userId, de.getDeviceId(), null), PushMessage.Action.WAKEUP,
-              PubSubNotification.getType(), pubsubPayload);
-          if (result.getCount().getRequested() != result.getCount().getSent()) {
-            Unsent unsent = result.getUnsentList().get(0);
-            LOGGER.warn(
-                "pubsub wake up failed; count={}, devId={}, code={}, msg={}",
-                result.getCount(), unsent.getDeviceId(), unsent.getCode(),
-                unsent.getMessage());
-          }
+          devices.add(de);
+        }
+      }
+      if (devices.size() > 0) {
+        // Wake up all disconnected devices
+        PushResult result = pushMsgMgr.send(fromJID, appId, devices,
+            PushMessage.Action.WAKEUP, PubSubNotification.getType(),
+            pubsubPayload);
+        if (result.getCount().getRequested() != result.getCount().getSent()) {
+          Unsent unsent = result.getUnsentList().get(0);
+          LOGGER.warn("pubsub wake up failed; count={}, devId={}, code={}, msg={}",
+              result.getCount(), unsent.getDeviceId(), unsent.getCode(),
+              unsent.getMessage());
         }
       }
     }

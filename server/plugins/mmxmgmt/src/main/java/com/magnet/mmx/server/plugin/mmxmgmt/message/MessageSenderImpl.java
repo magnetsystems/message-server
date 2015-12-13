@@ -141,6 +141,7 @@ public class MessageSenderImpl implements MessageSender {
               .setRecipientIds(recipients.toArray(new MMXid[sent]))
               .setReplyTo(request.getReplyTo())
               .setNoAck(true)
+              .setMsgType(request.getMessageType())
               .setMetadata(request.getContent())
               .setReceipt(request.isReceipt())
               .build();
@@ -166,6 +167,7 @@ public class MessageSenderImpl implements MessageSender {
             .setRecipientId(new MMXid(recipient, devId, null))
             .setReplyTo(request.getReplyTo())
             .setNoAck(true)
+            .setMsgType(request.getMessageType())
             .setMetadata(request.getContent())
             .setDomain(domain)
             .setReceipt(request.isReceipt());
@@ -206,6 +208,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setRecipientId(new MMXid(recipient, null, null))
                 .setReplyTo(request.getReplyTo())
                 .setNoAck(true)
+                .setMsgType(request.getMessageType())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
@@ -241,6 +244,7 @@ public class MessageSenderImpl implements MessageSender {
                 .setRecipientId(new MMXid(recipient, de.getDeviceId(), null))
                 .setReplyTo(request.getReplyTo())
                 .setNoAck(true)
+                .setMsgType(request.getMessageType())
                 .setMetadata(request.getContent())
                 .setDomain(domain)
                 .setReceipt(request.isReceipt());
