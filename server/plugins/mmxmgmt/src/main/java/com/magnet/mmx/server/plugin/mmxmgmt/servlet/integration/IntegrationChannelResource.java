@@ -16,8 +16,9 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.*;
+import com.magnet.mmx.protocol.ChannelInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
-import com.magnet.mmx.server.api.v1.protocol.ChannelCreateInfo;
+import com.magnet.mmx.server.api.v1.protocol.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
@@ -33,6 +34,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -44,6 +47,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -309,6 +316,182 @@ public class IntegrationChannelResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/query/sql")
+    public Response findChannelsUsingSQL(@Context HttpHeaders headers,QueryChannelRequest queryChannelRequest) {
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+
+            StringBuffer stringBuffer = new StringBuffer();
+            for(String user:queryChannelRequest.getSubscribers()) {
+
+                JID from = RestUtils.createJID(user,
+                        queryChannelRequest.getMmxAppId(),
+                        queryChannelRequest.getDeviceId());
+                if(stringBuffer.length() == 0) {
+                    stringBuffer.append("'").append(from).append("'");
+                }else{
+                    stringBuffer.append(",'").append(from).append("'");
+                }
+            }
+
+            String sql = "SELECT nodeID,count(*) FROM ofPubsubSubscription where state = 'subscribed' AND nodeID " +
+                    "like '" + "/" + queryChannelRequest.getMmxAppId() + "%' AND " +
+                    "jid in (" + stringBuffer.toString() + ") group by nodeID";
+
+            pstmt = con.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+            Map<String,Integer> channelCountMap = new HashMap<String,Integer>(3);
+            while (rs.next()) {
+                channelCountMap.put(rs.getString(1),rs.getInt(2));
+            }
+
+            List<String> filteredChannels = new ArrayList<String>(3);
+
+            if(!queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.any_match)) {
+                //Populate the subscription count
+                for (String channelName : channelCountMap.keySet()) {
+                    String countSql = "SELECT count(*) FROM ofPubsubSubscription where state = 'subscribed' AND " +
+                            "nodeID = '" + channelName + "'";
+
+                    pstmt = con.prepareStatement(countSql);
+                    rs = pstmt.executeQuery();
+
+                    while (rs.next()) {
+                        int totalSubscriptionCount = rs.getInt(1);
+                        int matchingSubscriptionCount = channelCountMap.get(channelName);
+                        if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+
+                            if (matchingSubscriptionCount == totalSubscriptionCount &&
+                                    matchingSubscriptionCount == queryChannelRequest.getSubscribers().size()) {
+                                filteredChannels.add(channelName);
+                            }
+
+                        } else if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                            if (totalSubscriptionCount >= matchingSubscriptionCount &&
+                                    matchingSubscriptionCount >= queryChannelRequest.getSubscribers().size()) {
+                                filteredChannels.add(channelName);
+                            }
+                        } else {
+                            filteredChannels.add(channelName);
+                        }
+                    }
+                }
+            }else{
+
+                for (String channelName : channelCountMap.keySet()) {
+                    filteredChannels.add(channelName);
+                }
+
+            }
+
+            List<String> channelNames = new ArrayList<String>(3);
+            if(filteredChannels.size() > 0) {
+                //convert from nodeId to name
+                StringBuffer nodeIds = new StringBuffer();
+                for(String nodeId:filteredChannels) {
+                    if(nodeIds.length() == 0) {
+                        nodeIds.append("'").append(nodeId).append("'");
+                    }else{
+                        nodeIds.append(",'").append(nodeId).append("'");
+                    }
+                }
+
+                String channelNameQry = "SELECT name FROM ofPubsubNode where nodeID in (" + nodeIds.toString() + ")";
+
+
+                pstmt = con.prepareStatement(channelNameQry);
+                rs = pstmt.executeQuery();
+
+                while (rs.next()) {
+                    channelNames.add(rs.getString(1));
+                }
+
+            }
+            QueryChannelResponse response = new QueryChannelResponse(ErrorCode.NO_ERROR.getCode(),
+                    "Success");
+            response.setChannels(channelNames);
+            return RestUtils.getCreatedJAXRSResp(response);
+
+        } catch (Exception sqlex) {
+            LOGGER.error(sqlex.getMessage(), sqlex);
+            ErrorResponse errorResponse = new ErrorResponse(ErrorCode.UNKNOWN_ERROR, "");
+            return RestUtils.getBadReqJAXRSResp(errorResponse);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/query")
+    public Response findChannels(@Context HttpHeaders headers,QueryChannelRequest queryChannelRequest) {
+
+        Map<String,Integer> channelCountMap = new HashMap<String, Integer>(3);
+
+        MMXChannelManager channelManager = MMXChannelManager.getInstance();
+
+        try {
+            ChannelAction.ListRequest request = new ChannelAction.ListRequest();
+            request.setLimit(1000);
+            request.setType(queryChannelRequest.getChannelType());
+
+            for(String userId:queryChannelRequest.getSubscribers()) {
+                JID from = RestUtils.createJID(userId, queryChannelRequest.getMmxAppId(), null);
+                ChannelAction.ListResponse response = channelManager.listChannels(from, queryChannelRequest.getMmxAppId(), request, null);
+                for (ChannelInfo info : response) {
+                    Integer integer = channelCountMap.get(info.getName());
+                    if (integer != null) {
+                        channelCountMap.put(info.getName(), new Integer(integer.intValue() + 1));
+                    } else {
+                        channelCountMap.put(info.getName(), new Integer(1));
+                    }
+                }
+            }
+            List<String> filteredChannels = new ArrayList<String>(3);
+            for(String channelName:channelCountMap.keySet()) {
+
+                if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+                    if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
+                        //Get the subscriber count
+                        List<NodeSubscription> subs = channelManager.listSubscriptionsForChannel(channelName);
+
+                        //Ignore if the user is not subscribed to this channel
+
+
+                        if (queryChannelRequest.getSubscribers().size() == subs.size()) {
+                            filteredChannels.add(channelName);
+                        }
+                    }
+                }else if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                    if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
+                        filteredChannels.add(channelName);
+                    }
+
+                }
+            }
+            QueryChannelResponse response = new QueryChannelResponse(ErrorCode.NO_ERROR.getCode(),
+                    "Success");
+            response.setChannels(filteredChannels);
+            return RestUtils.getCreatedJAXRSResp(response);
+
+        } catch (MMXException e) {
+            LOGGER.error("Exception during queryChannel request", e);
+            return RestUtils.getCreatedJAXRSResp(e.toString());
+
+        }
+
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Path("/chat/publish/")
     public Response publishToChannel(@Context HttpHeaders headers,
                                   PublishMessageToChatRequest channelInfo) {
@@ -345,6 +528,7 @@ public class IntegrationChannelResource {
         try {
             ChannelAction.CreateRequest rqt = toCreateRequest(channelInfo);
             channelManager.createChannel(from, channelInfo.getMmxAppId(), rqt);
+
 
         } catch (MMXException e) {
             if (e.getCode() != StatusCode.CONFLICT) {
@@ -384,6 +568,7 @@ public class IntegrationChannelResource {
                 resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
                         Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
                 sentList.add(new SentMessageId(subscriber,"",null));
+
 
             }
 
