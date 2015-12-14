@@ -14,20 +14,20 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
+import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.magnet.mmx.protocol.*;
 import com.magnet.mmx.protocol.ChannelInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.api.v1.protocol.*;
+import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.SentMessageId;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSender;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.MessageSenderImpl;
-import com.magnet.mmx.server.plugin.mmxmgmt.message.TopicPostResult;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
@@ -35,7 +35,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.*;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -627,6 +628,142 @@ public class IntegrationChannelResource {
     }
 
 
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/summary")
+    public Response  getChannelSummary(@Context HttpHeaders headers,
+                                                     ChannelSummaryRequest request){
+
+        List<ChannelSummaryResponse> summaryResponses = new ArrayList<ChannelSummaryResponse>();
+
+        JID userRequestingSummary = RestUtils.createJID(request.getRequestingUserId(),
+                request.getAppId(),
+                request.getDeviceId());
+
+        List<ChannelSummaryResponse> channelSummaries = getChannelsSummary(userRequestingSummary,request);
+
+
+//        //for each Channel
+//        for(String channelId:request.getChannelIds()) {
+//
+//            //ChannelInfo channelInfo = MMXChannelManager.getInstance().getChannel(null,request.getAppId(),)
+//            Node topicNode = MMXChannelManager.getInstance().getTopicNode(channelId);
+//            ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(request.getAppId(), topicNode);
+//            MMXChannelManager.getInstance().getSummary(from,)
+//            List<NodeSubscription> subscriptions = MMXChannelManager.getInstance().listSubscriptionsForChannel(channelId);
+//            Date fromDate = topicNode.getCreationDate();
+//            Date toDate = new Date(System.currentTimeMillis());
+//            List<PublishedItem> messages = new ArrayList<PublishedItem>();
+//
+//            if(!topicNode.isCollectionNode())
+//                messages = PubSubPersistenceManagerExt.getPublishedItems((LeafNode)topicNode,0,request.getNumOfMessages(),fromDate,toDate,true);
+//
+//            summaryResponses.add(new ChannelSummaryResponse(channelInfo,))
+//            //MMXTopicManager.listSubscriptionsForTopic
+//        }
+
+
+        return  RestUtils.getCreatedJAXRSResp(channelSummaries);
+    }
+
+
+    protected  List<ChannelSummaryResponse> getChannelsSummary(JID userRequestingSummary,ChannelSummaryRequest channelSummaryRequest) {
+
+
+        List<ChannelSummaryResponse> summaryList = new ArrayList<ChannelSummaryResponse>();
+        try {
+            MMXChannelManager channelManager = MMXChannelManager.getInstance();
+            List<MMXChannelId> channelIds = new ArrayList<MMXChannelId>();
+            for(String channelName:channelSummaryRequest.getChannelIds()) {
+                channelIds.add(nameToId(channelName));
+            }
+
+            ChannelAction.SummaryRequest rqt = new ChannelAction.SummaryRequest(channelIds);
+            ChannelAction.SummaryResponse resp = channelManager.getSummary(userRequestingSummary, channelSummaryRequest.getAppId(), rqt);
+
+            for (ChannelSummary s : resp) {
+                int count = s.getCount();
+                Date lastPublishedDate = s.getLastPubTime();
+                String userId = s.getChannelNode().getUserId();
+                String name = s.getChannelNode().getName();
+                // get Summary
+//                MMXChannelSummary mts = new MMXChannelSummary(userId, name, count,
+//                        lastPublishedDate);
+                // get ChannelInfo
+                Node node = MMXChannelManager.getInstance().getChannelNode(channelSummaryRequest.getAppId(),nameToId(name));
+
+                ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null,node);
+                // get Subscribers
+                //ChannelAction.SubscribersRequest subscribersRequest = new ChannelAction.SubscribersRequest(JIDUtil.getUserId(userRequestingSummary),node.getNodeID(), 0, channelSummaryRequest.getNumOfSubcribers());
+                ChannelAction.SubscribersResponse subscribersResponse = MMXChannelManager.getInstance().getSubscribersFromNode(null, channelSummaryRequest.getAppId(), 0, channelSummaryRequest.getNumOfSubcribers(),node);
+
+
+
+                Date sinceDate = null;
+                if(channelSummaryRequest.getMessagesSince()==0) {
+                    Calendar oneyearDeafult = Calendar.getInstance();
+                    oneyearDeafult.add(Calendar.YEAR, -1);
+                    sinceDate = oneyearDeafult.getTime();
+                }else {
+                    sinceDate = new Date(channelSummaryRequest.getMessagesSince());
+                }
+                JID channelOwner = node.getOwners()==null?null:node.getOwners().iterator().next();
+                int messageOffset = 1;
+                List<ChannelResource.MMXPubSubItemChannel2> messages =
+                        this.fetchItemsForChannel(
+                                channelOwner,
+                                channelSummaryRequest.getAppId(),
+                                name,
+                                sinceDate,
+                                new Date(),
+                                channelSummaryRequest.getNumOfMessages(),
+                                messageOffset,
+                                MMXServerConstants.SORT_ORDER_ASC);
+
+                ChannelSummaryResponse channelSummaryResponse = new ChannelSummaryResponse(
+                        userId, name,
+                        count,lastPublishedDate,
+                        subscribersResponse.getTotal(),
+                        subscribersResponse.getSubscribers(),
+                        messages
+                );
+
+                summaryList.add(channelSummaryResponse);
+            }
+
+        }catch (Exception exc) {
+
+        }
+
+        return summaryList;
+
+    }
+
+
+    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,String appId,String channelName,Date since,Date until,int size,int offset,String sortOrder) throws MMXException {
+        MMXChannelManager channelManager = MMXChannelManager.getInstance();
+        MMXChannelId channelId = nameToId(channelName);
+        ChannelAction.FetchOptions opt = new ChannelAction.FetchOptions()
+                .setMaxItems(size)
+                .setOffset(offset)
+                .setAscending(
+                        sortOrder.equalsIgnoreCase(MMXServerConstants.SORT_ORDER_ASC))
+                .setSince(since == null ? null : new DateTime(since).toDate())
+                .setUntil(until == null ? null : new DateTime(until).toDate());
+        ChannelAction.FetchRequest rqt = new ChannelAction.FetchRequest(channelId.getEscUserId(), channelId
+                .getName(),
+                opt);
+        ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+
+        String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
+        List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
+        List<ChannelResource.MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
+
+        return items;
+
+    }
+
 
 
 //    /**
@@ -651,7 +788,7 @@ public class IntegrationChannelResource {
 //            return RestUtils.getUnauthJAXRSResp();
 //        }
 //
-//        JID admin = RestUtils.createJID(tokenInfo);
+ //      JID admin = RestUtils.createJID(tokenInfo);
 //        String domain = admin.getDomain();
 //        String appId = tokenInfo.getMmxAppId();
 //        MMXChannelId channelId = nameToId(channelName);
@@ -834,5 +971,41 @@ public class IntegrationChannelResource {
         return new String(hex);
     }
 
+
+    private List<TopicItemEntity> toTopicItemEntity(String nodeId,
+                                                    List<ChannelAction.MMXPublishedItem> items) {
+        List<TopicItemEntity> list = new ArrayList<TopicItemEntity>(items.size());
+        for (ChannelAction.MMXPublishedItem item : items) {
+            TopicItemEntity itemEntity = new TopicItemEntity();
+            itemEntity.setNodeId(nodeId);
+            itemEntity.setJid(item.getPublisher());
+            itemEntity.setId(item.getItemId());
+            itemEntity.setPayload(item.getPayloadXml());
+            itemEntity.setCreationDate(org.jivesoftware.util.StringUtils.dateToMillis(item.getCreationDate()));
+            itemEntity.setServiceId("pubsub");
+            list.add(itemEntity);
+        }
+        return list;
+    }
+
+    private List<ChannelResource.MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+        Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
+                new Function<TopicItemEntity, MMXPubSubItemChannel>() {
+                    public MMXPubSubItemChannel apply(TopicItemEntity i) {
+                        return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
+                                channelId.getName()),
+                                i.getId(), new JID(i.getJid()), i.getPayload());
+                    }
+
+                    ;
+                };
+
+        List<MMXPubSubItemChannel> items = Lists.transform(entityList, entityToItem);
+        List<ChannelResource.MMXPubSubItemChannel2> items2 = new ArrayList<ChannelResource.MMXPubSubItemChannel2>(items.size());
+        for (MMXPubSubItemChannel item : items) {
+            items2.add(new ChannelResource.MMXPubSubItemChannel2(item));
+        }
+        return items2;
+    }
 
 }

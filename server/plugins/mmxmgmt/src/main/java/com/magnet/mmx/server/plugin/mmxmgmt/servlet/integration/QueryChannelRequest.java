@@ -3,6 +3,10 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 import com.magnet.mmx.protocol.ChannelAction;
 import com.magnet.mmx.server.api.v1.protocol.ChannelCreateInfo;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
 

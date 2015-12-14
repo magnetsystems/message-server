@@ -863,7 +863,7 @@ public class ChannelResource {
         }
     }
 
-    public class MMXPubSubItemChannel2 {
+    public static class MMXPubSubItemChannel2 {
       private String itemId;
       private String channelName;
       private MMXItemPublisher publisher;

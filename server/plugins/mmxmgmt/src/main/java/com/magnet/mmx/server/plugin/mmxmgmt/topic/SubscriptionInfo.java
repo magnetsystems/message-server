@@ -45,6 +45,7 @@ public class SubscriptionInfo {
     SubscriptionInfo info = new SubscriptionInfo();
     info.setUserId(nodeSubscription.getJID().toFullJID());
     info.setTopicId(nodeSubscription.getNode().getNodeID());
+
     return info;
   }
 }
