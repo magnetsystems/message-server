@@ -323,55 +323,70 @@ public class IntegrationChannelResource {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        Map<String,Integer> channelCountMap = new HashMap<String,Integer>(3);
+        Map<String,Integer> channelSubscriptionMap = new HashMap<String,Integer>(3);
         try {
             con = DbConnectionManager.getConnection();
 
-            StringBuffer stringBuffer = new StringBuffer();
+
+            StringBuffer userInClause = new StringBuffer();
             for(String user:queryChannelRequest.getSubscribers()) {
 
                 JID from = RestUtils.createJID(user,
                         queryChannelRequest.getMmxAppId(),
                         queryChannelRequest.getDeviceId());
-                if(stringBuffer.length() == 0) {
-                    stringBuffer.append("'").append(from).append("'");
+                if(userInClause.length() == 0) {
+                    userInClause.append("'").append(from).append("'");
                 }else{
-                    stringBuffer.append(",'").append(from).append("'");
+                    userInClause.append(",'").append(from).append("'");
                 }
             }
 
             String sql = "SELECT nodeID,count(*) FROM ofPubsubSubscription where state = 'subscribed' AND nodeID " +
                     "like '" + "/" + queryChannelRequest.getMmxAppId() + "%' AND " +
-                    "jid in (" + stringBuffer.toString() + ") group by nodeID";
-
+                    "jid in (" + userInClause.toString() + ") group by nodeID";
             pstmt = con.prepareStatement(sql);
             rs = pstmt.executeQuery();
-            Map<String,Integer> channelCountMap = new HashMap<String,Integer>(3);
+
             while (rs.next()) {
                 channelCountMap.put(rs.getString(1),rs.getInt(2));
             }
 
+            StringBuffer channelInClause = new StringBuffer();
+            for(String node:channelCountMap.keySet()) {
+                if(channelInClause.length() == 0) {
+                    channelInClause.append("'").append(node).append("'");
+                }else{
+                    channelInClause.append(",'").append(node).append("'");
+                }
+            }
+
+            String countSql = "SELECT nodeID, count(*) FROM ofPubsubSubscription where state = 'subscribed' AND " +
+                    "nodeID in (" + channelInClause + ") group by nodeID";
+
+            pstmt = con.prepareStatement(countSql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                channelSubscriptionMap.put(rs.getString(1),rs.getInt(2));
+            }
+
             List<String> filteredChannels = new ArrayList<String>(3);
 
-            if(!queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.any_match)) {
+            if(!queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.ANY_MATCH)) {
                 //Populate the subscription count
                 for (String channelName : channelCountMap.keySet()) {
-                    String countSql = "SELECT count(*) FROM ofPubsubSubscription where state = 'subscribed' AND " +
-                            "nodeID = '" + channelName + "'";
 
-                    pstmt = con.prepareStatement(countSql);
-                    rs = pstmt.executeQuery();
-
-                    while (rs.next()) {
-                        int totalSubscriptionCount = rs.getInt(1);
+                        int totalSubscriptionCount = channelSubscriptionMap.get(channelName);
                         int matchingSubscriptionCount = channelCountMap.get(channelName);
-                        if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+                        if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.EXACT_MATCH)) {
 
                             if (matchingSubscriptionCount == totalSubscriptionCount &&
                                     matchingSubscriptionCount == queryChannelRequest.getSubscribers().size()) {
                                 filteredChannels.add(channelName);
                             }
 
-                        } else if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                        } else if (queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.SUBSET_MATCH)) {
                             if (totalSubscriptionCount >= matchingSubscriptionCount &&
                                     matchingSubscriptionCount >= queryChannelRequest.getSubscribers().size()) {
                                 filteredChannels.add(channelName);
@@ -379,7 +394,7 @@ public class IntegrationChannelResource {
                         } else {
                             filteredChannels.add(channelName);
                         }
-                    }
+
                 }
             }else{
 
@@ -458,7 +473,7 @@ public class IntegrationChannelResource {
             List<String> filteredChannels = new ArrayList<String>(3);
             for(String channelName:channelCountMap.keySet()) {
 
-                if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.exact_match)) {
+                if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.EXACT_MATCH)) {
                     if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
                         //Get the subscriber count
                         List<NodeSubscription> subs = channelManager.listSubscriptionsForChannel(channelName);
@@ -470,7 +485,7 @@ public class IntegrationChannelResource {
                             filteredChannels.add(channelName);
                         }
                     }
-                }else if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.subset_match)) {
+                }else if(queryChannelRequest.getMatchFilter().equals(QueryChannelRequest.MatchType.SUBSET_MATCH)) {
                     if (channelCountMap.get(channelName).intValue() == queryChannelRequest.getSubscribers().size()) {
                         filteredChannels.add(channelName);
                     }
