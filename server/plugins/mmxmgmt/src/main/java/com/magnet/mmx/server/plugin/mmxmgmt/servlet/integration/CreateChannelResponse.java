@@ -2,6 +2,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
 
 import com.magnet.mmx.protocol.ChannelAction;
+import com.magnet.mmx.protocol.MMXStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,4 +45,6 @@ public class CreateChannelResponse {
     public void setSubscribeResponse(Map<String, ChannelAction.SubscribeResponse> subscribeResponse) {
         this.subscribeResponse = subscribeResponse;
     }
+
+
 }

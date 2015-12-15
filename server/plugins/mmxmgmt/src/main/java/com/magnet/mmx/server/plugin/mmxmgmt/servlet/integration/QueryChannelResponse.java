@@ -1,5 +1,9 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 
+
+
+import com.magnet.mmx.protocol.ChannelInfo;
+
 import java.util.List;
 
 
@@ -7,7 +11,7 @@ public class QueryChannelResponse {
 
     private int code;
     private String message;
-    private List<String> channels;
+    private List<ChannelInfo> channels;
 
     public QueryChannelResponse(){
         this.code = 200;
@@ -36,11 +40,11 @@ public class QueryChannelResponse {
         return this;
     }
 
-    public List<String> getChannels() {
+    public List<ChannelInfo> getChannels() {
         return channels;
     }
 
-    public QueryChannelResponse setChannels(List<String> channels) {
+    public QueryChannelResponse setChannels(List<ChannelInfo> channels) {
         this.channels = channels;
         return this;
     }
