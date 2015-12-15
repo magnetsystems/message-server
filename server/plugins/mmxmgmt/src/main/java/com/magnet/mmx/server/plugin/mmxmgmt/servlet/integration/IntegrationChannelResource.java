@@ -25,6 +25,7 @@ import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
@@ -777,7 +778,7 @@ public class IntegrationChannelResource {
 
         String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
         List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-        List<ChannelResource.MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
+        List<ChannelResource.MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities,appId);
 
         return items;
 
@@ -1007,7 +1008,7 @@ public class IntegrationChannelResource {
         return list;
     }
 
-    private List<ChannelResource.MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+    private List<ChannelResource.MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList, String appId) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
@@ -1022,9 +1023,10 @@ public class IntegrationChannelResource {
         List<MMXPubSubItemChannel> items = Lists.transform(entityList, entityToItem);
         List<ChannelResource.MMXPubSubItemChannel2> items2 = new ArrayList<ChannelResource.MMXPubSubItemChannel2>(items.size());
         for (MMXPubSubItemChannel item : items) {
-            items2.add(new ChannelResource.MMXPubSubItemChannel2(item));
+            items2.add(new ChannelResource.MMXPubSubItemChannel2Ext(item,appId));
         }
         return items2;
     }
+
 
 }
