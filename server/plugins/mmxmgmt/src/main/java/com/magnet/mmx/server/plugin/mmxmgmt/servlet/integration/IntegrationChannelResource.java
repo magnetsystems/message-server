@@ -216,6 +216,34 @@ public class IntegrationChannelResource {
         try {
             com.magnet.mmx.protocol.ChannelInfo info = channelManager.getChannel(from,
                     channelInfo.getMmxAppId(), tid);
+
+            if(info.isUserChannel()) {
+                if (!JIDUtil.getReadableUserId(info.getCreator()).equals(channelInfo.getUserId())) {
+                    errorResponse = new ErrorResponse(ErrorCode.TOPIC_NOT_OWNER,
+                            "Channel doesn't belong to this user: " + channelInfo.getChannelName());
+                    return RestUtils.getJAXRSResp(Response.Status.OK, errorResponse);
+                }
+            }else{
+                //Validate the subscriber
+                String channelId = ChannelHelper.makeChannel(channelInfo.getMmxAppId(), info.getEscUserId(),
+                        info.getName());
+                List<NodeSubscription> subscriptions = channelManager
+                        .listSubscriptionsForChannel(channelId);
+
+                boolean isSubscribedUser = false;
+                for(NodeSubscription subscription:subscriptions) {
+                    if(subscription.getJID().equals(from)) {
+                        isSubscribedUser = true;
+                    }
+                }
+                if (!isSubscribedUser) {
+                    errorResponse = new ErrorResponse(ErrorCode.TOPIC_NOT_SUBSCRIBED,
+                            "User doesn't subscribed to this channel: " + channelInfo.getChannelName());
+                    return RestUtils.getJAXRSResp(Response.Status.OK, errorResponse);
+                }
+
+            }
+
         } catch (MMXException e) {
             ErrorResponse response;
             if (e.getCode() == StatusCode.NOT_FOUND) {
@@ -340,21 +368,25 @@ public class IntegrationChannelResource {
             MMXStatus resp = null;
             if(channelInfo.getSubscribers() != null) {
                 for (String subscriber : channelInfo.getSubscribers()) {
-                    JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
-                            from.getDomain(), null);
-                    resp = channelManager.unsubscribeChannel(sub, channelInfo.getMmxAppId(), rqt);
+                    try {
+                        JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
+                                from.getDomain(), null);
+                        resp = channelManager.unsubscribeChannel(sub, channelInfo.getMmxAppId(), rqt);
 
-                    if(resp.getCode() == 200) {
-                        subResponseMap.put(subscriber,new ChannelAction.SubscribeResponse(null,0,resp.getMessage()));
-                    }else{
-                        subResponseMap.put(subscriber,new ChannelAction.SubscribeResponse(null,resp.getCode(),resp.getMessage()));
+                        if (resp.getCode() == 200) {
+                            subResponseMap.put(subscriber, new ChannelAction.SubscribeResponse(null, 0, resp.getMessage()));
+                        } else {
+                            subResponseMap.put(subscriber, new ChannelAction.SubscribeResponse(null, resp.getCode(), resp.getMessage()));
 
+                        }
+                    }catch(Exception ex) {
+                        subResponseMap.put(subscriber, new ChannelAction.SubscribeResponse(null, ErrorCode.UNKNOWN_ERROR.getCode(), ex.getMessage()));
                     }
 
                 }
             }
 
-        } catch (MMXException e) {
+        } catch (Exception e) {
             LOGGER.error("Exception during addSubscribersToChannel request", e);
             chatChannelResponse = new CreateChannelResponse(ErrorCode.UNKNOWN_ERROR.getCode(),
                     e.getMessage());
