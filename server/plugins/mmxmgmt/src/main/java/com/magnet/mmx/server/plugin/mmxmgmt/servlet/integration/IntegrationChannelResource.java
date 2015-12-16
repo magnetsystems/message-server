@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.magnet.mmx.protocol.*;
 import com.magnet.mmx.protocol.ChannelInfo;
+import com.magnet.mmx.sasl.TokenInfo;
 import com.magnet.mmx.server.api.v1.RestUtils;
 import com.magnet.mmx.server.api.v1.protocol.*;
 import com.magnet.mmx.server.api.v2.ChannelResource;
@@ -210,6 +211,23 @@ public class IntegrationChannelResource {
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
+        MMXChannelId tid = nameToId(channelInfo.getChannelName());
+
+        try {
+            com.magnet.mmx.protocol.ChannelInfo info = channelManager.getChannel(from,
+                    channelInfo.getMmxAppId(), tid);
+        } catch (MMXException e) {
+            ErrorResponse response;
+            if (e.getCode() == StatusCode.NOT_FOUND) {
+                response = new ErrorResponse(ErrorCode.TOPIC_NOT_EXIST.getCode(),
+                        "Channel not found: " + channelInfo.getChannelName());
+                return RestUtils.getJAXRSResp(Response.Status.OK, response);
+            } else {
+                response = new ErrorResponse(ErrorCode.UNKNOWN_ERROR.getCode(), e
+                        .getMessage());
+                return RestUtils.getInternalErrorJAXRSResp(response);
+            }
+        }
 
         // auto subscribe recipients to this channel
         Map<String,ChannelAction.SubscribeResponse> subResponseMap =  new HashMap<String,ChannelAction.SubscribeResponse>();
@@ -222,8 +240,7 @@ public class IntegrationChannelResource {
             }else{
                 channelId = new MMXChannelId(channelInfo.getChannelName());
             }
-            //ChannelInfo foundChannel =  channelManager.getChannel(channelInfo.getMmxAppId(),channelId );
-            //errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Send Message to Chat Success");
+
 
             ChannelAction.SubscribeRequest rqt = new ChannelAction.SubscribeRequest(
                     channelId.getEscUserId(), channelId.getName(), null);
@@ -274,8 +291,35 @@ public class IntegrationChannelResource {
         ErrorResponse errorResponse = null;
         CreateChannelResponse chatChannelResponse = null;
 
+        JID from = RestUtils.createJID(channelInfo.getUserId(),
+                channelInfo.getMmxAppId(),
+                channelInfo.getDeviceId());
+
+        MMXChannelId tid = nameToId(channelInfo.getChannelName());
+
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
-        JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
+        try {
+            com.magnet.mmx.protocol.ChannelInfo info = channelManager.getChannel(from,
+                    channelInfo.getMmxAppId(), tid);
+
+            if(!JIDUtil.getReadableUserId(info.getCreator()).equals(channelInfo.getUserId())) {
+                errorResponse = new ErrorResponse(ErrorCode.TOPIC_NOT_OWNER,
+                        "Channel doesn't belong to this user: " + channelInfo.getChannelName());
+                return RestUtils.getJAXRSResp(Response.Status.OK, errorResponse);
+            }
+
+        } catch (MMXException e) {
+            ErrorResponse response;
+            if (e.getCode() == StatusCode.NOT_FOUND) {
+                response = new ErrorResponse(ErrorCode.TOPIC_NOT_EXIST.getCode(),
+                        "Channel not found: " + channelInfo.getChannelName());
+                return RestUtils.getJAXRSResp(Response.Status.OK, response);
+            } else {
+                response = new ErrorResponse(ErrorCode.UNKNOWN_ERROR.getCode(), e
+                        .getMessage());
+                return RestUtils.getInternalErrorJAXRSResp(response);
+            }
+        }
 
         // auto subscribe recipients to this channel
         Map<String,ChannelAction.SubscribeResponse> subResponseMap =  new HashMap<String,ChannelAction.SubscribeResponse>();
