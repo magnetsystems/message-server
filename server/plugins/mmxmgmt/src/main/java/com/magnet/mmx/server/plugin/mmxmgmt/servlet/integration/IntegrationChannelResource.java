@@ -31,6 +31,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
@@ -282,6 +283,12 @@ public class IntegrationChannelResource {
             ChannelAction.SubscribeResponse resp = null;
             if(channelInfo.getSubscribers() != null) {
                 for (String subscriber : channelInfo.getSubscribers()) {
+
+                    //Validate the user
+                    if(!isValidUser(channelInfo.getMmxAppId(),subscriber)) {
+                        subResponseMap.put(subscriber,new ChannelAction.SubscribeResponse(null,ErrorCode.INVALID_USER_NAME.getCode(),"Invalid User"));
+                        continue;
+                    }
                     JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
                             from.getDomain(), null);
                     resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
@@ -313,6 +320,16 @@ public class IntegrationChannelResource {
         return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
 
 
+    }
+
+    private boolean isValidUser(String appId, String subscriber) {
+        String mmxUsername = Helper.getMMXUsername(subscriber, appId);
+        UserEntity userEntity = userDAO.getUser(mmxUsername);
+        if(userEntity == null) {
+            return false;
+        }else {
+            return true;
+        }
     }
 
 
@@ -381,6 +398,13 @@ public class IntegrationChannelResource {
             if(channelInfo.getSubscribers() != null) {
                 for (String subscriber : channelInfo.getSubscribers()) {
                     try {
+
+                        //Validate the user
+                        if(!isValidUser(channelInfo.getMmxAppId(),subscriber)) {
+                            subResponseMap.put(subscriber,new ChannelAction.SubscribeResponse(null,ErrorCode.INVALID_USER_NAME.getCode(),"Invalid User"));
+                            continue;
+                        }
+
                         JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
                                 from.getDomain(), null);
                         resp = channelManager.unsubscribeChannel(sub, channelInfo.getMmxAppId(), rqt);
