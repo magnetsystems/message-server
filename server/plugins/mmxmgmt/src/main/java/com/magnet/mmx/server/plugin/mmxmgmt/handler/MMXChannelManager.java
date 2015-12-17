@@ -736,6 +736,18 @@ public class MMXChannelManager {
 //    }
     return nodeToInfo(channel.getUserId(), channel.getName(), node);
   }
+
+  public Node getChannelNode(String appId, MMXChannelId channel)
+          throws MMXException {
+    String realChannel = ChannelHelper.makeChannel(appId, channel.getEscUserId(),
+            ChannelHelper.normalizePath(channel.getName()));
+    Node node = mPubSubModule.getNode(realChannel);
+    if (node == null) {
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel.getName()),
+              StatusCode.CHANNEL_NOT_FOUND.getCode());
+    }
+    return node;
+  }
   
   public List<ChannelInfo> getChannels(JID from, String appId, List<MMXChannelId> channels)
                             throws MMXException {
@@ -949,7 +961,8 @@ public class MMXChannelManager {
     int limit = (maxLimit == null || maxLimit == -1) ? Integer.MAX_VALUE : maxLimit;
     String realChannel;
     if (start == null || start.isEmpty()) {
-      // Get the global root node.
+      // Get the g
+      // lobal root node.
       Node node = mPubSubModule.getNode(appId);
       if (node == null) {
         throw new MMXException(StatusCode.APP_NODE_NOT_FOUND.getMessage(appId),
@@ -986,7 +999,11 @@ public class MMXChannelManager {
     }
     return resp;
   }
-  
+
+  public ChannelInfo nodeToChannelInfo(String userId,Node node){
+    return nodeToInfo(userId,node.getName(),node);
+  }
+
   private ChannelInfo nodeToInfo(String userId, String channel, Node node) {
     ChannelInfo info = new ChannelInfo(
         userId, node.getName() != null ? node.getName() : channel, node.isCollectionNode())
@@ -1588,7 +1605,7 @@ public class MMXChannelManager {
     Node node = subNode.getNode();
     Message notification = new Message();
     Element event = notification.getElement().addElement("event",
-        "http://jabber.org/protocol/pubsub#event");
+            "http://jabber.org/protocol/pubsub#event");
     Element items = event.addElement("items");
     items.addAttribute("node", node.getNodeID());
     for (PublishedItem publishedItem : publishedItems) {
@@ -1610,7 +1627,7 @@ public class MMXChannelManager {
         .getElement()
         .addElement("delay", "urn:xmpp:delay")
         .addAttribute("stamp",
-            XMPPDateTimeFormat.format(pubItem.getCreationDate()));
+                XMPPDateTimeFormat.format(pubItem.getCreationDate()));
     // Send the event notification to the subscriber
     node.getService().sendNotification(node, notification, to);
     // node.getService().sendNotification(node, notification, subNode.getJID());
@@ -1873,6 +1890,56 @@ public class MMXChannelManager {
       .setTotal(count).setSubscribers(userInfoList);
     resp.setCode(StatusCode.SUCCESS.getCode())
       .setMessage(StatusCode.SUCCESS.getMessage());
+    return resp;
+  }
+
+
+  public ChannelAction.SubscribersResponse getSubscribersFromNode(JID from,
+                                                                  String appId,
+                                                                  int offset,
+                                                                  int size,
+                                                          Node node) throws MMXException {
+    Collection<NodeSubscription> allSubscriptions = node.getAllSubscriptions();
+    /**
+     * all subscriptions has all subscriptions in all possible states. We need
+     * cull out subscriptions in state == subscribed.
+     */
+    int count = 0;
+    TreeSet<String> subscriberUserNameSet = new TreeSet<String>();
+    for (NodeSubscription ns : allSubscriptions) {
+      if ((ns.getState() != null) && (ns.getState() == NodeSubscription.State.subscribed)) {
+        JID subscriberJID = ns.getJID();
+        String subscriberJIDNode = subscriberJID.getNode();
+        String username = subscriberJIDNode;
+        subscriberUserNameSet.add(username);
+        count++;
+      }
+    }
+    List<com.magnet.mmx.protocol.UserInfo> userInfoList = new LinkedList<com.magnet.mmx.protocol.UserInfo>();
+    if(count > offset) {
+      UserDAO userDAO = new UserDAOImpl(getConnectionProvider());
+      int addedCount = 0; //for applying the limit
+      int index = 0;
+      for (String username : subscriberUserNameSet) {
+        if(index++ < offset) {
+          continue;
+        }
+
+        if (size > 0 && addedCount >= size) {
+          break;
+        }
+        //TODO: Improve this
+        UserEntity userEntity = userDAO.getUser(username);
+        com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+        userInfoList.add(userInfo);
+        addedCount++;
+      }
+    }
+
+    ChannelAction.SubscribersResponse resp = new ChannelAction.SubscribersResponse()
+            .setTotal(count).setSubscribers(userInfoList);
+    resp.setCode(StatusCode.SUCCESS.getCode())
+            .setMessage(StatusCode.SUCCESS.getMessage());
     return resp;
   }
 

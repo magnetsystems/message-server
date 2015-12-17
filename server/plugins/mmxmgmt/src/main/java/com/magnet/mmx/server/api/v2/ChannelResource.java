@@ -31,9 +31,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
@@ -54,6 +52,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import javax.ws.rs.*;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -74,6 +73,7 @@ public class ChannelResource {
     static final String CHANNEL_NAME = "channelName";
     private static final String DEFAULT_MAX_ITEMS = "200";
     private final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
+
 
     public static class AddTagRequest {
         private boolean personal;
@@ -863,7 +863,7 @@ public class ChannelResource {
         }
     }
 
-    public class MMXPubSubItemChannel2 {
+    public static class MMXPubSubItemChannel2 {
       private String itemId;
       private String channelName;
       private MMXItemPublisher publisher;
@@ -1171,4 +1171,25 @@ public class ChannelResource {
             return userId + ChannelHelper.CHANNEL_SEPARATOR + channelName;
         }
     }
+
+    public static class MMXPubSubItemChannel2Ext extends MMXPubSubItemChannel2 {
+        private UserEntity publisherInfo;
+        UserDAO userDAO = new UserDAOImpl( new OpenFireDBConnectionProvider());
+        public MMXPubSubItemChannel2Ext(MMXPubSubItemChannel item, String appId) {
+            super(item);
+            publisherInfo = userDAO.getUser(item.getPublisher().getUserId() + "%" + appId);
+        }
+
+        public UserEntity getPublisherInfo() {
+            return publisherInfo;
+        }
+
+        public MMXPubSubItemChannel2Ext setPublisherInfo(UserEntity publisherInfo) {
+            this.publisherInfo = publisherInfo;
+            return this;
+        }
+    }
+
+
+
 }
