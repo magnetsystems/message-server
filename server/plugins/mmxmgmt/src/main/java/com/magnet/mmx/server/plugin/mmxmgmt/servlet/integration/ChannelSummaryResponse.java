@@ -73,4 +73,12 @@ public class ChannelSummaryResponse extends MMXChannelSummary{
         this.subscribers = subscribers;
     }
 
+    public UserInfo getOwner() {
+        return owner;
+    }
+
+    public ChannelSummaryResponse setOwner(UserInfo owner) {
+        this.owner = owner;
+        return this;
+    }
 }
