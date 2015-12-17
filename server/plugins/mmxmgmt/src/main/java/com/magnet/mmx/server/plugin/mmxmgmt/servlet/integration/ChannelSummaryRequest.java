@@ -3,12 +3,14 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.query.DateRange;
 
 import java.util.List;
+import java.util.Map;
 
 public class ChannelSummaryRequest {
 
     private String deviceId;
 
-    private List<String> channelIds;
+    //private List<String> channelIds;
+    private Map<String,Boolean> channelIds;
 
     private int numOfSubcribers;
 
@@ -22,11 +24,11 @@ public class ChannelSummaryRequest {
 
     private String appId;
 
-    public List<String> getChannelIds() {
+    public Map<String,Boolean> getChannelIds() {
         return channelIds;
     }
 
-    public void setChannelIds(List<String> channelIds) {
+    public void setChannelIds(Map<String,Boolean> channelIds) {
         this.channelIds = channelIds;
     }
 

@@ -330,7 +330,12 @@ public class IntegrationChannelResource {
                 channelInfo.getMmxAppId(),
                 channelInfo.getDeviceId());
 
-        MMXChannelId tid = nameToId(channelInfo.getChannelName());
+        MMXChannelId tid = null;
+        if(channelInfo.isPrivateChannel()){
+            tid = new MMXChannelId(channelInfo.getUserId(),channelInfo.getChannelName());
+        }else{
+            tid = new MMXChannelId(channelInfo.getChannelName());
+        }
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         try {
@@ -508,8 +513,8 @@ public class IntegrationChannelResource {
                 //convert from nodeId to name
                 StringBuffer nodeIds = new StringBuffer();
                 for(String nodeId:filteredChannels) {
-                    String channelName = nodeId.substring(nodeId.lastIndexOf("/") + 1);
-                    Node node = MMXChannelManager.getInstance().getChannelNode(queryChannelRequest.getMmxAppId(),nameToId(channelName));
+                    MMXChannelId channelId = getChannelName(queryChannelRequest.getUserId(), nodeId);
+                    Node node = MMXChannelManager.getInstance().getChannelNode(queryChannelRequest.getMmxAppId(),channelId);
                     ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null,node);
                     channels.add(channelInfo);
                 }
@@ -529,7 +534,20 @@ public class IntegrationChannelResource {
     }
 
 
-
+    private MMXChannelId getChannelName(String userId,String node){
+        String channelName = null;
+        MMXChannelId channelId;
+        if(node.indexOf(userId) > 0) {
+            //private channel
+            //channelName = node.substring(node.lastIndexOf(userId));
+            channelName = node.substring(node.lastIndexOf("/") + 1);
+            channelId = new MMXChannelId(userId,channelName);
+        }else {
+            channelName = node.substring(node.lastIndexOf("/") + 1);
+            channelId = new MMXChannelId(channelName);
+        }
+        return channelId;
+    }
 //    @POST
 //    @Produces(MediaType.APPLICATION_JSON)
 //    @Consumes(MediaType.APPLICATION_JSON)
@@ -777,8 +795,16 @@ public class IntegrationChannelResource {
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
             List<MMXChannelId> channelIds = new ArrayList<MMXChannelId>();
-            for(String channelName:channelSummaryRequest.getChannelIds()) {
-                channelIds.add(nameToId(channelName));
+            for(String channelName:channelSummaryRequest.getChannelIds().keySet()) {
+
+
+                if(channelSummaryRequest.getChannelIds().get(channelName)){
+                    channelIds.add(new MMXChannelId(channelSummaryRequest.getRequestingUserId(),channelName));
+                }else{
+                    channelIds.add(new MMXChannelId(channelName));
+                }
+
+                //channelIds.add(nameToId(channelName));
             }
 
             ChannelAction.SummaryRequest rqt = new ChannelAction.SummaryRequest(channelIds);
@@ -789,13 +815,21 @@ public class IntegrationChannelResource {
                 Date lastPublishedDate = s.getLastPubTime();
                 String userId = s.getChannelNode().getUserId();
                 String name = s.getChannelNode().getName();
+
+
                 // get Summary
 //                MMXChannelSummary mts = new MMXChannelSummary(userId, name, count,
 //                        lastPublishedDate);
                 // get ChannelInfo
-                Node node = MMXChannelManager.getInstance().getChannelNode(channelSummaryRequest.getAppId(),nameToId(name));
+                MMXChannelId channelId;
+                if(s.getChannelNode().isUserChannel()) {
+                    channelId = new MMXChannelId(userId,name);
+                }else{
+                    channelId = new MMXChannelId(name);
+                }
+                Node node = MMXChannelManager.getInstance().getChannelNode(channelSummaryRequest.getAppId(),channelId);
 
-                ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null,node);
+                ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(userId,node);
                 // get Subscribers
                 //ChannelAction.SubscribersRequest subscribersRequest = new ChannelAction.SubscribersRequest(JIDUtil.getUserId(userRequestingSummary),node.getNodeID(), 0, channelSummaryRequest.getNumOfSubcribers());
                 ChannelAction.SubscribersResponse subscribersResponse = MMXChannelManager.getInstance().getSubscribersFromNode(null, channelSummaryRequest.getAppId(), 0, channelSummaryRequest.getNumOfSubcribers(),node);
@@ -817,7 +851,7 @@ public class IntegrationChannelResource {
                         this.fetchItemsForChannel(
                                 channelOwner,
                                 channelSummaryRequest.getAppId(),
-                                name,
+                                channelId,
                                 sinceDate,
                                 new Date(),
                                 channelSummaryRequest.getNumOfMessages(),
@@ -848,9 +882,16 @@ public class IntegrationChannelResource {
     }
 
 
-    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,String appId,String channelName,Date since,Date until,int size,int offset,String sortOrder) throws MMXException {
+    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,
+                                                                             String appId,
+                                                                             MMXChannelId channelId,
+                                                                             Date since,
+                                                                             Date until,
+                                                                             int size,
+                                                                             int offset,
+                                                                             String sortOrder) throws MMXException {
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
-        MMXChannelId channelId = nameToId(channelName);
+
         ChannelAction.FetchOptions opt = new ChannelAction.FetchOptions()
                 .setMaxItems(size)
                 .setOffset(offset)
