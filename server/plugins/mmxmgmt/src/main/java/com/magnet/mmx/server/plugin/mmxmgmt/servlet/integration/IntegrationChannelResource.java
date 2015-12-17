@@ -25,8 +25,7 @@ import com.magnet.mmx.server.api.v1.protocol.*;
 import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.*;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
@@ -70,6 +69,8 @@ public class IntegrationChannelResource {
     static final String MMX_INTERNAL_SALT = "Z00N13!!";
     private static  char[] hexArray = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
     private static int HASH_MIN_KEY_SIZE = 8;
+    UserDAO userDAO = new UserDAOImpl( new OpenFireDBConnectionProvider());
+
 
 
     @POST
@@ -211,7 +212,13 @@ public class IntegrationChannelResource {
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         JID from = RestUtils.createJID(channelInfo.getUserId(), channelInfo.getMmxAppId(), channelInfo.getDeviceId());
-        MMXChannelId tid = nameToId(channelInfo.getChannelName());
+
+        MMXChannelId tid = null;
+        if(channelInfo.isPrivateChannel()){
+            tid = new MMXChannelId(channelInfo.getUserId(),channelInfo.getChannelName());
+        }else{
+            tid = new MMXChannelId(channelInfo.getChannelName());
+        }
 
         try {
             com.magnet.mmx.protocol.ChannelInfo info = channelManager.getChannel(from,
@@ -803,6 +810,7 @@ public class IntegrationChannelResource {
                 }else {
                     sinceDate = new Date(channelSummaryRequest.getMessagesSince());
                 }
+
                 JID channelOwner = node.getOwners()==null?null:node.getOwners().iterator().next();
                 int messageOffset = 1;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
@@ -816,8 +824,11 @@ public class IntegrationChannelResource {
                                 messageOffset,
                                 MMXServerConstants.SORT_ORDER_ASC);
 
+                UserEntity ownerInfo = userDAO.getUser(channelOwner.getNode());
+
                 ChannelSummaryResponse channelSummaryResponse = new ChannelSummaryResponse(
                         userId, name,
+                        ownerInfo,
                         count,lastPublishedDate,
                         subscribersResponse.getTotal(),
                         subscribersResponse.getSubscribers(),

@@ -4,6 +4,7 @@ import com.google.gson.annotations.SerializedName;
 import com.magnet.mmx.protocol.*;
 import com.magnet.mmx.server.api.v2.ChannelResource;
 import com.magnet.mmx.server.api.v2.MessageResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXChannelSummary;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.PubSubItemResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
@@ -26,11 +27,12 @@ public class ChannelSummaryResponse extends MMXChannelSummary{
 
     private  int subscriberCount =0;
     private List<UserInfo> subscribers;
+    private UserInfo owner;
     private List<ChannelResource.MMXPubSubItemChannel2> messages;
 
 
 
-    public ChannelSummaryResponse(String userId, String channelName,
+    public ChannelSummaryResponse(String userId, String channelName,UserEntity owner,
                                   int publishedItemCount,
                                   Date lastPublishedItem,
                                   int subscriberCount,
@@ -40,6 +42,11 @@ public class ChannelSummaryResponse extends MMXChannelSummary{
         this.subscriberCount = subscriberCount;
         this.subscribers = subscribers;
         this.messages = messages;
+        this.owner = new UserInfo();
+        if(owner != null) {
+            this.owner.setUserId(owner.getUsername());
+            this.owner.setDisplayName(owner.getName());
+        }
     }
 
     public List<ChannelResource.MMXPubSubItemChannel2> getMessages() {
