@@ -795,13 +795,13 @@ public class IntegrationChannelResource {
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
             List<MMXChannelId> channelIds = new ArrayList<MMXChannelId>();
-            for(String channelName:channelSummaryRequest.getChannelIds().keySet()) {
+            for(ChannelLookupKey channelLookupKey:channelSummaryRequest.getChannelIds()) {
 
 
-                if(channelSummaryRequest.getChannelIds().get(channelName)){
-                    channelIds.add(new MMXChannelId(channelSummaryRequest.getRequestingUserId(),channelName));
+                if(channelLookupKey.isPrivateChannel()){
+                    channelIds.add(new MMXChannelId(channelSummaryRequest.getRequestingUserId(),channelLookupKey.getChannelName()));
                 }else{
-                    channelIds.add(new MMXChannelId(channelName));
+                    channelIds.add(new MMXChannelId(channelLookupKey.getChannelName()));
                 }
 
                 //channelIds.add(nameToId(channelName));

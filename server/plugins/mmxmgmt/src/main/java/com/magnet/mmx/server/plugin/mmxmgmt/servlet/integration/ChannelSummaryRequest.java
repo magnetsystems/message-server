@@ -10,7 +10,7 @@ public class ChannelSummaryRequest {
     private String deviceId;
 
     //private List<String> channelIds;
-    private Map<String,Boolean> channelIds;
+    private List<ChannelLookupKey> channelIds;
 
     private int numOfSubcribers;
 
@@ -23,14 +23,6 @@ public class ChannelSummaryRequest {
     private String requestingUserId;
 
     private String appId;
-
-    public Map<String,Boolean> getChannelIds() {
-        return channelIds;
-    }
-
-    public void setChannelIds(Map<String,Boolean> channelIds) {
-        this.channelIds = channelIds;
-    }
 
     public boolean isIncludeOwnerInfo() {
         return includeOwnerInfo;
@@ -86,5 +78,14 @@ public class ChannelSummaryRequest {
 
     public void setMessagesSince(long messagesSince) {
         this.messagesSince = messagesSince;
+    }
+
+    public List<ChannelLookupKey> getChannelIds() {
+        return channelIds;
+    }
+
+    public ChannelSummaryRequest setChannelIds(List<ChannelLookupKey> channelIds) {
+        this.channelIds = channelIds;
+        return this;
     }
 }
