@@ -539,7 +539,13 @@ public class IntegrationChannelResource {
                 for(String nodeId:filteredChannels) {
                     MMXChannelId channelId = getChannelName(queryChannelRequest.getUserId(), nodeId);
                     Node node = MMXChannelManager.getInstance().getChannelNode(queryChannelRequest.getMmxAppId(),channelId);
-                    ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(JIDUtil.getUserId(node.getCreator()),node);
+                    ChannelInfo channelInfo = null;
+                    MMXChannelId tid = ChannelHelper.parseNode(node.getNodeID());
+                    if(tid.isUserChannel()) {
+                        channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(JIDUtil.getUserId(node.getCreator()), node);
+                    }else{
+                        channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null, node);
+                    }
                     channels.add(channelInfo);
                 }
             }
