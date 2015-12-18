@@ -39,7 +39,7 @@ CREATE TABLE ofPrivate (
 );
 
 CREATE TABLE ofOffline (
-  username              VARCHAR(200)     NOT NULL,
+  username              VARCHAR(150)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE ofVersion (
 );
 
 CREATE TABLE ofExtComponentConf (
-  subdomain             VARCHAR(255)    NOT NULL,
+  subdomain             VARCHAR(191)    NOT NULL,
   wildcard              TINYINT         NOT NULL,
   secret                VARCHAR(255),
   permission            VARCHAR(10)     NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE ofExtComponentConf (
 );
 
 CREATE TABLE ofRemoteServerConf (
-  xmppDomain            VARCHAR(255)    NOT NULL,
+  xmppDomain            VARCHAR(191)    NOT NULL,
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
   PRIMARY KEY (xmppDomain)
@@ -148,7 +148,7 @@ CREATE TABLE ofPrivacyList (
 CREATE TABLE ofSASLAuthorized (
   username            VARCHAR(64)   NOT NULL,
   principal           TEXT          NOT NULL,
-  PRIMARY KEY (username, principal(200))
+  PRIMARY KEY (username, principal(127))
 );
 
 CREATE TABLE ofSecurityAuditLog (
@@ -167,7 +167,7 @@ CREATE TABLE ofSecurityAuditLog (
 
 CREATE TABLE ofMucService (
   serviceID           BIGINT        NOT NULL,
-  subdomain           VARCHAR(255)  NOT NULL,
+  subdomain           VARCHAR(191)  NOT NULL,
   description         VARCHAR(255),
   isHidden            TINYINT       NOT NULL,
   PRIMARY KEY (subdomain),
@@ -249,7 +249,7 @@ CREATE TABLE ofMucConversationLog (
 # PubSub Tables
 
 CREATE TABLE ofPubsubNode (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   leaf                TINYINT       NOT NULL,
   creationDate        CHAR(15)      NOT NULL,
@@ -282,7 +282,7 @@ CREATE TABLE ofPubsubNode (
 );
 
 CREATE TABLE ofPubsubNodeJIDs (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255)  NOT NULL,
   associationType     VARCHAR(20)   NOT NULL,
@@ -290,14 +290,14 @@ CREATE TABLE ofPubsubNodeJIDs (
 );
 
 CREATE TABLE ofPubsubNodeGroups (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   rosterGroup         VARCHAR(100)   NOT NULL,
   INDEX ofPubsubNodeGroups_idx (serviceID, nodeID)
 );
 
 CREATE TABLE ofPubsubAffiliation (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255) NOT NULL,
   affiliation         VARCHAR(10)   NOT NULL,
@@ -305,7 +305,7 @@ CREATE TABLE ofPubsubAffiliation (
 );
 
 CREATE TABLE ofPubsubItem (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255)  NOT NULL,
@@ -315,7 +315,7 @@ CREATE TABLE ofPubsubItem (
 );
 
 CREATE TABLE ofPubsubSubscription (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(255) NOT NULL,
@@ -334,7 +334,7 @@ CREATE TABLE ofPubsubSubscription (
 );
 
 CREATE TABLE ofPubsubDefaultConf (
-  serviceID           VARCHAR(100)  NOT NULL,
+  serviceID           VARCHAR(75)  NOT NULL,
   leaf                TINYINT       NOT NULL,
   deliverPayloads     TINYINT       NOT NULL,
   maxPayloadSize      INTEGER       NOT NULL,
@@ -362,7 +362,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 21);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 25);
 
 # Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
@@ -381,10 +381,18 @@ insert into ofProperty values('xmpp.client.idle', '-1');
 
 insert into ofProperty values('xmpp.client.idle.ping', 'false');
 
-insert into ofProperty values('xmpp.proxy.enabled', 'false');
+insert into ofProperty values('xmpp.pubsub.flush.max', '0');
 
 insert into ofProperty values('xmpp.auth.anonymous', 'false');
 
-insert into ofProperty values('route.all-resources', 'true');
+insert into ofProperty values('register.inband', 'false');
 
-insert into ofProperty values('xmpp.pubsub.flush.max', '0');
+insert into ofProperty values('xmpp.server.socket.active', 'false');
+
+INSERT INTO ofProperty VALUES ('flash.crossdomain.enabled', 'false');
+
+INSERT INTO ofProperty VALUES('xmpp.proxy.enabled', 'false');
+
+INSERT INTO ofProperty VALUES ('xmpp.proxy.port', 7778);
+
+insert into ofProperty values('route.all-resources', 'true');
