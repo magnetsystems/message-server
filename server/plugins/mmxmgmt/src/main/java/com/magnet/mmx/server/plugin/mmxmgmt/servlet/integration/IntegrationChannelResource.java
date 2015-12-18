@@ -34,6 +34,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
@@ -537,12 +538,13 @@ public class IntegrationChannelResource {
                 //convert from nodeId to name
                 StringBuffer nodeIds = new StringBuffer();
                 for(String nodeId:filteredChannels) {
-                    MMXChannelId channelId = getChannelName(queryChannelRequest.getUserId(), nodeId);
+                    AppChannel appChannel = ChannelHelper.parseChannel(nodeId);
+                    MMXChannelId channelId = getChannelName(appChannel);
                     Node node = MMXChannelManager.getInstance().getChannelNode(queryChannelRequest.getMmxAppId(),channelId);
                     ChannelInfo channelInfo = null;
-                    MMXChannelId tid = ChannelHelper.parseNode(node.getNodeID());
-                    if(tid.isUserChannel()) {
-                        channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(JIDUtil.getUserId(node.getCreator()), node);
+                    //MMXChannelId tid = ChannelHelper.parseNode(node.getNodeID());
+                    if(appChannel.isUserChannel()) {
+                        channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(appChannel.getUserId(), node);
                     }else{
                         channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null, node);
                     }
@@ -564,17 +566,12 @@ public class IntegrationChannelResource {
     }
 
 
-    private MMXChannelId getChannelName(String userId,String node){
-        String channelName = null;
+    private MMXChannelId getChannelName(AppChannel appChannel){
         MMXChannelId channelId;
-        if(node.indexOf(userId) > 0) {
-            //private channel
-            //channelName = node.substring(node.lastIndexOf(userId));
-            channelName = node.substring(node.lastIndexOf("/") + 1);
-            channelId = new MMXChannelId(userId,channelName);
+        if(appChannel.isUserChannel()) {
+            channelId = new MMXChannelId(appChannel.getUserId(),appChannel.getName());
         }else {
-            channelName = node.substring(node.lastIndexOf("/") + 1);
-            channelId = new MMXChannelId(channelName);
+            channelId = new MMXChannelId(appChannel.getName());
         }
         return channelId;
     }
