@@ -821,14 +821,12 @@ public class IntegrationChannelResource {
             List<MMXChannelId> channelIds = new ArrayList<MMXChannelId>();
             for(ChannelLookupKey channelLookupKey:channelSummaryRequest.getChannelIds()) {
 
-
-                if(channelLookupKey.isPrivateChannel()){
-                    channelIds.add(new MMXChannelId(channelSummaryRequest.getRequestingUserId(),channelLookupKey.getChannelName()));
-                }else{
-                    channelIds.add(new MMXChannelId(channelLookupKey.getChannelName()));
-                }
-
-                //channelIds.add(nameToId(channelName));
+//                if(channelLookupKey.isPrivateChannel()){
+//                    channelIds.add(new MMXChannelId(channelSummaryRequest.getRequestingUserId(),channelLookupKey.getChannelName()));
+//                }else{
+//                    channelIds.add(new MMXChannelId(channelLookupKey.getChannelName()));
+//                }
+                channelIds.add(nameToId(channelLookupKey.getChannelName()));
             }
 
             ChannelAction.SummaryRequest rqt = new ChannelAction.SummaryRequest(channelIds);
