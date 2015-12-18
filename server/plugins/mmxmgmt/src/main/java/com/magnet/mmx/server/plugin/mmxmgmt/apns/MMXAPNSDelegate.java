@@ -67,26 +67,29 @@ public class MMXAPNSDelegate extends ApnsDelegateAdapter implements ApnsDelegate
 
   @Override
   public void messageSendFailed(ApnsNotification message, Throwable e) {
-    LOGGER.info("APNS Message delivery failed for key:{}", key, e);
+    LOGGER.error("APNS Message delivery failed for key:{}", key, e);
     if (message != null) {
       byte[] tokenByte = message.getDeviceToken();
       String deviceToken = Utilities.encodeHex(tokenByte);
-      invalidateToken(deviceToken);
-      byte[] payload = message.getPayload();
-      String payloadString = fromBytes(payload);
-      if (payloadString != null) {
-        APNSPayloadInfo info = APNSPayloadInfo.parse(payloadString);
-        if (info != null && info.getMessageId() != null) {
-          Integer errorCode = null;
-          if (e instanceof ApnsDeliveryErrorException) {
-            errorCode = Integer.valueOf(((ApnsDeliveryErrorException) e).getDeliveryError().code());
-          }
-          //mark push message state as error
-          updatePushMessageState(info.getMessageId(), errorCode);
-        }
-      }
+      LOGGER.error("APNS Message delivery failed for key:{}", key, e);
+
+      //TODO : Revisit failure handling. Commented on 12/17/2015
+//      invalidateToken(deviceToken);
+//      byte[] payload = message.getPayload();
+//      String payloadString = fromBytes(payload);
+//      if (payloadString != null) {
+//        APNSPayloadInfo info = APNSPayloadInfo.parse(payloadString);
+//        if (info != null && info.getMessageId() != null) {
+//          Integer errorCode = null;
+//          if (e instanceof ApnsDeliveryErrorException) {
+//            errorCode = Integer.valueOf(((ApnsDeliveryErrorException) e).getDeliveryError().code());
+//          }
+//          //mark push message state as error
+//          updatePushMessageState(info.getMessageId(), errorCode);
+//        }
+//      }
     } else {
-      LOGGER.warn("APNS Message delivery failed but ApnsNotification message is null and hence can't invalidate the token");
+      LOGGER.error("APNS Message delivery failed but ApnsNotification message is null and hence can't invalidate the token");
     }
   }
 
