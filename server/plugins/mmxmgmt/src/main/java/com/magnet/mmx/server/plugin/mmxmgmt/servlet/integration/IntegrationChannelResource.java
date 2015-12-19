@@ -871,7 +871,7 @@ public class IntegrationChannelResource {
                 }
 
                 JID channelOwner = node.getOwners()==null?null:node.getOwners().iterator().next();
-                int messageOffset = 1;
+                int messageOffset = 0;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
                         this.fetchItemsForChannel(
                                 channelOwner,
