@@ -16,6 +16,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.db;
 
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.DevReg;
+import com.magnet.mmx.protocol.DeviceInfo;
 import com.magnet.mmx.protocol.OSType;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
@@ -57,7 +58,7 @@ public class DeviceDAOImpl implements DeviceDAO {
 
   private static final String UPDATE_DEVICE = "UPDATE mmxDevice SET name=?, ownerJid=? , clientToken=?, tokenType=?, " +
       "versionInfo=?, modelInfo=?, status=?, dateUpdated=?, phoneNumber=?, phoneNumberRev=?, carrierInfo=?, " +
-      "protocolVersionMajor=?, protocolVersionMinor=? "+
+      "protocolVersionMajor=?, protocolVersionMinor=?,pushStatus=? "+
       "WHERE appId=? AND deviceId=? AND osType=?";
   
   private static final String UPDATE_DEVICE_STATUS = "UPDATE mmxDevice SET status = ?, dateUpdated =? " +
@@ -279,6 +280,8 @@ public class DeviceDAOImpl implements DeviceDAO {
     }
   }
 
+
+
   @Override
   public int updateDevice(String deviceId, OSType type, String appId, com.magnet.mmx.protocol.DeviceInfo request,
                           String ownerId, DeviceStatus status) throws DbInteractionException {
@@ -310,10 +313,14 @@ public class DeviceDAOImpl implements DeviceDAO {
       pstmt.setInt(12, request.getVersionMajor());
       pstmt.setInt(13, request.getVersionMinor());
 
+      if(request.getPushToken()!=null && request.getPushToken().trim().length()>0)
+        pstmt.setString(14, PushStatus.VALID.name().toString());
+      else
+        pstmt.setString(14, null);// PushStatus.INVALID.name().toString());
       //where clause
-      pstmt.setString(14, appId);
-      pstmt.setString(15, deviceId);
-      pstmt.setString(16, type.name());
+      pstmt.setString(15, appId);
+      pstmt.setString(16, deviceId);
+      pstmt.setString(17, type.name());
 
       LOGGER.trace("updateDevice : deviceId={}, appId={}, statment={}", new Object[]{deviceId, appId, pstmt});
       int count = pstmt.executeUpdate();

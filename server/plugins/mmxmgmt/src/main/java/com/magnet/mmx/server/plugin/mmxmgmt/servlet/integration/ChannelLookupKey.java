@@ -10,6 +10,7 @@ public class ChannelLookupKey {
     //Set to true to make channel private, false to make public.
     //Default to false
     private boolean privateChannel;
+    private String userId;
 
 
     public String getChannelName() {
@@ -26,5 +27,13 @@ public class ChannelLookupKey {
 
     public void setPrivateChannel(boolean privateChannel) {
         this.privateChannel = privateChannel;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }
