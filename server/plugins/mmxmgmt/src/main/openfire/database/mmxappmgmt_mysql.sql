@@ -1,7 +1,7 @@
 # $Revision$
 # $Date$
 
-INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 6);
+INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 7);
 
 CREATE TABLE mmxApp (
   id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -181,4 +181,9 @@ SELECT serviceID,nodeID,'PUBLIC', now() FROM ofPubsubNode WHERE nodeID IS NOT NU
 
 INSERT INTO ofProperty (name, propValue) VALUES('xmpp.domain', 'mmx') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES('route.all-resources', 'true') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
+
+/* Support utf8mb4 for emoji in messages; application and device names are not suppored */
+ALTER TABLE ofOffline MODIFY stanza MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE ofPubsubItem MODIFY payload MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
