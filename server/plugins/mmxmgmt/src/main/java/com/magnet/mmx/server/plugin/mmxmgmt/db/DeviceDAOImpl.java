@@ -316,7 +316,7 @@ public class DeviceDAOImpl implements DeviceDAO {
       if(request.getPushToken()!=null && request.getPushToken().trim().length()>0)
         pstmt.setString(14, PushStatus.VALID.name().toString());
       else
-        pstmt.setString(14, PushStatus.INVALID.name().toString());
+        pstmt.setString(14, null);// PushStatus.INVALID.name().toString());
       //where clause
       pstmt.setString(15, appId);
       pstmt.setString(16, deviceId);
