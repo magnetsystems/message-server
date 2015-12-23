@@ -118,9 +118,9 @@ public class WakeupProcessorTest {
 
   public static class StubWakeupProcessor extends  WakeupProcessor {
 
-    private WakeupEntityDAO dao = new WakeupEntityDAOImpl(new BasicDataSourceConnectionProvider(ds));
-    private WakeupNotifier notifier = new StubWakeupNotifier();
-    private WakeupNotifier apnsNotifier = new StubAPNSWakeupNotifier();
+    private final WakeupEntityDAO dao = new WakeupEntityDAOImpl(new BasicDataSourceConnectionProvider(ds));
+    private final WakeupNotifier notifier = new StubWakeupNotifier();
+    private final WakeupNotifier apnsNotifier = new StubAPNSWakeupNotifier();
 
     public StubWakeupProcessor(Lock lock) {
       super(lock);
@@ -131,6 +131,7 @@ public class WakeupProcessorTest {
       return dao;
     }
 
+    @Override
     protected MessageDAO getMessageDAO() {
       MessageDAO messageDAO = new MessageDAOImpl(new BasicDataSourceConnectionProvider(ds));
       return messageDAO;
@@ -157,17 +158,19 @@ public class WakeupProcessorTest {
   public static class StubWakeupNotifier implements WakeupNotifier {
     private int callCount = 0;
     @Override
-    public List<NotificationResult> sendNotification(List<String> deviceTokens, String payload, NotificationSystemContext context) {
-      String senderIdentifier = null;
+    public List<NotificationResult> sendNotification(List<String> deviceTokens,
+        String payload, NotificationSystemContext context) {
+      String apiKey = null;
       if (context instanceof GCMWakeupNotifierImpl.GCMNotificationSystemContext) {
-        senderIdentifier = ((GCMWakeupNotifierImpl.GCMNotificationSystemContext) context).getSenderIdentifier();
+        apiKey = ((GCMWakeupNotifierImpl.GCMNotificationSystemContext) context).getApiKey();
       }
 
       assertTrue("device tokens is empty", !deviceTokens.isEmpty());
       assertTrue("payload is not null", (payload != null && !payload.isEmpty()));
-      assertNotNull("senderIdentifier is null", senderIdentifier);
+      assertNotNull("apiKey is null", apiKey);
 
-      List<NotificationResult> rv = Collections.singletonList(NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER);
+      List<NotificationResult> rv = Collections.singletonList(
+          NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER);
       callCount ++;
       return rv;
     }
@@ -177,7 +180,6 @@ public class WakeupProcessorTest {
     private int callCount = 0;
     @Override
     public List<NotificationResult> sendNotification(List<String> deviceTokens, String payload, NotificationSystemContext context) {
-      String senderIdentifier = null;
       boolean correctContext = context instanceof APNSWakeupNotifierImpl.APNSNotificationSystemContext;
 
       assertTrue("device tokens is empty", !deviceTokens.isEmpty());

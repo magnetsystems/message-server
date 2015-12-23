@@ -56,7 +56,7 @@ public class WakeupUtil {
     wakeupEntity.setToken(deviceEntity.getClientToken());
     wakeupEntity.setDeviceId(deviceEntity.getDeviceId());
     wakeupEntity.setType(deviceEntity.getTokenType());
-    wakeupEntity.setSenderIdentifier(appEntity.getGoogleAPIKey());
+    wakeupEntity.setGoogleApiKey(appEntity.getGoogleAPIKey());
 
     /**
      * Set the payload based on the Device type.
