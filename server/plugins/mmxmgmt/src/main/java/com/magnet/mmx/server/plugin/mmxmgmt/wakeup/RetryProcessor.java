@@ -138,7 +138,7 @@ public class RetryProcessor extends MMXClusterableTask implements Runnable {
     wakeupEntity.setToken(deviceEntity.getClientToken());
     wakeupEntity.setDeviceId(deviceEntity.getDeviceId());
     wakeupEntity.setType(deviceEntity.getTokenType());
-    wakeupEntity.setSenderIdentifier(appEntity.getGoogleAPIKey());
+    wakeupEntity.setGoogleApiKey(appEntity.getGoogleAPIKey());
     /**
      * Set the payload based on the Device type.
      * The wakeup payloads are different for iOS and Android devices
