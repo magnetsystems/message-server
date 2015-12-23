@@ -42,7 +42,7 @@ import java.util.concurrent.locks.Lock;
  * Items for which wakeup notification are sent are updated to have date sent set.
  */
 public class WakeupProcessor extends MMXClusterableTask implements Runnable {
-  private Logger LOGGER = LoggerFactory.getLogger(WakeupProcessor.class);
+  private final Logger LOGGER = LoggerFactory.getLogger(WakeupProcessor.class);
   private final int WAKE_UP_CHUNK = 1000;
   private static final int CACHE_SIZE = 100;
   private static AppEntityDBLoadingEntityCache appCache = new AppEntityDBLoadingEntityCache(CACHE_SIZE, new AppEntityDBLoadingEntityCache.AppEntityDBLoader());
@@ -81,19 +81,25 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
       List<WakeupEntity> badGoogleAPIKey = new LinkedList<WakeupEntity>();
 
       for (WakeupEntity wkEntity : wakeupList) {
+        String token = wkEntity.getToken();
+        String appId = wkEntity.getAppId();
+        if (token == null || appId == null) {
+          LOGGER.info("Skipping (no token or appId) wakeup record:" + wkEntity.toString());
+          continue;
+        }
         if (wkEntity.getType() == PushType.GCM) {
-          String token = wkEntity.getToken();
-          if (token == null || wkEntity.getSenderIdentifier() == null) {
-            LOGGER.info("Skipping wakeup record:" + wkEntity.toString());
+          if (wkEntity.getGoogleApiKey() == null) {
+            LOGGER.info("Skipping (no apikey) wakeup record:" + wkEntity.toString());
             continue;
           }
-          List<NotificationResult> results = gcmNotifier.sendNotification(Collections.singletonList(wkEntity.getToken()), wkEntity.getPayload(), new GCMWakeupNotifierImpl.GCMNotificationSystemContext(wkEntity.getSenderIdentifier()));
+          List<NotificationResult> results = gcmNotifier.sendNotification(
+              Collections.singletonList(wkEntity.getToken()), wkEntity.getPayload(),
+              new GCMWakeupNotifierImpl.GCMNotificationSystemContext(wkEntity.getGoogleApiKey()));
           if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
             completed.add(wkEntity);
             count++;
           } else if (results.get(0) == NotificationResult.DELIVERY_FAILED_INVALID_TOKEN) {
             //change PushStatus for the device to INVALID
-            String appId = wkEntity.getAppId();
             DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
             invalidator.invalidateToken(appId, PushType.GCM, token);
           } else if (results.get(0) == NotificationResult.DELIVERY_FAILED_INVALID_API_KEY) {
@@ -101,19 +107,16 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
           }
         } else if (wkEntity.getType() == PushType.APNS) {
           //handle APNS wake up notification
-          String appId = wkEntity.getAppId();
-          if (appId != null) {
-            AppEntity appEntity = getAppEntity(appId);
-            if (wkEntity.getToken() == null) {
-              LOGGER.info("Skipping wakeup record:" + wkEntity.toString());
-              continue;
-            }
-            WakeupNotifier.NotificationSystemContext context = new APNSWakeupNotifierImpl.APNSNotificationSystemContext(appId, appEntity.isApnsCertProduction());
-            List<NotificationResult> results = apnsNotifier.sendNotification(Collections.singletonList(wkEntity.getToken()), wkEntity.getPayload(), context);
-            if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
-              completed.add(wkEntity);
-              count++;
-            }
+          AppEntity appEntity = getAppEntity(appId);
+          WakeupNotifier.NotificationSystemContext context =
+              new APNSWakeupNotifierImpl.APNSNotificationSystemContext(
+                  appId, appEntity.isApnsCertProduction());
+          List<NotificationResult> results = apnsNotifier.sendNotification(
+              Collections.singletonList(token),
+              wkEntity.getPayload(), context);
+          if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
+            completed.add(wkEntity);
+            count++;
           }
         }
       }
