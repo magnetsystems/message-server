@@ -29,7 +29,7 @@ public class WakeupEntity {
   private String token;
   private String appId;
   private PushType type;
-  private String senderIdentifier;
+  private String gooleApiKey;
   private String payload;
   private String messageId;
   private Long dateCreated;
@@ -67,12 +67,12 @@ public class WakeupEntity {
     this.type = type;
   }
 
-  public String getSenderIdentifier() {
-    return senderIdentifier;
+  public String getGoogleApiKey() {
+    return gooleApiKey;
   }
 
-  public void setSenderIdentifier(String senderIdentifier) {
-    this.senderIdentifier = senderIdentifier;
+  public void setGoogleApiKey(String googleApiKey) {
+    this.gooleApiKey = googleApiKey;
   }
 
   public String getPayload() {
@@ -120,9 +120,10 @@ public class WakeupEntity {
     final StringBuilder sb = new StringBuilder("WakeupEntity{");
     sb.append("id=").append(id);
     sb.append(", deviceId='").append(deviceId).append('\'');
+    sb.append(", appId='").append(appId).append('\'');
     sb.append(", token='").append(token).append('\'');
     sb.append(", type=").append(type);
-    sb.append(", senderIdentifier='").append(senderIdentifier).append('\'');
+    sb.append(", googleApiKey='").append(gooleApiKey).append('\'');
     sb.append(", payload='").append(payload).append('\'');
     sb.append(", messageId='").append(messageId).append('\'');
     sb.append(", dateCreated=").append(dateCreated);
@@ -153,14 +154,14 @@ public class WakeupEntity {
           dateCreated = Long.valueOf(temp);
         }
       }
-      String senderIdentifier = rs.getString("googleApiKey");
+      String googleApiKey = rs.getString("googleApiKey");
       String appId = rs.getString("appId");
       WakeupEntity entity = new WakeupEntity();
       entity.setId(id);
       entity.setDeviceId(deviceId);
       entity.setMessageId(messageId);
       entity.setPayload(payload);
-      entity.setSenderIdentifier(senderIdentifier);
+      entity.setGoogleApiKey(googleApiKey);
       entity.setType(pushType);
       entity.setDateCreated(dateCreated);
       entity.setToken(clientToken);

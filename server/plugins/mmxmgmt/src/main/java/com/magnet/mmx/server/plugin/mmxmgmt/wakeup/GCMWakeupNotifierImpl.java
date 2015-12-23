@@ -33,62 +33,81 @@ import java.util.List;
  */
 public class GCMWakeupNotifierImpl implements WakeupNotifier {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(GCMWakeupNotifierImpl.class);
+  private static Logger LOGGER = LoggerFactory
+      .getLogger(GCMWakeupNotifierImpl.class);
   private static final int RETRY_COUNT = 5;
 
   @Override
-  public List<NotificationResult> sendNotification(List<String> deviceTokens, String payload, NotificationSystemContext context) {
-      if (context instanceof GCMNotificationSystemContext) {
-        return this.sendNotification(deviceTokens, payload, ((GCMNotificationSystemContext) context).getSenderIdentifier());
-      } else {
-        throw new IllegalArgumentException("Need an instance of GCMNotificationSystemContext");
-      }
+  public List<NotificationResult> sendNotification(List<String> deviceTokens,
+      String payload, NotificationSystemContext context) {
+    if (context instanceof GCMNotificationSystemContext) {
+      return this.sendNotification(deviceTokens, payload,
+          ((GCMNotificationSystemContext) context).getApiKey());
+    } else {
+      throw new IllegalArgumentException(
+          "Need an instance of GCMNotificationSystemContext");
+    }
   }
 
-  public List<NotificationResult> sendNotification(List<String> deviceTokens, String payload, String senderIdentifier) {
+  public List<NotificationResult> sendNotification(List<String> deviceTokens,
+      String payload, String apiKey) {
     String tokens = deviceTokens.toString();
 
-    LOGGER.debug(String.format("Sending: %s to tokens:%s", payload, tokens));
+    LOGGER.debug(String.format("Sending: \"%s\" using apiKey:%s to tokens:%s",
+        payload, apiKey, tokens));
 
-    //Prepare a simple payload to push
+    // Prepare a simple payload to push
     NotificationResult[] results = new NotificationResult[deviceTokens.size()];
 
-    Sender sender = new Sender(senderIdentifier);
+    Sender sender = new Sender(apiKey);
     Message.Builder mb = new Message.Builder().
         addData("msg", payload);
-
 
     MulticastResult mcResult = null;
     try {
       mcResult = sender.send(mb.build(), deviceTokens, RETRY_COUNT);
     } catch (IOException e) {
-      LOGGER.error(String.format("Sending:%s to tokens:%s failed with an exception", payload, tokens), e);
-      if (e instanceof HttpRetryException && ((HttpRetryException) e).responseCode() == 401) {
-          LOGGER.error("Got status code:401 for Google API Key:{}", senderIdentifier);
-          for (int i = 0; i < results.length; i++) {
-            results[i] = NotificationResult.DELIVERY_FAILED_INVALID_API_KEY;
-          }
+      LOGGER.error(String.format(
+          "Sending:%s using apiKey:%s to tokens:%s failed with an exception",
+          payload, apiKey, tokens), e);
+      if (e instanceof HttpRetryException
+          && ((HttpRetryException) e).responseCode() == 401) {
+        LOGGER.error("Got status code:401 for Google API Key:{}", apiKey);
+        for (int i = 0; i < results.length; i++) {
+          results[i] = NotificationResult.DELIVERY_FAILED_INVALID_API_KEY;
+        }
       } else {
-          for (int i = 0; i < results.length; i++) {
-            results[i] = NotificationResult.DELIVERY_FAILED_PERMANENT;
-          }
+        for (int i = 0; i < results.length; i++) {
+          results[i] = NotificationResult.DELIVERY_FAILED_PERMANENT;
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      LOGGER.error(String.format(
+          "Sending:%s using apiKey:%s to tokens:%s failed with IllegalArgumentException",
+          payload, apiKey, tokens), e);
+      for (int i = 0; i < results.length; i++) {
+        results[i] = NotificationResult.DELIVERY_FAILED_INVALID_API_KEY;
       }
     }
-    if(null != mcResult) {
-      for(int i = 0; i < mcResult.getResults().size(); i++) {
+    if (null != mcResult) {
+      for (int i = 0; i < mcResult.getResults().size(); i++) {
         Result r = mcResult.getResults().get(i);
         String error = r.getErrorCodeName();
         if (null != error) {
-          if (error.equals(Constants.ERROR_NOT_REGISTERED) || error.equals(Constants.ERROR_INVALID_REGISTRATION) ||
-              error.equals(Constants.ERROR_MISSING_REGISTRATION) || error.equals(Constants.ERROR_MISMATCH_SENDER_ID)) {
+          if (error.equals(Constants.ERROR_NOT_REGISTERED)
+              || error.equals(Constants.ERROR_INVALID_REGISTRATION) ||
+              error.equals(Constants.ERROR_MISSING_REGISTRATION)
+              || error.equals(Constants.ERROR_MISMATCH_SENDER_ID)) {
             results[i] = NotificationResult.DELIVERY_FAILED_INVALID_TOKEN;
           } else if (error.equals(Constants.ERROR_MESSAGE_TOO_BIG)) {
-            //message is too big
+            // message is too big
             results[i] = NotificationResult.DELIVERY_FAILED_MESSAGE_TOO_BIG;
           } else {
             results[i] = NotificationResult.DELIVERY_FAILED_PERMANENT;
           }
-          LOGGER.warn(String.format("Sending:%s to token:%s failed with error code:%s", payload, deviceTokens.get(i), error));
+          LOGGER.warn(String.format(
+              "Sending:%s to token:%s failed with error code:%s", payload,
+              deviceTokens.get(i), error));
         } else {
           results[i] = NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER;
         }
@@ -97,18 +116,17 @@ public class GCMWakeupNotifierImpl implements WakeupNotifier {
     return Arrays.asList(results);
   }
 
+  public static class GCMNotificationSystemContext implements
+      NotificationSystemContext {
+    private final String googleApiKey;
 
-  public static class GCMNotificationSystemContext implements NotificationSystemContext {
-    private String senderIdentifier;
-
-    public GCMNotificationSystemContext(String senderIdentifier) {
-      this.senderIdentifier = senderIdentifier;
+    public GCMNotificationSystemContext(String googleApiKey) {
+      this.googleApiKey = googleApiKey;
     }
 
-    public String getSenderIdentifier() {
-      return this.senderIdentifier;
+    public String getApiKey() {
+      return this.googleApiKey;
     }
   }
-
 
 }
