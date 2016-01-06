@@ -223,8 +223,9 @@ public class ChannelResource {
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
 
-        if (offset == null)
-            offset = DEFAULT_OFFSET;
+        if (offset == null) {
+          offset = DEFAULT_OFFSET;
+        }
 
         TopicAction.TopicSearchRequest rqt = toSearchRequest(channelName,
                 description, tags, size, offset);
@@ -669,17 +670,17 @@ public class ChannelResource {
 
     public static class InviteInfo {
       private String invitationText;
-      private List<String> invitees;
-      
+      private List<String> inviteeUserIds;
+
       public void setInvitationText(String invitationText) {
         this.invitationText = invitationText;
       }
       /**
        * Set the user ID's of the invitees
-       * @param invitees
+       * @param inviteeUserIds
        */
-      public void setInvitees(List<String> invitees) {
-        this.invitees = invitees;
+      public void setInviteeUserIds(List<String> inviteeUserIds) {
+        this.inviteeUserIds = inviteeUserIds;
       }
     }
 
@@ -694,7 +695,7 @@ public class ChannelResource {
       if (tokenInfo == null) {
           return RestUtils.getUnauthJAXRSResp();
       }
-      if (inviteInfo.invitees == null || inviteInfo.invitees.isEmpty()) {
+      if (inviteInfo.inviteeUserIds == null || inviteInfo.inviteeUserIds.isEmpty()) {
         ErrorResponse errorResponse = new ErrorResponse(
             ErrorCode.INVALID_USER_NAME.getCode(),
             ErrorMessages.ERROR_INVALID_USERNAME_VALUE);
@@ -702,7 +703,6 @@ public class ChannelResource {
       }
 
       try {
-        int i = 0;
         String appId = tokenInfo.getMmxAppId();
         JID from = RestUtils.createJID(tokenInfo);
         MMXChannelId channelId = nameToId(channelName);
@@ -711,7 +711,7 @@ public class ChannelResource {
             from, appId, channelId);
 
         SendMessageRequest request = new SendMessageRequest();
-        request.setRecipientUserIds(inviteInfo.invitees);
+        request.setRecipientUserIds(inviteInfo.inviteeUserIds);
         request.setReceipt(false);
         request.setMessageType(MSG_TYPE_INVITATION);
         request.setContent(buildInviteContent(channelInfo, inviteInfo));
@@ -748,7 +748,7 @@ public class ChannelResource {
         }
       }
     }
-    
+
     private static final String MSG_TYPE_INVITATION = "invitation";
     private static final String KEY_TEXT = "text";
     private static final String KEY_CHANNEL_NAME = "channelName";
@@ -757,7 +757,7 @@ public class ChannelResource {
     private static final String KEY_CHANNEL_OWNER_ID = "channelOwnerId";
     private static final String KEY_CHANNEL_CREATION_DATE = "channelCreationDate";
     private static final String KEY_CHANNEL_PUBLISH_PERMISSIONS = "channelPublishPermissions";
-    
+
     protected final HashMap<String, String> buildInviteContent(
                                     ChannelInfo channel, InviteInfo invInfo) {
       HashMap<String,String> content = new HashMap<String, String>();
@@ -776,7 +776,7 @@ public class ChannelResource {
       content.put(KEY_CHANNEL_PUBLISH_PERMISSIONS, channel.getPublishPermission().name());
       return content;
     }
-    
+
     /**
      * Fetch the published items using a date range filter with pagination.  The
      * URL looks like:<br>
@@ -808,10 +808,12 @@ public class ChannelResource {
             return RestUtils.getUnauthJAXRSResp();
         }
 
-        if (offset == null)
-            offset = DEFAULT_OFFSET;
-        if (sortOrder == null)
-            sortOrder = MMXServerConstants.SORT_ORDER_ASCENDING;
+        if (offset == null) {
+          offset = DEFAULT_OFFSET;
+        }
+        if (sortOrder == null) {
+          sortOrder = MMXServerConstants.SORT_ORDER_ASCENDING;
+        }
 
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
@@ -864,12 +866,12 @@ public class ChannelResource {
     }
 
     public static class MMXPubSubItemChannel2 {
-      private String itemId;
-      private String channelName;
-      private MMXItemPublisher publisher;
-      private Map<String, String> content;
-      private MMXPubSubPayload metaData;
-      
+      private final String itemId;
+      private final String channelName;
+      private final MMXItemPublisher publisher;
+      private final Map<String, String> content;
+      private final MMXPubSubPayload metaData;
+
       public MMXPubSubItemChannel2(MMXPubSubItemChannel item) {
         itemId = item.getItemId();
         channelName = item.getChannelName();
@@ -898,7 +900,7 @@ public class ChannelResource {
         return metaData;
       }
     }
-    
+
     /**
      * Get the published items by their ID's.  The channel name can be a public
      * channel or private channel.  The URL may look like:<br>
@@ -1078,6 +1080,7 @@ public class ChannelResource {
     private List<MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
+                    @Override
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
                         return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
                                 channelId.getName()),
