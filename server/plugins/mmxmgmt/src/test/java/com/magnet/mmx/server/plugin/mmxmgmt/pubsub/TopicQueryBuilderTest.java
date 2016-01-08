@@ -21,6 +21,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryBuilderResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryParam;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -35,6 +37,8 @@ import static org.junit.Assert.assertNotNull;
 /**
  */
 public class TopicQueryBuilderTest {
+  private static Logger log = Logger.getLogger(TopicQueryBuilderTest.class);
+
   @Test
   public void testBuildQuery() throws Exception {
     TopicQuery topicQuery = new TopicQuery();
@@ -48,16 +52,18 @@ public class TopicQueryBuilderTest {
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
-    String expected =
-        "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = " +
-            "ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' " +
-            "FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? AND (EXISTS ( SELECT id from mmxTopicRole WHERE " +
-            "mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.nodeID LIKE ? " +
-            "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s "+
+        "where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' " +
+        "FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? AND (EXISTS ( SELECT id from mmxTopicRole WHERE " +
+        "mmxTopicRole.serviceID = ofPubsubNode.serviceID AND " +
+        "mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.serviceID = ? AND " +
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQuery: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 6, paramCount);
+    assertEquals("Non matching parameter count", 7, paramCount);
   }
 
   @Test
@@ -72,11 +78,16 @@ public class TopicQueryBuilderTest {
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
-    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?) AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s "+
+        "where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' "+
+        "FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?) AND (ofPubsubNode.serviceID = ? AND "+
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQueryUsingDescription: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
   }
 
   @Test
@@ -96,10 +107,13 @@ public class TopicQueryBuilderTest {
         "ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
         "ofPubsubNode,mmxTag WHERE (( ( mmxTag.tagname = ? OR mmxTag.tagname = ? OR mmxTag.tagname = ? ) AND " +
         "mmxTag.serviceID=ofPubsubNode.serviceID AND mmxTag.nodeID=ofPubsubNode.nodeID )) AND " +
-        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "(ofPubsubNode.serviceID = ? AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQueryUsingTags: expected="+expected+"; actual="+resultQuery);
+
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 7, paramCount);
+    assertEquals("Non matching parameter count", 8, paramCount);
   }
 
 
@@ -118,11 +132,18 @@ public class TopicQueryBuilderTest {
     assertNotNull(result);
 
     String resultQuery = result.getQuery();
-    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID = ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?  AND (EXISTS ( SELECT id from mmxTopicRole WHERE mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+    String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
+        "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
+        "ofPubsubNode WHERE (UPPER(ofPubsubNode.description) LIKE ?  AND " +
+        "(EXISTS ( SELECT id from mmxTopicRole WHERE mmxTopicRole.serviceID = ofPubsubNode.serviceID AND " +
+        "mmxTopicRole.nodeID = ofPubsubNode.nodeID AND mmxTopicRole.role IN (? ) ))) AND (ofPubsubNode.serviceID = ? AND " +
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQueryUsingDescriptionWithMatchresultQuery: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 6, paramCount);
+    assertEquals("Non matching parameter count", 7, paramCount);
   }
 
   @Test
@@ -142,12 +163,14 @@ public class TopicQueryBuilderTest {
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
         "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
-        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.serviceID = ? AND " +
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQueryUsingDisplayNameWithPrefixMatch: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
 
     boolean foundPrefix = false;
     Iterator<QueryParam> paramIterator = result.getParamList().iterator();
@@ -183,12 +206,14 @@ public class TopicQueryBuilderTest {
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
         "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
-        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.serviceID = ? AND "+
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//  log.info("testBuildQueryUsingDisplayNameWithSuffixMatch: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
 
     boolean foundPrefix = false;
     Iterator<QueryParam> paramIterator = result.getParamList().iterator();
@@ -223,12 +248,14 @@ public class TopicQueryBuilderTest {
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
         "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
-        "ofPubsubNode WHERE (ofPubsubNode.name=? ) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "ofPubsubNode WHERE (ofPubsubNode.name=? ) AND (ofPubsubNode.serviceID = ? AND " +
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//  log.info("testBuildQueryUsingDisplayNameWithExactMatch: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
 
     boolean foundPrefix = false;
     Iterator<QueryParam> paramIterator = result.getParamList().iterator();
@@ -264,12 +291,14 @@ public class TopicQueryBuilderTest {
     String resultQuery = result.getQuery();
     String expected = "SELECT DISTINCT ofPubsubNode.* , (SELECT count(1) FROM ofPubsubSubscription s where s.serviceID " +
         "= ofPubsubNode.serviceId AND s.nodeID = ofPubsubNode.nodeID GROUP by s.nodeID,s.serviceId ) as 'subcount' FROM " +
-        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.nodeID LIKE ? " +
-        "OR ofPubsubNode.nodeID LIKE ?)  LIMIT ? OFFSET ?";
+        "ofPubsubNode WHERE (UPPER(ofPubsubNode.name) LIKE ? ) AND (ofPubsubNode.serviceID = ? AND " +
+        "(ofPubsubNode.nodeID LIKE ? OR ofPubsubNode.nodeID LIKE ?))  LIMIT ? OFFSET ?";
+
+//    log.info("testBuildQueryUsingDisplayNameWithNullMatch: expected="+expected+"; actual="+resultQuery);
 
     assertEquals("Non matching generated query", expected, resultQuery);
     int paramCount = result.getParamList().size();
-    assertEquals("Non matching parameter count", 5, paramCount);
+    assertEquals("Non matching parameter count", 6, paramCount);
 
     boolean foundPrefix = false;
     Iterator<QueryParam> paramIterator = result.getParamList().iterator();

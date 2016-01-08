@@ -32,7 +32,7 @@ import java.util.List;
 public class TopicDAOImpl implements TopicDAO {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopicDAOImpl.class);
 
-  private ConnectionProvider provider;
+  private final ConnectionProvider provider;
 
   public TopicDAOImpl(ConnectionProvider provider) {
     this.provider = provider;
@@ -183,7 +183,10 @@ public class TopicDAOImpl implements TopicDAO {
 
   @Override
   public List<TopicEntity> getTopicsForTag(String tagname, String appId) {
-    final String statementStr = "select distinct ofPubsubNode.* from mmxTag inner join ofPubsubNode on ofPubsubNode.nodeID = mmxTag.nodeID AND ofPubsubNode.serviceID = mmxTag.serviceID where mmxTag.tagname=? and mmxTag.appId=?";
+    final String statementStr = "select distinct ofPubsubNode.* "+
+        "from mmxTag inner join ofPubsubNode "+
+        "on ofPubsubNode.nodeID = mmxTag.nodeID AND ofPubsubNode.serviceID = mmxTag.serviceID "+
+        "where mmxTag.tagname=? and mmxTag.appId=?";
     Connection conn = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
