@@ -59,6 +59,9 @@ public class APNSWakeupNotifierImpl implements WakeupNotifier {
       } catch (APNSConnectionException e) {
         LOGGER.warn("Exception in sending APNS wakeup notification", e);
         results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
+      } catch (Throwable e) {
+        LOGGER.error("Exception in sending APNS wakeup notification", e);
+        results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
       }
     }
     if (connection != null) {

@@ -21,6 +21,7 @@ import java.util.List;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.WakeupProvider;
+import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -46,6 +47,10 @@ import com.magnet.mmx.util.TopicHelper;
 
 public class PubSubWakeupProvider implements WakeupProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubWakeupProvider.class);
+  private static final String TITLE = "New message is available";
+  private static final String PROP_PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
+  private static final String PROP_PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
+  private static final String PROP_PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
 
   @Override
   public void wakeup(WakeupProvider.Scope scope, JID userOrDev, Node node, Date pubDate) {
@@ -57,14 +62,37 @@ public class PubSubWakeupProvider implements WakeupProvider {
     MMXPushManager pushMsgMgr = MMXPushManager.getInstance();
 
     MMXTopicId topic = TopicHelper.parseNode(node.getNodeID());
-    LOGGER.debug("@@@ wakeup(): scope="+scope+", jid="+userOrDev+", topic="+topic);
-    String text = "New message is available";
-    PubSubNotification pubsubNtf = new PubSubNotification(topic, pubDate, text);
-    String pubsubPayload = GsonData.getGson().toJson(pubsubNtf);
+    PushMessage.Action action;
+    try {
+      // Default is "push".  Other options are: wakeup or "" (disabling.)
+      String type = JiveProperties.getInstance().getProperty(
+          PROP_PUBSUB_NOTIFICATION_TYPE, PushMessage.Action.PUSH.toString());
+      action = PushMessage.Action.valueOf(type.toUpperCase());
+    } catch (Throwable e) {
+      action = null;
+    }
 
-    if (scope == WakeupProvider.Scope.no_wakeup)
+    LOGGER.debug("@@@ wakeup(): action="+action+", scope="+scope+", jid="+
+                userOrDev+", topic="+topic);
+    if (action == null || scope == WakeupProvider.Scope.no_wakeup) {
       return;
-    
+    }
+
+    String pubsubPayload;
+    String title = JiveProperties.getInstance().getProperty(
+        PROP_PUBSUB_NOTIFICATION_TITLE, TITLE);
+    if (action == PushMessage.Action.PUSH) {
+      // Push notification payload
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, title, JiveProperties.getInstance().getProperty(
+              PROP_PUBSUB_NOTIFICATION_BODY, (topic.getUserId() == null) ?
+                  topic.getName() : topic.toString())));
+    } else {
+      // Wakeup (silent) notification payload
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, title));
+    }
+
     if (userOrDev.getResource() != null) {
       if (sessionMgr.getSession(userOrDev) == null) {
         // Wake up this disconnected device only.
@@ -73,8 +101,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
-            userOrDev.getResource(), null), PushMessage.Action.WAKEUP,
-            PubSubNotification.getType(), pubsubPayload);
+            userOrDev.getResource(), null), action, PubSubNotification.getType(),
+            pubsubPayload);
         if (result.getCount().getRequested() != result.getCount().getSent()) {
           Unsent unsent = result.getUnsentList().get(0);
           LOGGER.warn(
@@ -103,9 +131,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
       }
       if (devices.size() > 0) {
         // Wake up all disconnected devices
-        PushResult result = pushMsgMgr.send(fromJID, appId, devices,
-            PushMessage.Action.WAKEUP, PubSubNotification.getType(),
-            pubsubPayload);
+        PushResult result = pushMsgMgr.send(fromJID, appId, devices, action,
+            PubSubNotification.getType(), pubsubPayload);
         if (result.getCount().getRequested() != result.getCount().getSent()) {
           Unsent unsent = result.getUnsentList().get(0);
           LOGGER.warn("pubsub wake up failed; count={}, devId={}, code={}, msg={}",
