@@ -43,7 +43,10 @@ import com.magnet.mmx.util.TimeUtil;
 
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PubSubService;
 import org.jivesoftware.util.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -448,6 +451,47 @@ public class ChannelResource {
                     .getMessage());
             return RestUtils.getInternalErrorJAXRSResp(response);
         }
+    }
+
+    @GET
+    @Path("my_subscriptions")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getMySubscriptions(@Context HttpHeaders headers) {
+      TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+      if (tokenInfo == null) {
+          return RestUtils.getUnauthJAXRSResp();
+      }
+
+      JID from = RestUtils.createJID(tokenInfo);
+      JID owner = from.asBareJID();
+      String appId = tokenInfo.getMmxAppId();
+
+      try {
+        long startTime = System.nanoTime();
+        PubSubService service = XMPPServer.getInstance().getPubSubModule();
+        List<ChannelSubscription> subList = new ArrayList<ChannelSubscription>();
+        CollectionNode appNode = (CollectionNode) service.getNode(appId);
+        if (appNode != null) {
+          for (Node node : appNode.getNodes()) {
+            Collection<NodeSubscription> subscriptions = node.getSubscriptions(owner);
+            for (NodeSubscription sub : subscriptions) {
+              ChannelSubscription info = ChannelSubscription.build(sub);
+              subList.add(info);
+            }
+          }
+        }
+        long endTime = System.nanoTime();
+        LOGGER.info("Completed processing getSubscriptions in {} milliseconds",
+            TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
+        return RestUtils.getOKJAXRSResp(subList);
+      } catch (WebApplicationException e) {
+        throw e;
+      } catch (Throwable t) {
+        LOGGER.warn("Throwable during getSubscriptionsForChannels", t);
+        ErrorResponse response = new ErrorResponse(ErrorCode.SEARCH_TOPIC_ISE, t
+                .getMessage());
+        return RestUtils.getInternalErrorJAXRSResp(response);
+      }
     }
 
     @GET
