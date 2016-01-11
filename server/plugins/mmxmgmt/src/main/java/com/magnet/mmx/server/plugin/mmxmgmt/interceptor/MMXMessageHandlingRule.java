@@ -66,7 +66,7 @@ public class MMXMessageHandlingRule {
       .getLogger(MMXMessageHandlingRule.class);
   private static final String SERVER_USER = "serveruser";
   private static final String SERVER_ACK_SENDER_POOL = "ServerAckSenderPool";
-  private Map<String, Counter> mMulticastMsgs = new Hashtable<String, Counter>();
+  private final Map<String, Counter> mMulticastMsgs = new Hashtable<String, Counter>();
 
   private static class Counter {
     AtomicInteger count;
@@ -79,7 +79,7 @@ public class MMXMessageHandlingRule {
     public int decrementAndGet() {
       return count.decrementAndGet();
     }
-    
+
     public void addBadReceiver(String userId, String deviceId) {
       MMXMetaBuilder.MetaToEntry entry = new MMXMetaBuilder.MetaToEntry();
       entry.setUserId(userId);
@@ -118,13 +118,13 @@ public class MMXMessageHandlingRule {
 
     /**
      * At this point only unprocessed messages will be processed
-     * 
+     *
      * A message with bareJID can only be incoming. A message with bareJID can
      * never be a receipt
-     * 
+     *
      * For matched rule distribute the message, then stop processing by throwing
      * an exception
-     * 
+     *
      */
 
     if (input.isBareJID()) {
@@ -145,24 +145,24 @@ public class MMXMessageHandlingRule {
 
     /**
      * At this point only unprocessed messages with fullJID's will be handled
-     * 
+     *
      * If the message is an outgoing message, store the message and return
-     * 
+     *
      */
 
     if (!input.isIncoming()) {
-      LOGGER.trace("handle : message is an outgoing message storing input={}",
-          input);
-      MMXOfflineStorageUtil.storeMessage(input.getMessage());
+      LOGGER.trace("handle: no processing for outgoing message; input={}", input);
+//      LOGGER.trace("handle : message is an outgoing message storing input={}",
+//          input);
+//      MMXOfflineStorageUtil.storeMessage(input.getMessage());
       return;
     }
 
     /*
      * At this point only unprocessed incoming messages with fullJID will be
      * handled
-     * 
-     * If the message is a receipt, store the message, make the relevant state
-     * changes and return
+     *
+     * If the message is a receipt, make the relevant state changes and return
      */
 
     if (input.isReceipt()) {
@@ -173,7 +173,7 @@ public class MMXMessageHandlingRule {
     /**
      * At this point only unprocessed, incoming, fullJID, non-receipt messages
      * will be processed
-     * 
+     *
      */
 
     LOGGER.trace(
@@ -236,7 +236,7 @@ public class MMXMessageHandlingRule {
       // Abort the send because no device is found.
       throw new PacketRejectedException("Invalid deviceId : " + deviceId);
     }
-    
+
     MessageEntity messageEntity = getMessageEntity(input.getMessage());
     MMXPresenceFinder presenceFinder = new MMXPresenceFinderImpl();
     boolean isOnline = presenceFinder.isOnline(input.getMessage().getTo());
@@ -422,7 +422,7 @@ public class MMXMessageHandlingRule {
     }
     return recipients;
   }
-  
+
   private Object getMmxMeta(PacketExtension payload, String key, Object defVal) {
     Element mmxElement = payload.getElement();
     if (mmxElement == null) {
@@ -498,7 +498,7 @@ public class MMXMessageHandlingRule {
 
   /**
    * Process message receipts for messages addressed to serveruser.
-   * 
+   *
    * @param input
    */
   private void processMessageReceiptForServerUser(MMXMsgRuleInput input) {
@@ -514,7 +514,7 @@ public class MMXMessageHandlingRule {
 
   /**
    * Process regular message receipts addressed to full JIDs.
-   * 
+   *
    * @param input
    */
   private void processMessageReceipt(MMXMsgRuleInput input) {
@@ -552,7 +552,7 @@ public class MMXMessageHandlingRule {
 
   /**
    * Send the signal message asynchronously.
-   * 
+   *
    * @param signalMessage
    */
   protected void sendSignalMessage(final Message signalMessage) {
