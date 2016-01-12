@@ -98,6 +98,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
         // Wake up this disconnected device only.
         AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
         AppEntity ae = appDAO.getAppForAppKey(appId);
+        if (!isPushEnabled(ae)) {
+          return;
+        }
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
@@ -119,6 +122,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
       AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
       DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
       AppEntity ae = appDAO.getAppForAppKey(appId);
+      if (!isPushEnabled(ae)) {
+        return;
+      }
       JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
           domain, null);
       List<DeviceEntity> deList = deviceDAO.getDevices(appId, userId, DeviceStatus.ACTIVE);
@@ -139,7 +145,20 @@ public class PubSubWakeupProvider implements WakeupProvider {
               result.getCount(), unsent.getDeviceId(), unsent.getCode(),
               unsent.getMessage());
         }
+      } else {
+        LOGGER.trace("@@@ wakeup(): no disconnected (active) devices for jid="+
+              userOrDev+", topic="+topic);
       }
     }
+  }
+
+  private boolean isPushEnabled(AppEntity ae) {
+    if ((ae.getApnsCert() != null && ae.getApnsCert().length > 0) ||
+        (ae.getGoogleAPIKey() != null && ae.getGoogleProjectId() != null)) {
+      return true;
+    }
+    LOGGER.debug("Push configuration is not set; pubsub wakeup is ignored in app {}",
+        ae.getAppId());
+    return false;
   }
 }

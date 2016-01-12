@@ -55,7 +55,7 @@ import com.magnet.mmx.util.GsonData;
 public class MMXPushManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXPushManager.class);
   private static MMXPushManager sInstance = new MMXPushManager();
-  
+
   public static class ApsAlert {
     @SerializedName("title")
     public String mTitle;
@@ -73,7 +73,8 @@ public class MMXPushManager {
     public List<String> mLocArgs;
     @SerializedName("launch-image")
     public String mLaunchImage;
-    
+
+    @Override
     public String toString() {
       return "{title="+mTitle+", body="+mBody+", launch-image="+mLaunchImage+"}";
     }
@@ -91,7 +92,7 @@ public class MMXPushManager {
     public Integer mContentAvailable;
     @SerializedName("category")
     public String mCategory;
-    
+
     @Override
     public String toString() {
       return "{alert="+mAlert+", badge="+mBadge+", sound="+mSound+", category="
@@ -121,10 +122,10 @@ public class MMXPushManager {
   public static MMXPushManager getInstance() {
     return sInstance;
   }
-  
+
   private MMXPushManager() {
   }
-  
+
   /**
    * Send a push message to a list of validated devices.
    * @param from
@@ -179,7 +180,7 @@ public class MMXPushManager {
                  ", customType="+customType+", payload="+jsonPayload);
     String userId = to.getUserId();
     String devId = to.getDeviceId();
-    
+
     boolean abortOnError;
     DeviceDAO deviceDAO = new DeviceDAOImpl(new OpenFireDBConnectionProvider());
     List<DeviceEntity> gcmDevices = new ArrayList<DeviceEntity>(1);
@@ -189,11 +190,11 @@ public class MMXPushManager {
       abortOnError = true;
       try {
         DeviceEntity de = deviceDAO.getDeviceUsingId(appId, devId, DeviceStatus.ACTIVE);
-        if (de == null) {
+        if (de == null || de.getClientToken() == null) {
           PushResult result = new PushResult();
           result.setCount(new Count(1, 0, 1));
           result.setUnsentList(Arrays.asList(new PushResult.Unsent(devId,
-              ErrorCode.INVALID_DEVICE_ID.getCode(), "Device not found or not active")));
+              ErrorCode.INVALID_DEVICE_ID.getCode(), "Device not found, not active, or no client token")));
           return result;
         }
         if (de.getTokenType() == PushType.APNS) {
@@ -215,6 +216,10 @@ public class MMXPushManager {
       List<DeviceEntity> deList = deviceDAO.getDevices(appId, userId,
           DeviceStatus.ACTIVE);
       for (DeviceEntity de : deList) {
+        if (de.getClientToken() == null) {
+          LOGGER.trace("Skipping push to dev{}; client token is null", de.getDeviceId());
+          continue;
+        }
         if (de.getTokenType() == PushType.APNS) {
           apnsDevices.add(de);
         } else if (de.getTokenType() == PushType.GCM) {
@@ -222,7 +227,7 @@ public class MMXPushManager {
         }
       }
     }
-    
+
     PushResult result = null;
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
@@ -344,10 +349,12 @@ public class MMXPushManager {
 
   // Add two results.
   private PushResult addResults(PushResult r1, PushResult r2) {
-    if (r1 == null)
+    if (r1 == null) {
       return r2;
-    if (r2 == null)
+    }
+    if (r2 == null) {
       return r1;
+    }
     List<PushResult.PushIdTuple> sentList = new ArrayList<PushResult.PushIdTuple>(
         r1.getSentList().size() + r2.getSentList().size());
     sentList.addAll(r1.getSentList());
