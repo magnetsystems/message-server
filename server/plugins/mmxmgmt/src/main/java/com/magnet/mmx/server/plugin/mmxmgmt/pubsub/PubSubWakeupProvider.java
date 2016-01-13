@@ -21,10 +21,12 @@ import java.util.List;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.WakeupProvider;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
@@ -47,7 +49,7 @@ import com.magnet.mmx.util.TopicHelper;
 
 public class PubSubWakeupProvider implements WakeupProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubWakeupProvider.class);
-  private static final String TITLE = "New message is available";
+  private static final String BODY = "New message is available";
   private static final String PROP_PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
   private static final String PROP_PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
   private static final String PROP_PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
@@ -79,18 +81,18 @@ public class PubSubWakeupProvider implements WakeupProvider {
     }
 
     String pubsubPayload;
-    String title = JiveProperties.getInstance().getProperty(
-        PROP_PUBSUB_NOTIFICATION_TITLE, TITLE);
+    String body = JiveProperties.getInstance().getProperty(
+        PROP_PUBSUB_NOTIFICATION_BODY, BODY);
     if (action == PushMessage.Action.PUSH) {
       // Push notification payload
       pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, title, JiveProperties.getInstance().getProperty(
-              PROP_PUBSUB_NOTIFICATION_BODY, (topic.getUserId() == null) ?
-                  topic.getName() : topic.toString())));
+          pubDate, JiveProperties.getInstance().getProperty(
+              PROP_PUBSUB_NOTIFICATION_TITLE, (topic.getUserId() == null) ?
+                  topic.getName() : topic.toString()), body));
     } else {
       // Wakeup (silent) notification payload
       pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, title));
+          pubDate, body));
     }
 
     if (userOrDev.getResource() != null) {
