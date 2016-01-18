@@ -177,7 +177,7 @@ public class IntegrationAppResource {
       AppEntity entity = dao.getAppForAppKey(appId);
 
       MMXAppManager manager = MMXAppManager.getInstance();
-      manager.deleteApp(appId);
+      manager.deleteAppQuietly(appId); // change to a quite delete i.e do not complain if related serveruser is not found.
       return RestUtils.getOKJAXRSResp();
     } catch (Exception e) {
       return RestUtils.getBadReqJAXRSResp(new ErrorResponse(ErrorCode.UNKNOWN_ERROR, "Unknow internal error"));

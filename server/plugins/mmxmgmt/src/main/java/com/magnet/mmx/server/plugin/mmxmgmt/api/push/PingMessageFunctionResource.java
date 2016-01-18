@@ -15,6 +15,11 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.protocol.PushResult;
+import com.magnet.mmx.protocol.PushResult.PushIdTuple;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.AbstractBaseResource;
@@ -168,15 +173,16 @@ public class PingMessageFunctionResource extends AbstractBaseResource {
 
 
   protected MMXPushAPNSPayloadBuilder builder(SendPingMessageRequest request) {
-    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder();
-    builder.silent();
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.ping.name()));
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(
+        PushMessage.Action.WAKEUP, Constants.PingPongCommand.ping.name());
+    builder.setCustomType(Constants.PingPongCommand.ping.name());
     return builder;
   }
 
   protected MMXPushGCMPayloadBuilder gcmBuilder(SendPingMessageRequest request) {
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.ping.name()));
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.WAKEUP, Constants.PingPongCommand.ping.name());
+    builder.setCustomType(Constants.PingPongCommand.ping.name());
     return builder;
   }
 }

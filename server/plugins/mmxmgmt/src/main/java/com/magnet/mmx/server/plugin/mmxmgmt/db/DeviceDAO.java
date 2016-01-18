@@ -66,6 +66,8 @@ public interface DeviceDAO {
   public int updateDevice(String deviceId, OSType type, String appId, com.magnet.mmx.protocol.DeviceInfo update, String ownerId, DeviceStatus status) throws DbInteractionException;
 
 
+
+
   public int deactivateDevice(String deviceId) throws DbInteractionException;
 
   /**

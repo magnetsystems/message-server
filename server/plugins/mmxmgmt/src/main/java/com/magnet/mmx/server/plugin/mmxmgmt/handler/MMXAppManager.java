@@ -210,7 +210,8 @@ public class MMXAppManager {
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     String userName = appEntity.getServerUserId();
     if (userName != null) {
-      User user = server.getUserManager().getUser(userName);
+      String userId = JIDUtil.makeNode(userName,appId);
+      User user = server.getUserManager().getUser(userId);
       if (user != null) {
         // delete the OS topic and its children.
         MMXTopicManager topicManager =  MMXTopicManager.getInstance();
@@ -222,6 +223,48 @@ public class MMXAppManager {
     String clientBootstrapUserId = appEntity.getGuestUserId();
     if (clientBootstrapUserId != null) {
       User user = server.getUserManager().getUser(clientBootstrapUserId);
+      if (user != null) {
+        server.getUserManager().deleteUser(user);
+      }
+    }
+
+    //TODO cleanup pending messages, devices, message status
+    // delete all the users for this appId
+
+    appDAO.deleteApp(appId);
+  }
+
+
+  // not quite sure what the significance of not finding server user is in the above codeblock. Will suppress UserNotFoundException
+  // rrao
+  public void deleteAppQuietly(String appId) throws AppDoesntExistException {
+    AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
+    AppEntity appEntity = appDAO.getAppForAppKey(appId);
+    String userName = appEntity.getServerUserId();
+    if (userName != null) {
+      String userId = JIDUtil.makeNode(userName,appId);
+      User user = null;
+      try {
+        user = server.getUserManager().getUser(userId);
+      } catch (UserNotFoundException e) {
+        e.printStackTrace();
+      }
+      if (user != null) {
+        // delete the OS topic and its children.
+        MMXTopicManager topicManager =  MMXTopicManager.getInstance();
+        // delete the app server user.
+        server.getUserManager().deleteUser(user);
+      }
+    }
+    // now delete the bootstrap client user
+    String clientBootstrapUserId = appEntity.getGuestUserId();
+    if (clientBootstrapUserId != null) {
+      User user = null;
+      try {
+        user = server.getUserManager().getUser(clientBootstrapUserId);
+      } catch (UserNotFoundException e) {
+        e.printStackTrace();
+      }
       if (user != null) {
         server.getUserManager().deleteUser(user);
       }

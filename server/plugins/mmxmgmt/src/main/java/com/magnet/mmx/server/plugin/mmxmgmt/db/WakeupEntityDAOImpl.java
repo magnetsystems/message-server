@@ -48,8 +48,7 @@ public class WakeupEntityDAOImpl implements WakeupEntityDAO {
 
   private static final String WAKEUP_SELECT_FOR_DEVICE_FOR_MUTE = "SELECT id, deviceId, clientToken, tokenType, googleApiKey," +
       "payload,messageId,dateCreatedUTC, appId FROM mmxWakeupQueue WHERE appId = ? AND deviceId = ? AND " +
-      "(? - dateCreatedUTC < ?) ";
-
+      "((? - dateCreatedUTC < ?) AND (dateSentUTC IS NULL))";
 
   private ConnectionProvider provider;
 
@@ -71,7 +70,7 @@ public class WakeupEntityDAOImpl implements WakeupEntityDAO {
       pstmt.setString(1, entity.getDeviceId());
       pstmt.setString(2, entity.getToken());
       pstmt.setString(3, entity.getType().name());
-      pstmt.setString(4, entity.getSenderIdentifier());
+      pstmt.setString(4, entity.getGoogleApiKey());
       pstmt.setString(5, entity.getPayload());
       pstmt.setString(6, entity.getMessageId());
       pstmt.setLong(7, Long.valueOf((new Date().getTime())/1000L));

@@ -15,9 +15,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.servlet;
 
 import com.magnet.mmx.server.api.v1.MMXAppIdFilter;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationAppResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationDeviceResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.IntegrationUserResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration.*;
 
 /**
  */
@@ -33,7 +31,9 @@ public final class AdminRESTResourceListing {
       AppResource.class.getName(),
       IntegrationAppResource.class.getName(),
       IntegrationUserResource.class.getName(),
-      IntegrationDeviceResource.class.getName()
+      IntegrationDeviceResource.class.getName(),
+      IntegrationChannelResource.class.getName(),
+      AdminResource.class.getName()
   };
 
 

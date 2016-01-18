@@ -14,13 +14,13 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.apns;
 
+import com.magnet.mmx.protocol.PushResult;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Target;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Unsent;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;

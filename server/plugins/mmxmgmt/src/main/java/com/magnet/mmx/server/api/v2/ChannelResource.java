@@ -28,32 +28,38 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
-import com.magnet.mmx.server.plugin.mmxmgmt.topic.ChannelNode;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
-import com.magnet.mmx.util.Utils;
+import com.magnet.mmx.util.TimeUtil;
+
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
+import org.jivesoftware.openfire.pubsub.PubSubService;
 import org.jivesoftware.util.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import javax.ws.rs.*;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -70,6 +76,7 @@ public class ChannelResource {
     static final String CHANNEL_NAME = "channelName";
     private static final String DEFAULT_MAX_ITEMS = "200";
     private final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
+
 
     public static class AddTagRequest {
         private boolean personal;
@@ -219,8 +226,9 @@ public class ChannelResource {
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
 
-        if (offset == null)
-            offset = DEFAULT_OFFSET;
+        if (offset == null) {
+          offset = DEFAULT_OFFSET;
+        }
 
         TopicAction.TopicSearchRequest rqt = toSearchRequest(channelName,
                 description, tags, size, offset);
@@ -426,7 +434,9 @@ public class ChannelResource {
 
         try {
             long startTime = System.nanoTime();
-            List<ChannelSubscription> infoList = getChannelSubscriptions(appId, channelName);
+            MMXChannelId channelId = nameToId(channelName);
+            List<ChannelSubscription> infoList = getChannelSubscriptions(appId,
+                                                                    channelId);
             long endTime = System.nanoTime();
             LOGGER.info(
                     "Completed processing getSubscriptionsForChannels in {} milliseconds",
@@ -441,6 +451,47 @@ public class ChannelResource {
                     .getMessage());
             return RestUtils.getInternalErrorJAXRSResp(response);
         }
+    }
+
+    @GET
+    @Path("my_subscriptions")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getMySubscriptions(@Context HttpHeaders headers) {
+      TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+      if (tokenInfo == null) {
+          return RestUtils.getUnauthJAXRSResp();
+      }
+
+      JID from = RestUtils.createJID(tokenInfo);
+      JID owner = from.asBareJID();
+      String appId = tokenInfo.getMmxAppId();
+
+      try {
+        long startTime = System.nanoTime();
+        PubSubService service = XMPPServer.getInstance().getPubSubModule();
+        List<ChannelSubscription> subList = new ArrayList<ChannelSubscription>();
+        CollectionNode appNode = (CollectionNode) service.getNode(appId);
+        if (appNode != null) {
+          for (Node node : appNode.getNodes()) {
+            Collection<NodeSubscription> subscriptions = node.getSubscriptions(owner);
+            for (NodeSubscription sub : subscriptions) {
+              ChannelSubscription info = ChannelSubscription.build(sub);
+              subList.add(info);
+            }
+          }
+        }
+        long endTime = System.nanoTime();
+        LOGGER.info("Completed processing getSubscriptions in {} milliseconds",
+            TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
+        return RestUtils.getOKJAXRSResp(subList);
+      } catch (WebApplicationException e) {
+        throw e;
+      } catch (Throwable t) {
+        LOGGER.warn("Throwable during getSubscriptionsForChannels", t);
+        ErrorResponse response = new ErrorResponse(ErrorCode.SEARCH_TOPIC_ISE, t
+                .getMessage());
+        return RestUtils.getInternalErrorJAXRSResp(response);
+      }
     }
 
     @GET
@@ -623,7 +674,8 @@ public class ChannelResource {
             MMXChannelId channelId = nameToId(channelName);
             SummaryRequest rqt = new SummaryRequest(Arrays.asList(channelId));
             SummaryResponse resp = channelManager.getSummary(from, appId, rqt);
-            List<MMXChannelSummary> summaryList = new ArrayList<MMXChannelSummary>();
+//            List<MMXChannelSummary> summaryList = new ArrayList<MMXChannelSummary>();
+            MMXChannelSummary singleResult = null;
             for (ChannelSummary s : resp) {
                 int count = s.getCount();
                 Date lastPublishedDate = s.getLastPubTime();
@@ -631,11 +683,14 @@ public class ChannelResource {
                 String name = s.getChannelNode().getName();
                 MMXChannelSummary mts = new MMXChannelSummary(userId, name, count,
                         lastPublishedDate);
-                summaryList.add(mts);
+                singleResult = mts;
+                break;
+//                summaryList.add(mts);
             }
-            MMXChannelSummaryResult summaryResult = new MMXChannelSummaryResult(appId,
-                    summaryList);
-            return RestUtils.getOKJAXRSResp(summaryResult);
+//            MMXChannelSummaryResult summaryResult = new MMXChannelSummaryResult(summaryList);
+//            return RestUtils.getOKJAXRSResp(summaryResult);
+            return RestUtils.getOKJAXRSResp(singleResult);
+//            return RestUtils.getOKJAXRSResp(summaryList);
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
             if (e.getCode() == StatusCode.NOT_FOUND) {
@@ -655,6 +710,115 @@ public class ChannelResource {
                 return RestUtils.getInternalErrorJAXRSResp(errorResponse);
             }
         }
+    }
+
+    public static class InviteInfo {
+      private String invitationText;
+      private List<String> inviteeUserIds;
+
+      public void setInvitationText(String invitationText) {
+        this.invitationText = invitationText;
+      }
+      /**
+       * Set the user ID's of the invitees
+       * @param inviteeUserIds
+       */
+      public void setInviteeUserIds(List<String> inviteeUserIds) {
+        this.inviteeUserIds = inviteeUserIds;
+      }
+    }
+
+    @POST
+    @Path("{" + CHANNEL_NAME + "}/invite")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response inviteUsers(@Context HttpHeaders headers,
+                              @PathParam(CHANNEL_NAME) String channelName,
+                              InviteInfo inviteInfo) {
+      TokenInfo tokenInfo = RestUtils.getAuthTokenInfo(headers);
+      if (tokenInfo == null) {
+          return RestUtils.getUnauthJAXRSResp();
+      }
+      if (inviteInfo.inviteeUserIds == null || inviteInfo.inviteeUserIds.isEmpty()) {
+        ErrorResponse errorResponse = new ErrorResponse(
+            ErrorCode.INVALID_USER_NAME.getCode(),
+            ErrorMessages.ERROR_INVALID_USERNAME_VALUE);
+        return RestUtils.getBadReqJAXRSResp(errorResponse);
+      }
+
+      try {
+        String appId = tokenInfo.getMmxAppId();
+        JID from = RestUtils.createJID(tokenInfo);
+        MMXChannelId channelId = nameToId(channelName);
+        MMXChannelManager channelMgr = MMXChannelManager.getInstance();
+        com.magnet.mmx.protocol.ChannelInfo channelInfo = channelMgr.getChannel(
+            from, appId, channelId);
+
+        SendMessageRequest request = new SendMessageRequest();
+        request.setRecipientUserIds(inviteInfo.inviteeUserIds);
+        request.setReceipt(false);
+        request.setMessageType(MSG_TYPE_INVITATION);
+        request.setContent(buildInviteContent(channelInfo, inviteInfo));
+
+        MessageSender sender = new MessageSenderImpl();
+        SendMessageResult result = sender.send(tokenInfo.getUserId(), appId, request);
+        if (result.isError()) {
+          ErrorResponse response = new ErrorResponse(result.getErrorCode(),
+                                                     result.getErrorMessage());
+          return RestUtils.getBadReqJAXRSResp(response);
+        } else {
+          SendMessageResponse response = new SendMessageResponse();
+          response.setCount(result.getCount());
+          response.setSentList(result.getSentList());
+          response.setUnsentList(result.getUnsentList());
+          return RestUtils.getOKJAXRSResp(response);
+        }
+      } catch (MMXException e) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        if (e.getCode() == StatusCode.NOT_FOUND) {
+          String message = String.format(ErrorMessages.ERROR_TOPIC_NOT_FOUND,
+                  channelName);
+          errorResponse.setMessage(message);
+          return RestUtils.getJAXRSResp(Response.Status.fromStatusCode(
+              e.getCode()), errorResponse);
+        } else if (e.getCode() == StatusCode.BAD_REQUEST) {
+          errorResponse.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+          errorResponse.setMessage(e.getMessage());
+          return RestUtils.getBadReqJAXRSResp(errorResponse);
+        } else {
+          errorResponse.setCode(ErrorCode.UNKNOWN_ERROR.getCode());
+          errorResponse.setMessage(e.getMessage());
+          return RestUtils.getInternalErrorJAXRSResp(errorResponse);
+        }
+      }
+    }
+
+    private static final String MSG_TYPE_INVITATION = "invitation";
+    private static final String KEY_TEXT = "text";
+    private static final String KEY_CHANNEL_NAME = "channelName";
+    private static final String KEY_CHANNEL_SUMMARY = "channelSummary";
+    private static final String KEY_CHANNEL_IS_PUBLIC = "channelIsPublic";
+    private static final String KEY_CHANNEL_OWNER_ID = "channelOwnerId";
+    private static final String KEY_CHANNEL_CREATION_DATE = "channelCreationDate";
+    private static final String KEY_CHANNEL_PUBLISH_PERMISSIONS = "channelPublishPermissions";
+
+    protected final HashMap<String, String> buildInviteContent(
+                                    ChannelInfo channel, InviteInfo invInfo) {
+      HashMap<String,String> content = new HashMap<String, String>();
+      if (invInfo.invitationText != null) {
+        content.put(KEY_TEXT, invInfo.invitationText);
+      }
+      content.put(KEY_CHANNEL_NAME, channel.getName());
+      if (channel.getDescription() != null) {
+        content.put(KEY_CHANNEL_SUMMARY, channel.getDescription());
+      }
+      content.put(KEY_CHANNEL_IS_PUBLIC, String.valueOf(!channel.isUserChannel()));
+      content.put(KEY_CHANNEL_OWNER_ID, JIDUtil.getReadableUserId(channel.getCreator()));
+      if (channel.getCreationDate() != null) {
+        content.put(KEY_CHANNEL_CREATION_DATE, TimeUtil.toString(channel.getCreationDate()));
+      }
+      content.put(KEY_CHANNEL_PUBLISH_PERMISSIONS, channel.getPublishPermission().name());
+      return content;
     }
 
     /**
@@ -688,10 +852,12 @@ public class ChannelResource {
             return RestUtils.getUnauthJAXRSResp();
         }
 
-        if (offset == null)
-            offset = DEFAULT_OFFSET;
-        if (sortOrder == null)
-            sortOrder = MMXServerConstants.SORT_ORDER_ASCENDING;
+        if (offset == null) {
+          offset = DEFAULT_OFFSET;
+        }
+        if (sortOrder == null) {
+          sortOrder = MMXServerConstants.SORT_ORDER_ASCENDING;
+        }
 
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
@@ -712,9 +878,16 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+            List<MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
             return RestUtils.getOKJAXRSResp(result);
+        } catch (IllegalArgumentException e) {
+          String message = String.format(ErrorMessages.ERROR_DATE_BAD_FORMAT,
+                  e.getMessage());
+          ErrorResponse errorResponse = new ErrorResponse();
+          errorResponse.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+          errorResponse.setMessage(message);
+          return RestUtils.getBadReqJAXRSResp(errorResponse);
         } catch (MMXException e) {
             ErrorResponse errorResponse = new ErrorResponse();
             if (e.getCode() == StatusCode.NOT_FOUND) {
@@ -734,6 +907,42 @@ public class ChannelResource {
                 return RestUtils.getInternalErrorJAXRSResp(errorResponse);
             }
         }
+    }
+
+    public static class MMXPubSubItemChannel2 {
+      private final String itemId;
+      private final String channelName;
+      private final MMXItemPublisher publisher;
+      private final Map<String, String> content;
+      private final MMXPubSubPayload metaData;
+
+      public MMXPubSubItemChannel2(MMXPubSubItemChannel item) {
+        itemId = item.getItemId();
+        channelName = item.getChannelName();
+        publisher = item.getPublisher();
+        content = item.getMeta();
+        metaData = item.getPayload();
+      }
+
+      public String getItemId() {
+        return itemId;
+      }
+
+      public String getChannelName() {
+        return channelName;
+      }
+
+      public MMXItemPublisher getPublisher() {
+        return publisher;
+      }
+
+      public Map<String, String> getContent() {
+        return content;
+      }
+
+      public MMXPubSubPayload getMetaData() {
+        return metaData;
+      }
     }
 
     /**
@@ -767,7 +976,7 @@ public class ChannelResource {
 
             String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
             List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
-            List<MMXPubSubItemChannel> items = toPubSubItems(appId, channelId, channelItemEntities);
+            List<MMXPubSubItemChannel2> items = toPubSubItems(channelId, channelItemEntities);
             PubSubItemResultChannels result = new PubSubItemResultChannels(resp.getTotal(), items);
 
             return RestUtils.getOKJAXRSResp(result);
@@ -912,12 +1121,12 @@ public class ChannelResource {
         return list;
     }
 
-    private List<MMXPubSubItemChannel> toPubSubItems(final String appId,
-                                                     final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+    private List<MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
+                    @Override
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
-                        return new MMXPubSubItemChannel(appId, idToName(channelId.getEscUserId(),
+                        return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
                                 channelId.getName()),
                                 i.getId(), new JID(i.getJid()), i.getPayload());
                     }
@@ -925,52 +1134,56 @@ public class ChannelResource {
                     ;
                 };
 
-        return Lists.transform(entityList, entityToItem);
+        List<MMXPubSubItemChannel> items = Lists.transform(entityList, entityToItem);
+        List<MMXPubSubItemChannel2> items2 = new ArrayList<MMXPubSubItemChannel2>(items.size());
+        for (MMXPubSubItemChannel item : items) {
+          items2.add(new MMXPubSubItemChannel2(item));
+        }
+        return items2;
     }
 
     protected ConnectionProvider getConnectionProvider() {
         return new OpenFireDBConnectionProvider();
     }
 
-    protected SearchResult<ChannelNode> transform(
-            String appId, SearchResult<ChannelInfoWithSubscriptionCount> results) {
-        SearchResult<ChannelNode> nodes = new SearchResult<ChannelNode>();
-        nodes.setOffset(results.getOffset());
-        nodes.setSize(results.getSize());
-        nodes.setTotal(results.getTotal());
-
-        List<ChannelInfoWithSubscriptionCount> objects = results.getResults();
-        List<ChannelNode> nodeList = new LinkedList<ChannelNode>();
-
-        for (ChannelInfoWithSubscriptionCount object : objects) {
-            ChannelNode node = new ChannelNode();
-            // TODO: hack to fix MOB-2516;display a user channel as userId#channelName.
-            node.setChannelName(idToName(object.getUserId(), object.getName()));
-            node.setUserId(object.getUserId());
-            node.setCollection(object.isCollection());
-            node.setDescription(object.getDescription());
-            node.setPersistent(object.isPersistent());
-            node.setMaxItems(object.getMaxItems());
-            node.setMaxPayloadSize(object.getMaxPayloadSize());
-            node.setPublishPermission(object.getPublishPermission().name());
-            Date creationDate = object.getCreationDate();
-            Date modified = object.getModifiedDate();
-            DateFormat isoFormatter = Utils.buildISO8601DateFormat();
-            node.setCreationDate(isoFormatter.format(creationDate));
-            node.setModificationDate(isoFormatter.format(modified));
-            node.setSubscriptionEnabled(object.isSubscriptionEnabled());
-            node.setSubscriptionCount(object.getSubscriptionCount());
-            nodeList.add(node);
-        }
-        nodes.setResults(nodeList);
-        return nodes;
-    }
+//    protected SearchResult<ChannelNode> transform(
+//            String appId, SearchResult<ChannelInfoWithSubscriptionCount> results) {
+//        SearchResult<ChannelNode> nodes = new SearchResult<ChannelNode>();
+//        nodes.setOffset(results.getOffset());
+//        nodes.setSize(results.getSize());
+//        nodes.setTotal(results.getTotal());
+//
+//        List<ChannelInfoWithSubscriptionCount> objects = results.getResults();
+//        List<ChannelNode> nodeList = new LinkedList<ChannelNode>();
+//
+//        for (ChannelInfoWithSubscriptionCount object : objects) {
+//            ChannelNode node = new ChannelNode();
+//            // TODO: hack to fix MOB-2516;display a user channel as userId#channelName.
+//            node.setChannelName(idToName(object.getUserId(), object.getName()));
+//            node.setUserId(object.getUserId());
+//            node.setCollection(object.isCollection());
+//            node.setDescription(object.getDescription());
+//            node.setPersistent(object.isPersistent());
+//            node.setMaxItems(object.getMaxItems());
+//            node.setMaxPayloadSize(object.getMaxPayloadSize());
+//            node.setPublishPermission(object.getPublishPermission().name());
+//            Date creationDate = object.getCreationDate();
+//            Date modified = object.getModifiedDate();
+//            DateFormat isoFormatter = Utils.buildISO8601DateFormat();
+//            node.setCreationDate(isoFormatter.format(creationDate));
+//            node.setModificationDate(isoFormatter.format(modified));
+//            node.setSubscriptionEnabled(object.isSubscriptionEnabled());
+//            node.setSubscriptionCount(object.getSubscriptionCount());
+//            nodeList.add(node);
+//        }
+//        nodes.setResults(nodeList);
+//        return nodes;
+//    }
 
     protected List<ChannelSubscription> getChannelSubscriptions(String appId,
-                                                            String channelName) {
-        MMXChannelId tid = nameToId(channelName);
-        String channelId = ChannelHelper.makeChannel(appId, tid.getEscUserId(), tid
-                .getName());
+                                                         MMXChannelId cid) {
+        String channelId = ChannelHelper.makeChannel(appId, cid.getEscUserId(),
+            cid.getName());
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         List<NodeSubscription> subscriptions = channelManager
                 .listSubscriptionsForChannel(channelId);
@@ -1005,4 +1218,25 @@ public class ChannelResource {
             return userId + ChannelHelper.CHANNEL_SEPARATOR + channelName;
         }
     }
+
+    public static class MMXPubSubItemChannel2Ext extends MMXPubSubItemChannel2 {
+        private UserEntity publisherInfo;
+        UserDAO userDAO = new UserDAOImpl( new OpenFireDBConnectionProvider());
+        public MMXPubSubItemChannel2Ext(MMXPubSubItemChannel item, String appId) {
+            super(item);
+            publisherInfo = userDAO.getUser(item.getPublisher().getUserId() + "%" + appId);
+        }
+
+        public UserEntity getPublisherInfo() {
+            return publisherInfo;
+        }
+
+        public MMXPubSubItemChannel2Ext setPublisherInfo(UserEntity publisherInfo) {
+            this.publisherInfo = publisherInfo;
+            return this;
+        }
+    }
+
+
+
 }

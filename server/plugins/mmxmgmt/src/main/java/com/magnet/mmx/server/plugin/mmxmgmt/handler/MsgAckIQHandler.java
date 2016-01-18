@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.handler.IQHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +57,10 @@ public class MsgAckIQHandler extends IQHandler {
       String to = acknowledgement.getTo();
       String messageId = acknowledgement.getMsgId();
 
+      // Remove the offline message for end-point.
       MMXOfflineStorageUtil.removeMessage(to, messageId);
+      // Remove the offline message for user added when there were no active sessions.
+      MMXOfflineStorageUtil.removeMessage(packet.getFrom().toBareJID(), messageId);
 
       String appId = JIDUtil.getAppId(to);
       String deviceId = JIDUtil.getResource(to);

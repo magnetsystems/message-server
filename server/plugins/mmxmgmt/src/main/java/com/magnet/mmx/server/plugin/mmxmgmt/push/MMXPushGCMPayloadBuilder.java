@@ -17,64 +17,82 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push;
 import com.google.gson.Gson;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.GCMPayload;
+import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
 import com.magnet.mmx.util.GsonData;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Builder that helps with building the Push Payload for Android devices
+ * Builder that helps with building the Push Payload for Android devices.  It
+ * can be used by the console and IQHandler.
  */
 public class MMXPushGCMPayloadBuilder {
   private HashMap<String, ? super Object> mmxDictionary;
   private GCMPayload payload;
   private MMXPushHeader header;
 
-  public MMXPushGCMPayloadBuilder() {
+  public MMXPushGCMPayloadBuilder(PushMessage.Action action) {
     payload = new GCMPayload();
     mmxDictionary = new HashMap<String, Object>(10);
+    this.header = new MMXPushHeader(Constants.MMX, action.getCode());
+
+  }
+  public MMXPushGCMPayloadBuilder(PushMessage.Action action, String type) {
+    payload = new GCMPayload();
+    mmxDictionary = new HashMap<String, Object>(10);
+    header = new MMXPushHeader(Constants.MMX, action.getCode(), type);
+  }
+  
+  public MMXPushGCMPayloadBuilder(MMXPushHeader header) {
+    payload = new GCMPayload();
+    mmxDictionary = new HashMap<String, Object>(10);
+    this.header = header;
   }
 
-
+  public MMXPushGCMPayloadBuilder setGcm(MMXPushManager.GcmPayload gcm) {
+    setTitle(gcm.mTitle);
+    setBody(gcm.mBody);
+    setIcon(gcm.mIcon);
+    setSound(gcm.mSound);
+    setBadge(gcm.mBadge);
+    return this;
+  }
+  
   public MMXPushGCMPayloadBuilder setTitle(String title) {
-    if (title == null) {
-      return this;
+    if (title != null) {
+      payload.setTitle(title);
     }
-    payload.setTitle(title);
     return this;
   }
 
   public MMXPushGCMPayloadBuilder setBody(String body) {
-    if (body == null) {
-      return this;
+    if (body != null) {
+      payload.setBody(body);
     }
-    payload.setBody(body);
     return this;
   }
 
-
   public MMXPushGCMPayloadBuilder setSound(String sound) {
-    if (sound == null) {
-      return this;
+    if (sound != null) {
+      payload.setSound(sound);
     }
-    payload.setSound(sound);
     return this;
   }
 
   public MMXPushGCMPayloadBuilder setIcon(String icon) {
-    if (icon == null) {
-      return this;
+    if (icon != null) {
+      payload.setIcon(icon);
     }
-    payload.setIcon(icon);
     return this;
   }
 
-  public MMXPushGCMPayloadBuilder setType(MMXPushHeader header) {
-    mmxDictionary.put(Constants.PAYLOAD_TYPE_KEY, header.toString(false));
-    this.header = header;
+  public MMXPushGCMPayloadBuilder setBadge(Integer badge) {
+    if (badge != null) {
+      payload.setBadge(badge);
+    }
     return this;
   }
-
 
   public MMXPushGCMPayloadBuilder setId(String id) {
     mmxDictionary.put(Constants.PAYLOAD_ID_KEY, id);
@@ -86,13 +104,18 @@ public class MMXPushGCMPayloadBuilder {
     return this;
   }
 
-  public MMXPushGCMPayloadBuilder setCustomDictionary(Map<String, String> dictionary) {
-    mmxDictionary.put(Constants.PAYLOAD_CUSTOM_KEY, dictionary);
+  public MMXPushGCMPayloadBuilder setCustomType(String customType) {
+    mmxDictionary.put(Constants.PAYLOAD_TYPE_KEY, customType);
+    return this;
+  }
+
+  public MMXPushGCMPayloadBuilder setCustom(Object customObject) {
+    mmxDictionary.put(Constants.PAYLOAD_CUSTOM_KEY, customObject);
     return this;
   }
 
   /**
-   * Build the complete payload
+   * Build the complete header and JSON payload
    * @return
    */
   public String build() {
@@ -111,7 +134,7 @@ public class MMXPushGCMPayloadBuilder {
   }
 
   /**
-   * Build the JSON part of the payload.
+   * Build the JSON payload without the header.
    * @return
    */
   public String buildJSON() {
@@ -126,13 +149,13 @@ public class MMXPushGCMPayloadBuilder {
 
   /**
    * Convenience method.
-   * Build and return a wakeup payload
+   * Build and return a wakeup payload for retrieve (no custom payload.)
    * @return
    */
   public static String wakeupPayload() {
-    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder();
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.retrieve.name()));
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
+        PushMessage.Action.WAKEUP, Constants.PingPongCommand.retrieve.name());
+    builder.setCustomType(null);
     return builder.build();
   }
-
 }

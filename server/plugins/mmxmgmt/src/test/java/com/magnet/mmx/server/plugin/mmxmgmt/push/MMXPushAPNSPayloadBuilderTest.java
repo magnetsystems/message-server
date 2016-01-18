@@ -18,6 +18,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.PushMessage;
+
 import org.junit.Test;
 
 import java.util.LinkedHashMap;
@@ -36,11 +38,11 @@ public class MMXPushAPNSPayloadBuilderTest {
     builder.setBody("Your order is ready for pickup at 465 E El Camino Real, Palo Alto, CA");
     builder.setTitle("Order status");
     builder.setBadge(Integer.valueOf(1));
-    builder.setType("mmx:p");
     builder.setId("261ty171890");
     builder.setCallBackURL("http://preview.magnet.com:5221/mmxmgmt/v1/pushreply?pushmessageid=261ty171890");
+    builder.setCustomType("pickup-type");
 
-    Map<String, String> custom = new LinkedHashMap<String, String>();
+    Map<String, Object> custom = new LinkedHashMap<String, Object>();
     custom.put("action", "doSomething");
     custom.put("url" ,"http://live.sports.espn.com");
     builder.setCustomDictionary(custom);
@@ -76,7 +78,7 @@ public class MMXPushAPNSPayloadBuilderTest {
     builder.setBody("Your order is ready for pickup at 465 E El Camino Real, Palo Alto, CA");
     builder.setTitle("Order status");
     builder.setBadge(Integer.valueOf(1));
-    builder.setType("mmx:p");
+    builder.setCustomType("pickup-type");
     builder.setId("261ty171890");
     builder.setCallBackURL("http://preview.magnet.com:5221/mmxmgmt/v1/pushreply?pushmessageid=261ty171890");
     builder.setCategory("OrderStatus");
@@ -95,12 +97,12 @@ public class MMXPushAPNSPayloadBuilderTest {
 
   @Test
   public void testPingMessage() throws Exception {
-    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder();
+    String ping = Constants.PingPongCommand.ping.name();
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(
+        PushMessage.Action.WAKEUP, ping);
     builder.silent();
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.ping.name()));
     builder.setId("261ty171890");
     builder.setCallBackURL("http://preview.magnet.com:5221/mmxmgmt/v1/pushreply?pushmessageid=261ty171890");
-
 
     String json = builder.build();
     assertNotNull("json is null", json);
@@ -118,7 +120,7 @@ public class MMXPushAPNSPayloadBuilderTest {
     JsonElement tye = mmx.get("ty");
     String value = tye.getAsString();
     assertNotNull(value);
-    assertEquals("Didn't get expected value of type", "mmx:w:ping", value);
+    assertEquals("Didn't get expected value of type", ping, value);
   }
 
 
@@ -140,6 +142,6 @@ public class MMXPushAPNSPayloadBuilderTest {
     JsonElement tye = mmx.get("ty");
     String value = tye.getAsString();
     assertNotNull(value);
-    assertEquals("Didn't get expected value of type", "mmx:w:retrieve", value);
+    assertEquals("Didn't get expected value of type", "retrieve", value);
   }
 }

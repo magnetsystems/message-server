@@ -1,7 +1,7 @@
 # $Revision$
 # $Date$
 
-INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 4);
+INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 7);
 
 CREATE TABLE mmxApp (
   id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -21,7 +21,7 @@ CREATE TABLE mmxApp (
   ownerId           VARCHAR(200),
   ownerEmail        VARCHAR(255) DEFAULT NULL,
   guestUserId       VARCHAR(200),
-  guestSecret       VARCHAR(255), 	
+  guestSecret       VARCHAR(255),
   UNIQUE KEY `mmxApp_appId` (`appId`)
 );
 
@@ -174,3 +174,16 @@ INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.apns.feedback.initialwait.
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.apns.feedback.frequency.min', '360') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.instance.max.xmpp.rate.per.sec', '-1') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.instance.max.http.rate.per.sec', '-1') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
+
+
+INSERT INTO mmxTopicRole (serviceID, nodeID, role, creationDate)
+SELECT serviceID,nodeID,'PUBLIC', now() FROM ofPubsubNode WHERE nodeID IS NOT NULL;
+
+INSERT INTO ofProperty (name, propValue) VALUES('xmpp.domain', 'mmx') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
+INSERT INTO ofProperty (name, propValue) VALUES('route.all-resources', 'true') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
+
+/* Support utf8mb4 for emoji in messages; application and device names are not suppored */
+ALTER TABLE ofOffline MODIFY stanza MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE ofPubsubItem MODIFY payload MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+

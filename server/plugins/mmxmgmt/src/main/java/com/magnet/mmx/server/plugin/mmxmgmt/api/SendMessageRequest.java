@@ -29,6 +29,7 @@ public class SendMessageRequest {
   private boolean receipt;
   private String replyTo;
   private Target target;
+  private String messageType;
 
 
   public List<String> getRecipientUserIds() {
@@ -81,6 +82,14 @@ public class SendMessageRequest {
     this.target = target;
   }
 
+  public String getMessageType() {
+    return messageType;
+  }
+
+  public void setMessageType(String messageType) {
+    this.messageType = messageType;
+  }
+
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("SendMessageRequest{");
@@ -90,6 +99,7 @@ public class SendMessageRequest {
     sb.append(", receipt=").append(receipt);
     sb.append(", replyTo='").append(replyTo).append('\'');
     sb.append(", target=").append(target);
+    sb.append(", msgType=").append(messageType);
     sb.append('}');
     return sb.toString();
   }

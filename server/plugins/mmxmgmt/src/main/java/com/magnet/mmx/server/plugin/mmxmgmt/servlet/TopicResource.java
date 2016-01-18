@@ -373,7 +373,9 @@ public class TopicResource {
             .status(Response.Status.INTERNAL_SERVER_ERROR)
             .build();
       }
-      List<TopicSubscription> infoList = getTopicSubscriptions(appEntity.getAppId(), topicName);
+      MMXTopicId tid = nameToId(topicName);
+      List<TopicSubscription> infoList = getTopicSubscriptions(
+          appEntity.getAppId(), tid);
       Response response = Response
           .status(Response.Status.OK)
           .entity(infoList)
@@ -434,8 +436,8 @@ public class TopicResource {
   }
 
 
-  protected List<TopicSubscription> getTopicSubscriptions (String appId, String topicName) {
-    MMXTopicId tid = nameToId(topicName);
+  protected List<TopicSubscription> getTopicSubscriptions (String appId,
+                                                            MMXTopicId tid) {
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
     List<NodeSubscription> subscriptions = topicManager.listSubscriptionsForTopic(topicId);

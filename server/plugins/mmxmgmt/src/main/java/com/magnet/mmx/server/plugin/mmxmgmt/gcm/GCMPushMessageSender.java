@@ -18,15 +18,15 @@ import com.google.android.gcm.server.Constants;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.MulticastResult;
 import com.google.android.gcm.server.Sender;
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushResult;
+import com.magnet.mmx.protocol.PushResult.PushIdTuple;
+import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorMessages;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Options;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushIdTuple;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Unsent;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
@@ -80,7 +80,8 @@ public class GCMPushMessageSender {
   }
 
 
-  public PushResult sendPush(List<DeviceEntity> deviceList, MMXPushGCMPayloadBuilder builder) {
+  public PushResult sendPush(List<DeviceEntity> deviceList,
+                              MMXPushGCMPayloadBuilder builder) {
     int sentCount = 0;
     int unsentCount = 0;
     int requested = deviceList.size();

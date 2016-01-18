@@ -15,6 +15,8 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.PayloadBuilder;
 
@@ -28,64 +30,103 @@ public class MMXPushAPNSPayloadBuilder {
   private PayloadBuilder builder = null;
   private HashMap<String, ? super Object> mmxDictionary;
 
+  public MMXPushAPNSPayloadBuilder(PushMessage.Action action) {
+    builder = APNS.newPayload();
+    mmxDictionary = new HashMap<String, Object>(10);
+    if (action == PushMessage.Action.WAKEUP) {
+      builder.instantDeliveryOrSilentNotification();
+    }
+  }
+  
+  public MMXPushAPNSPayloadBuilder(PushMessage.Action action, String type) {
+    builder = APNS.newPayload();
+    mmxDictionary = new HashMap<String, Object>(10);
+    if (action == PushMessage.Action.WAKEUP) {
+      builder.instantDeliveryOrSilentNotification();
+    }
+    if (type != null) {
+      setCustomType(type);
+    }
+  }
+  
   public MMXPushAPNSPayloadBuilder() {
     builder = APNS.newPayload();
     mmxDictionary = new HashMap<String, Object>(10);
   }
 
-
-  public MMXPushAPNSPayloadBuilder setTitle(String title) {
-    if (title == null) {
-      return this;
+  /**
+   * Convert a "aps" payload object into this payload builder.
+   * @param aps An APNS POJO.
+   * @return
+   */
+  public MMXPushAPNSPayloadBuilder setAps(MMXPushManager.ApsPayload aps) {
+    if (aps.mAlert != null) {
+      if (aps.mAlert instanceof String) {
+        builder.alertBody((String) aps.mAlert);
+      } else if (aps.mAlert instanceof MMXPushManager.ApsAlert) {
+        MMXPushManager.ApsAlert alert = (MMXPushManager.ApsAlert) aps.mAlert;
+        if (alert.mTitle != null)
+          builder.alertTitle(alert.mTitle);
+        if (alert.mBody != null)
+          builder.alertBody(alert.mBody);
+      } else if (aps.mAlert instanceof Map) {
+        String value;
+        Map<String, Object> alert = (Map<String, Object>) aps.mAlert;
+        if ((value = (String) alert.get("title")) != null)
+          builder.alertTitle(value);
+        if ((value = (String) alert.get("body")) != null)
+          builder.alertBody(value);
+      }
     }
-    builder.alertTitle(title);
+    if (aps.mBadge != null)
+      builder.badge(aps.mBadge);
+    if (aps.mSound != null)
+      builder.sound(aps.mSound);
+    if (aps.mCategory != null)
+      builder.category(aps.mCategory);
+    return this;
+  }
+  
+  public MMXPushAPNSPayloadBuilder setTitle(String title) {
+    if (title != null) {
+      builder.alertTitle(title);
+    }
     return this;
   }
 
   public MMXPushAPNSPayloadBuilder setBody(String body) {
-    if (body == null) {
-      return this;
+    if (body != null) {
+      builder.alertBody(body);
     }
-    builder.alertBody(body);
     return this;
   }
 
   public MMXPushAPNSPayloadBuilder setBadge(Integer badge) {
-    if (badge == null || badge.intValue() == 0) {
-      return this;
+    if (badge != null && badge.intValue() != 0) {
+      if (badge.intValue() < 1) {
+        throw new IllegalArgumentException("Negative badge values are not permitted");
+      }
+      builder.badge(badge.intValue());
     }
-    if (badge.intValue() < 1) {
-      throw new IllegalArgumentException("Negative badge values are not permitted");
-    }
-    builder.badge(badge.intValue());
     return this;
   }
 
   public MMXPushAPNSPayloadBuilder setSound(String sound) {
-    if (sound == null) {
-      return this;
+    if (sound != null) {
+      builder.sound(sound);
     }
-    builder.sound(sound);
     return this;
   }
 
   public MMXPushAPNSPayloadBuilder silent() {
-    builder.forNewsstand();
+    builder.instantDeliveryOrSilentNotification();
     return this;
   }
 
-  public MMXPushAPNSPayloadBuilder setType(String type) {
+  public MMXPushAPNSPayloadBuilder setCustomType(String type) {
     mmxDictionary.put(Constants.PAYLOAD_TYPE_KEY, type);
     return this;
   }
-
-  public MMXPushAPNSPayloadBuilder setType(MMXPushHeader header) {
-    if (header != null) {
-      mmxDictionary.put(Constants.PAYLOAD_TYPE_KEY, header.toString(false));
-    }
-    return this;
-  }
-
 
   public MMXPushAPNSPayloadBuilder setId(String id) {
     mmxDictionary.put(Constants.PAYLOAD_ID_KEY, id);
@@ -97,7 +138,7 @@ public class MMXPushAPNSPayloadBuilder {
     return this;
   }
 
-  public MMXPushAPNSPayloadBuilder setCustomDictionary(Map<String, String> dictionary) {
+  public MMXPushAPNSPayloadBuilder setCustomDictionary(Map<String, Object> dictionary) {
     mmxDictionary.put(Constants.PAYLOAD_CUSTOM_KEY, dictionary);
     return this;
   }
@@ -127,8 +168,8 @@ public class MMXPushAPNSPayloadBuilder {
    * @return
    */
   public static String wakeupPayload() {
-    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder();
-    builder.setType(new MMXPushHeader(Constants.MMX, Constants.MMX_ACTION_CODE_WAKEUP, Constants.PingPongCommand.retrieve.name()));
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(
+        PushMessage.Action.WAKEUP, Constants.PingPongCommand.retrieve.name());
     builder.silent();
     return builder.build();
   }

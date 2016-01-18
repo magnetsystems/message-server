@@ -148,6 +148,7 @@ public class BotRegistrationImpl implements BotRegistration {
       this.autoRespondingConnection = connection;
     }
 
+    @Override
     public void processIncoming(Packet packet) {
       if (packet instanceof Message) {
         Message message = (Message) packet;
@@ -158,6 +159,10 @@ public class BotRegistrationImpl implements BotRegistration {
         packet.setTo(fromJID);
 
         Element mmx = message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+        if (mmx == null) {
+          // Ignored the signal msg of send ack.
+          return;
+        }
         Element recieptRequest = message.getChildElement(Constants.XMPP_REQUEST, Constants.XMPP_NS_RECEIPTS);
         boolean receiptRequested = recieptRequest != null;
 
@@ -180,7 +185,7 @@ public class BotRegistrationImpl implements BotRegistration {
         mmxMeta.setFrom(new MMXid(senderId, senderDevId, null));
         Element revisedMeta = mmx.addElement(Constants.MMX_MMXMETA);
         revisedMeta.setText(GsonData.getGson().toJson(mmxMeta));
-        
+
         //add the content to meta (as requested by iOS team) and replace the meta object.
         Map<String, String> metaMap =  new HashMap<String, String>();
         metaMap.put(MMXServerConstants.TEXT_CONTENT_KEY, AMAZING_MESSAGE);
@@ -227,10 +232,12 @@ public class BotRegistrationImpl implements BotRegistration {
       }
     }
 
+    @Override
     public void processIncomingRaw(String rawText) {
       LOGGER.info("process Incoming raw");
     }
 
+    @Override
     public void terminate() {
       LOGGER.info("Terminating Bot processor ");
       if (autoRespondingConnection != null) {
@@ -262,6 +269,7 @@ public class BotRegistrationImpl implements BotRegistration {
   public static class EchoBotProcessor extends AmazingBotProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EchoBotProcessor.class);
 
+    @Override
     public void processIncoming(Packet packet) {
       if (packet instanceof Message) {
         LOGGER.debug("Sending the same message back");

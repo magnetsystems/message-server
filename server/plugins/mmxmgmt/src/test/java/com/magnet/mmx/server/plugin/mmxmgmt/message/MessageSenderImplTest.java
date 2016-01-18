@@ -44,8 +44,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SendMessageRequest;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.BasicDataSourceConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImplSearchTest;

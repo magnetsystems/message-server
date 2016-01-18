@@ -16,6 +16,10 @@ package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
 import java.util.List;
 
+import com.magnet.mmx.protocol.Count;
+import com.magnet.mmx.protocol.PushResult.PushIdTuple;
+import com.magnet.mmx.protocol.PushResult.Unsent;
+
 /**
  * SendPushMessageResponse
  */

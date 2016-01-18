@@ -14,8 +14,8 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.message;
 
+import com.magnet.mmx.protocol.Count;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.SentMessageId;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.Count;
 
 import java.util.List;
 
