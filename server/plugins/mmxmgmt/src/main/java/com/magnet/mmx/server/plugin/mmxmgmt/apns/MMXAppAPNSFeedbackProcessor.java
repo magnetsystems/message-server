@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class MMXAppAPNSFeedbackProcessor implements Callable<MMXAppAPNSFeedbackProcessResult> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppAPNSFeedbackProcessor.class);
-  private ConnectionProvider provider;
-  private String appId;
-  private boolean productionCert;
+  private final ConnectionProvider provider;
+  private final String appId;
+  private final boolean productionCert;
 
   /**
    * Constructor.
@@ -50,24 +50,36 @@ public class MMXAppAPNSFeedbackProcessor implements Callable<MMXAppAPNSFeedbackP
 
   @Override
   public MMXAppAPNSFeedbackProcessResult call() throws Exception {
-    long startTime = System.nanoTime();
-    APNSConnection connection = getAPNSConnection(appId, productionCert);
-
-    List<String> tokens = connection.getInactiveDeviceTokens();
-    DeviceDAO deviceDAO = new DeviceDAOImpl(provider);
     int count = 0;
-    DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
-    for (String token : tokens) {
-      invalidator.invalidateToken(appId, PushType.APNS, token);
-      count++;
+    APNSConnection connection = null;
+    long startTime = System.nanoTime();
+
+    try {
+      connection = getAPNSConnection(appId, productionCert);
+      if (connection == null) {
+        LOGGER.warn("Unable to invalidate tokens for appId:{}; no APNS "+
+            "connection available.  Is APNS certification misconfigured?", appId);
+      } else {
+        List<String> tokens = connection.getInactiveDeviceTokens();
+        DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
+        for (String token : tokens) {
+          invalidator.invalidateToken(appId, PushType.APNS, token);
+          count++;
+        }
+        LOGGER.info("Invalidated:{} tokens for appId:{}", count, appId);
+      }
+    } finally {
+      // Fix MAX-40 for APNS connection leak.
+      if (connection != null) {
+        returnConnection(connection);
+      }
     }
-    LOGGER.info("Invalidated:{} tokens for appId:{}", count, appId);
+    long endTime = System.nanoTime();
 
     MMXAppAPNSFeedbackProcessResult result = new MMXAppAPNSFeedbackProcessResult();
     result.setInvalidatedCount(count);
     result.setAppId(appId);
     result.setProductionApnsCert(productionCert);
-    long endTime = System.nanoTime();
 
     LOGGER.info("Completed processing APNS feedback for appId:{} in {} milliseconds", appId,
         TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS));
@@ -81,5 +93,8 @@ public class MMXAppAPNSFeedbackProcessor implements Callable<MMXAppAPNSFeedbackP
     return connection;
   }
 
-
+  protected void returnConnection (APNSConnection connection) {
+    APNSConnectionPool connectionPool = APNSConnectionPoolImpl.getInstance();
+    connectionPool.returnConnection(connection);
+  }
 }

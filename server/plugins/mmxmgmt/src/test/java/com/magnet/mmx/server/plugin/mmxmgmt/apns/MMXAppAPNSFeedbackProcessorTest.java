@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
 
 public class MMXAppAPNSFeedbackProcessorTest {
 
@@ -60,12 +62,113 @@ public class MMXAppAPNSFeedbackProcessorTest {
     }
   }
 
+  // This alarm thread will run a task after delaying for <code>delay</code>ms.
+  // A runnable task is written to interrupt a blocking call (e.g. wait()) after
+  // waiting for <code>delay</code>ms.  The caller should abort this alarm if
+  // the blocking call is completed.
+  private static class Alarm extends Thread {
+    private static int sId;
+    private boolean mAborted;
+    private boolean mExecuted;
+    private final long mDelay;
+    private final Runnable mTask;
+
+    public Alarm(long delay, Runnable task) {
+      super("Alarm-"+(++sId));
+      mTask = task;
+      mDelay = delay;
+    }
+
+    public boolean executed() {
+      return mExecuted;
+    }
+
+    @Override
+    public void run() {
+      synchronized(mTask) {
+        try {
+          System.out.println("Thread "+this.getName()+" waits for "+mDelay+"ms");
+          mTask.wait(mDelay);
+        } catch (InterruptedException e) {
+          System.out.println("Thread "+this.getName()+" is interrupted");
+        }
+      }
+      if (mAborted) {
+        System.out.println("Thread "+this.getName()+" is aborted");
+        return;
+      }
+      try {
+        mExecuted = true;
+        mTask.run();
+        System.out.println("Thread "+this.getName()+" executed a task");
+      } catch (Throwable e) {
+        // The task failed
+      }
+    }
+
+    public void abort() {
+      synchronized(mTask) {
+        mAborted = true;
+        mTask.notify();
+      }
+    }
+  }
+
   @Test
-  public void test1Call() throws Exception {
+  public void test0ReturnConnection() throws Exception {
+    String appId = "f2oi5ejp8di";
+    String[] badTokens = {};
+
+    StubMMXAppAPNSFeedbackProcessor processor = new StubMMXAppAPNSFeedbackProcessor(
+        new BasicDataSourceConnectionProvider(ds), appId, true, Arrays.asList(badTokens));
+    APNSConnection connection = processor.getAPNSConnection(appId, true);
+    assertNotNull(connection);
+    try {
+      processor.returnConnection(connection);
+    } catch (Throwable e) {
+      e.printStackTrace();
+      fail("Return connection caught "+e.getClass().getName()+": "+e);
+    }
+  }
+
+  @Test
+  public void test1ConnectionLeakViaCall() throws Exception {
+    String appId = "f2oi5ejp8di";
+    String[] badTokens = {};
+
+    StubMMXAppAPNSFeedbackProcessor processor = new StubMMXAppAPNSFeedbackProcessor(
+        new BasicDataSourceConnectionProvider(ds), appId, true, Arrays.asList(badTokens));
+
+    for (int i = 0; i < 10; i++) {
+      System.out.println("Iteration #"+i);
+      Alarm alarm = new Alarm(2000, new Runnable() {
+        private final Thread mThread = Thread.currentThread();
+        @Override
+        public void run() {
+          // The getConnection() in processor.call() took too long; interrupt the wait.
+          mThread.interrupt();
+        }
+      });
+      alarm.start();
+      // The call should take about 10ms.  if it does not return in two seconds,
+      // issue a failure.
+      MMXAppAPNSFeedbackProcessResult result = processor.call();
+      if (alarm.executed()) {
+        fail("MMXAppAPNSFeedbackProcessor was blocked at iteration "+i);
+      } else {
+        alarm.abort();
+      }
+      alarm.join();
+    }
+  }
+
+  @Test
+  public void test2Call() throws Exception {
     String appId = "f2oi5ejp8di";
     String[] badTokens = {"59AC2DAE4EEC46C8AD8DB01C41D0F89519800B459CEC75CF89C225E3661EC075"};
 
-    StubMMXAppAPNSFeedbackProcessor processor = new StubMMXAppAPNSFeedbackProcessor(new BasicDataSourceConnectionProvider(ds), appId, true, Arrays.asList(badTokens));
+    StubMMXAppAPNSFeedbackProcessor processor = new StubMMXAppAPNSFeedbackProcessor(
+        new BasicDataSourceConnectionProvider(ds), appId, true, Arrays.asList(badTokens));
 
     MMXAppAPNSFeedbackProcessResult result = processor.call();
     assertNotNull("Expecting a not null result", result);

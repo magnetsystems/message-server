@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,17 +18,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
 */
 class StubAPNSConnection implements APNSConnection {
   private static Logger LOGGER = LoggerFactory.getLogger(StubAPNSConnection.class);
-  private String appId;
-  private boolean production;
-  private long sleepTime;
-  private List<String> invalidTokens = Collections.emptyList();
+  private final String appId;
+  private final boolean production;
+  private final long sleepTime;
+  private final List<String> invalidTokens;
 
   StubAPNSConnection(String appId, boolean production, long sleepTime) {
     this (appId, production, sleepTime, new ArrayList<String>(0));
@@ -75,8 +74,8 @@ class StubAPNSConnection implements APNSConnection {
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("StubAPNSConnection{");
-    sb.append("appId='").append(appId).append('\'');
-    sb.append(", production=").append(production);
+    sb.append("appId='").append(getAppId()).append('\'');
+    sb.append(", production=").append(isApnsProductionCert());
     sb.append('}');
     return sb.toString();
   }

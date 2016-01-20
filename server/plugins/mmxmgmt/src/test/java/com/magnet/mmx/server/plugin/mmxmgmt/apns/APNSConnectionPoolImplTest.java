@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -111,7 +112,7 @@ public class APNSConnectionPoolImplTest {
 
     CountDownLatch countDownLatch = new CountDownLatch(threadCount);
     Executor executor = Executors.newFixedThreadPool(threadCount, new ThreadFactory() {
-      private AtomicInteger counter = new AtomicInteger(1);
+      private final AtomicInteger counter = new AtomicInteger(1);
 
       @Override
       public Thread newThread(Runnable r) {
@@ -138,7 +139,7 @@ public class APNSConnectionPoolImplTest {
   public void testGetForAppWithBadCert() {
     APNSConnectionPoolImpl pool = APNSConnectionPoolImpl.getInstance();
     APNSConnection connection = pool.getConnection(appWithBadCert, true);
-    assertTrue("Connection is not null", connection == null);
+    assertNull("Connection is not null", connection);
   }
 
   @Test
@@ -163,10 +164,10 @@ public class APNSConnectionPoolImplTest {
   }
 
   public static class SimpleAPNSSenderThread implements Runnable {
-    private String appId;
-    private boolean production;
-    private Map<String, String> payLoadMap;
-    private CountDownLatch latch;
+    private final String appId;
+    private final boolean production;
+    private final Map<String, String> payLoadMap;
+    private final CountDownLatch latch;
 
     public SimpleAPNSSenderThread(String appId, boolean production, Map<String, String> payLoadMap, CountDownLatch latch) {
       this.appId = appId;
@@ -182,16 +183,24 @@ public class APNSConnectionPoolImplTest {
       try {
         long start = System.nanoTime();
         connection = pool.getConnection(appId, production);
-        long end = System.nanoTime();
-        LOGGER.debug("Retrieved a connection from the pool in:" + (end - start) / 1000000l + " ms. with code:" + connection.hashCode());
+        if (connection == null) {
+          LOGGER.error("No APNS connection for appId={}, production={}", appId,
+              production);
+        } else {
+          long end = System.nanoTime();
+          LOGGER.debug("Retrieved a connection from the pool in:" +
+              (end - start) / 1000000l + " ms. with code:" + connection.hashCode());
 
-        for (String key : payLoadMap.keySet()) {
-          connection.send(key, payLoadMap.get(key));
+          for (String key : payLoadMap.keySet()) {
+            connection.send(key, payLoadMap.get(key));
+          }
         }
       } catch (Exception e) {
         LOGGER.info("Exception in sending the payload", e);
       } finally {
-        pool.returnConnection(connection);
+        if (connection != null) {
+          pool.returnConnection(connection);
+        }
       }
       //completed sending the message.
       latch.countDown();

@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,38 +35,39 @@ public class APNSWakeupNotifierImpl implements WakeupNotifier {
     if (context == null || !(context instanceof APNSNotificationSystemContext)) {
       throw new IllegalArgumentException("Context has to be instance of APNSNotificationSystemContext");
     }
-
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("JSON Payload for the APNS wakeup notification:{}" , payload);
+    }
     APNSNotificationSystemContext apnsContext = (APNSNotificationSystemContext) context;
     boolean apnsCertProduction = apnsContext.isApnsCertProduction();
     String appId = apnsContext.getAppId();
     APNSConnectionPool connectionPool = APNSConnectionPoolImpl.getInstance();
-    APNSConnection connection = connectionPool.getConnection(appId, apnsCertProduction);
-    if (connection == null) {
-      LOGGER.warn("No APNS connection available; maybe the certification is misconfigured.");
-    }
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("JSON Payload for the APNS wakeup notification:{}" , payload);
-    }
+    APNSConnection connection = null;
     List<NotificationResult> results = new ArrayList<NotificationResult>(deviceTokens.size());
-    for (String token : deviceTokens) {
-      try {
-        if (connection == null) {
-          results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
-        } else {
-          connection.send(token, payload);
-          results.add(NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER);
+    try {
+      connection = connectionPool.getConnection(appId, apnsCertProduction);
+      if (connection == null) {
+        LOGGER.warn("No APNS connection available; maybe the certification is misconfigured.");
+        results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
+      } else {
+        for (String token : deviceTokens) {
+          try {
+            connection.send(token, payload);
+            results.add(NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER);
+          } catch (APNSConnectionException e) {
+            LOGGER.warn("Exception in sending APNS wakeup notification", e);
+            results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
+          } catch (Throwable e) {
+            LOGGER.error("Unexpected exception in sending APNS wakeup notification", e);
+            results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
+          }
         }
-      } catch (APNSConnectionException e) {
-        LOGGER.warn("Exception in sending APNS wakeup notification", e);
-        results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
-      } catch (Throwable e) {
-        LOGGER.error("Exception in sending APNS wakeup notification", e);
-        results.add(NotificationResult.DELIVERY_FAILED_PERMANENT);
       }
-    }
-    if (connection != null) {
-      //return the connection back to pool
-      connectionPool.returnConnection(connection);
+    } finally {
+      if (connection != null) {
+        //return the connection back to pool
+        connectionPool.returnConnection(connection);
+      }
     }
     return results;
   }

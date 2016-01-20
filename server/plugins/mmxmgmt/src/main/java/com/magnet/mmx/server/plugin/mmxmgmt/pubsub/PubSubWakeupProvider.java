@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,12 +21,10 @@ import java.util.List;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.WakeupProvider;
-import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
@@ -44,15 +42,13 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.TopicHelper;
 
 public class PubSubWakeupProvider implements WakeupProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubWakeupProvider.class);
   private static final String BODY = "New message is available";
-  private static final String PROP_PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
-  private static final String PROP_PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
-  private static final String PROP_PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
 
   @Override
   public void wakeup(WakeupProvider.Scope scope, JID userOrDev, Node node, Date pubDate) {
@@ -66,9 +62,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
     MMXTopicId topic = TopicHelper.parseNode(node.getNodeID());
     PushMessage.Action action;
     try {
-      // Default is "push".  Other options are: wakeup or "" (disabling.)
+      // Default is "push".  Other options are: "wakeup" or "" (disabling.)
       String type = JiveProperties.getInstance().getProperty(
-          PROP_PUBSUB_NOTIFICATION_TYPE, PushMessage.Action.PUSH.toString());
+          MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE, PushMessage.Action.PUSH.toString());
       action = PushMessage.Action.valueOf(type.toUpperCase());
     } catch (Throwable e) {
       action = null;
@@ -82,12 +78,12 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     String pubsubPayload;
     String body = JiveProperties.getInstance().getProperty(
-        PROP_PUBSUB_NOTIFICATION_BODY, BODY);
+        MMXConfigKeys.PUBSUB_NOTIFICATION_BODY, BODY);
     if (action == PushMessage.Action.PUSH) {
       // Push notification payload
       pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
           pubDate, JiveProperties.getInstance().getProperty(
-              PROP_PUBSUB_NOTIFICATION_TITLE, (topic.getUserId() == null) ?
+              MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE, (topic.getUserId() == null) ?
                   topic.getName() : topic.toString()), body));
     } else {
       // Wakeup (silent) notification payload

@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -109,7 +109,11 @@ public class MessageDistributorImplTest {
 
     MessageDistributor.DistributionResult result = distributor.distribute(message, context);
 
-    Thread.sleep(5000);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      System.out.println("testDistribute1 thread is interrupted");
+    }
 
     CountingPacketRouter countingPacketRouter = (CountingPacketRouter) router;
     assertEquals("Non matching message packet count", 4, countingPacketRouter.messageCount.get());
@@ -139,7 +143,11 @@ public class MessageDistributorImplTest {
 
     MessageDistributor.DistributionResult result = distributor.distribute(message, context);
 
-    Thread.sleep(5000);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      System.out.println("testDistribute2ToUserWithNoDevices thread is interrupted");
+    }
 
     CountingPacketRouter countingPacketRouter = (CountingPacketRouter) router;
     assertEquals("Non matching message packet count", 0, countingPacketRouter.messageCount.get());
