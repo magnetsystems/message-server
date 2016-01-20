@@ -60,8 +60,8 @@ public class MMXChannelManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class);
   private static final boolean EXCLUDE_USER_CHANNELS = true;
-  private XMPPServer mServer = XMPPServer.getInstance();
-  private PubSubService mPubSubModule = mServer.getPubSubModule();
+  private final XMPPServer mServer = XMPPServer.getInstance();
+  private final PubSubService mPubSubModule = mServer.getPubSubModule();
 
   private static MMXChannelManager sInstance = null;
 
@@ -123,7 +123,7 @@ public class MMXChannelManager {
    * @return
    */
   public List<com.magnet.mmx.server.api.v1.protocol.ChannelInfo> getChannelInfo(String appId) {
-    ArrayList<com.magnet.mmx.server.api.v1.protocol.ChannelInfo> result = 
+    ArrayList<com.magnet.mmx.server.api.v1.protocol.ChannelInfo> result =
         new ArrayList<com.magnet.mmx.server.api.v1.protocol.ChannelInfo>();
     CollectionNode rootNode = getRootAppChannel(appId);
     if (rootNode != null) {
@@ -136,7 +136,7 @@ public class MMXChannelManager {
         String identifier = node.getNodeID();
         boolean isAppChannel = ChannelHelper.isAppChannel(identifier, appId);
         if (isAppChannel) {
-          com.magnet.mmx.server.api.v1.protocol.ChannelInfo info = 
+          com.magnet.mmx.server.api.v1.protocol.ChannelInfo info =
               getChannelInfoFromNode(appId, node);
           result.add(info);
         }
@@ -147,7 +147,7 @@ public class MMXChannelManager {
 
   public com.magnet.mmx.server.api.v1.protocol.ChannelInfo getChannelInfoFromNode(
                   String appId, Node node) {
-    com.magnet.mmx.server.api.v1.protocol.ChannelInfo info = new 
+    com.magnet.mmx.server.api.v1.protocol.ChannelInfo info = new
         com.magnet.mmx.server.api.v1.protocol.ChannelInfo();
     info.setDescription(node.getDescription());
     info.setChannelName(node.getName());
@@ -161,7 +161,7 @@ public class MMXChannelManager {
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
-  
+
   /**
    * Get a list of subscriptions for a specific channel
    * @param channelId
@@ -307,7 +307,7 @@ public class MMXChannelManager {
       form.setNodeType(ConfigureForm.NodeType.collection);
       form.setPublishModel(ConfigureForm.PublishModel.open);
       LOGGER.trace("Collection config form: " + form);
-      
+
       JID jid = new JID(creatorUsername, mServer.getServerInfo().getXMPPDomain(), null);
       CollectionNode node = new CollectionNode(mPubSubModule, parent, nodeId, jid);
       node.addOwner(jid);
@@ -332,7 +332,7 @@ public class MMXChannelManager {
    * @throws ChannelExistsException   -- if channel already exists
    * @throws NotAcceptableException -- if an exception is thrown by openfire during channel creation.
    */
-  private LeafNode createLeafNode(String createUsername, String channelId, 
+  private LeafNode createLeafNode(String createUsername, String channelId,
                     CollectionNode parentNode, ChannelCreateInfo channelInfo)
                         throws ChannelExistsException, NotAcceptableException {
 
@@ -381,12 +381,12 @@ public class MMXChannelManager {
         LOGGER.warn("NotAcceptableException", e);
         throw e;
       }
-      
+
       if (channelInfo.isSubscribeOnCreate()) {
         NodeSubscription subscription = subscribeToNode(node, jid, jid);
         // TODO: not returning the subscription ID yet.
       }
-      
+
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       createdNode = node;
@@ -459,7 +459,7 @@ public class MMXChannelManager {
       super(message);
     }
   }
-  
+
   private void setOptions(String channelName, Node node, MMXTopicOptions options) {
     ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
     form.setSendItemSubscribe(true);
@@ -481,7 +481,7 @@ public class MMXChannelManager {
     } else {
       // Set the default values if not specified.
       options.fillWithDefaults();
-      
+
       form.setPublishModel(ConfigureForm.convert(options.getPublisherType()));
       form.setPersistentItems(options.getMaxItems() != 0);
       form.setMaxItems(options.getMaxItems());
@@ -495,9 +495,9 @@ public class MMXChannelManager {
       e.printStackTrace();
     }
   }
-  
+
   // Create the collection node and its ancestors recursively.
-  private CollectionNode createCollectionNode(int prefix, String nodeId, 
+  private CollectionNode createCollectionNode(int prefix, String nodeId,
                               JID creator, JID owner) throws IllegalArgumentException {
 //    LOGGER.trace("createCollectionNode: prefix="+prefix+", nodeId="+nodeId);
     if (nodeId == null) {
@@ -520,7 +520,7 @@ public class MMXChannelManager {
     } else {
       parentNode = createCollectionNode(prefix, parentNodeId, creator, owner);
     }
-    
+
     synchronized(nodeId.intern()) {
       if ((node = mPubSubModule.getNode(nodeId)) == null) {
         LOGGER.trace("create collection node=" + nodeId + ", parent=" +
@@ -529,14 +529,14 @@ public class MMXChannelManager {
         setOptions(null, node, null);
         node.addOwner(owner);
         node.saveToDB();
-        
+
         CacheFactory.doClusterTask(new RefreshNodeTask(node));
       }
     }
     LOGGER.trace("return new collection node=" + nodeId);
     return (CollectionNode) node;
   }
-  
+
   /**
    * Create an application-wide or personal channel and create all parent nodes
    * if needed.
@@ -546,7 +546,7 @@ public class MMXChannelManager {
    * @return
    * @throws MMXException
    */
-  public MMXStatus createChannel(JID from, String appId, ChannelAction.CreateRequest rqt) 
+  public MMXStatus createChannel(JID from, String appId, ChannelAction.CreateRequest rqt)
                           throws MMXException {
     String channel = rqt.getChannelName();
     try {
@@ -583,9 +583,9 @@ public class MMXChannelManager {
     int prefix = ChannelHelper.getPrefixLength(channelId);
     String parentId = ChannelHelper.getParent(prefix, channelId);
     CollectionNode parent;
-    if (parentId == null)
+    if (parentId == null) {
       parent = getRootAppChannel(appId);
-    else {
+    } else {
       try {
         // Recursively create the parent nodes if they don't exist.
         parent = createCollectionNode(prefix, parentId, from, owner);
@@ -596,7 +596,7 @@ public class MMXChannelManager {
     if (parent != null && !rqt.isCollection()) {
       if (!parent.isAssociationAllowed(from)) {
         // Check if requester is allowed to add a new leaf node to the parent.
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
             StatusCode.FORBIDDEN.getCode());
       }
       if (parent.isMaxLeafNodeReached()) {
@@ -604,7 +604,7 @@ public class MMXChannelManager {
             StatusCode.CONFLICT.getCode());
       }
     }
-    
+
     synchronized(channelId.intern()) {
       if (mPubSubModule.getNode(channelId) != null) {
         throw new MMXException(StatusCode.CHANNEL_EXISTS.getMessage(channel),
@@ -612,9 +612,9 @@ public class MMXChannelManager {
       }
 //      LOGGER.trace("create node="+realChannel+", parent="+parent);
       Node node;
-      if (rqt.isCollection())
+      if (rqt.isCollection()) {
         node = new CollectionNode(mPubSubModule, parent, channelId, from);
-      else {
+      } else {
         node = new LeafNode(mPubSubModule, parent, channelId, from);
       }
       // Add the creator as the owner.
@@ -626,7 +626,7 @@ public class MMXChannelManager {
         NodeSubscription subscription = subscribeToNode(node, owner, owner);
         // TODO: not returning the subscription ID yet.
       }
-      
+
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       /**
@@ -648,7 +648,7 @@ public class MMXChannelManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
   private NodeSubscription subscribeToNode(Node node, JID owner, JID subscriber) {
     SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
     // Receive notification of new items only.
@@ -656,13 +656,13 @@ public class MMXChannelManager {
     optionsForm.setSubscriptionDepth("all");
     // Don't set other options; it will change the subscription state to
     // pending because it will wait for the owner's approval.
-    
+
     // Need a modified Node.java from mmx-openfire repo.
     NodeSubscription subscription = node.createSubscription(null, owner,
         subscriber, false, optionsForm);
     return subscription;
   }
-  
+
   private int deleteNode(Node node, JID owner) throws MMXException {
     if (!node.getOwners().contains(owner)) {
       AppChannel channel = ChannelHelper.parseChannel(node.getNodeID());
@@ -680,7 +680,7 @@ public class MMXChannelManager {
             throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel.getName()),
                 StatusCode.FORBIDDEN.getCode());
           }
-          
+
 //          LOGGER.trace("delete leaf node=" + node.getNodeID());
           child.delete();
           ++count;
@@ -692,8 +692,8 @@ public class MMXChannelManager {
     ++count;
     return count;
   }
-  
-  public MMXStatus deleteChannel(JID from, String appId, 
+
+  public MMXStatus deleteChannel(JID from, String appId,
                           ChannelAction.DeleteRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String userId = JIDUtil.getUserId(from);
@@ -702,10 +702,10 @@ public class MMXChannelManager {
             userId : null, channel);
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
-    int count = deleteNode(node, owner);    
+    int count = deleteNode(node, owner);
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" channel"+((count==1)?" is":"s are")+" deleted");
@@ -717,14 +717,14 @@ public class MMXChannelManager {
           throws MMXException {
         return getChannel( null,appId,channel);
   }
-  
+
   public ChannelInfo getChannel(JID from, String appId, MMXChannelId channel)
                           throws MMXException {
     String realChannel = ChannelHelper.makeChannel(appId, channel.getEscUserId(),
             ChannelHelper.normalizePath(channel.getName()));
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel.getName()), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel.getName()),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
 //    // A user can get the channel info if the channel is a global channel, or the owner
@@ -748,7 +748,7 @@ public class MMXChannelManager {
     }
     return node;
   }
-  
+
   public List<ChannelInfo> getChannels(JID from, String appId, List<MMXChannelId> channels)
                             throws MMXException {
     List<ChannelInfo> infos = new ArrayList<ChannelInfo>(channels.size());
@@ -761,7 +761,7 @@ public class MMXChannelManager {
     }
     return infos;
   }
-  
+
   public MMXStatus retractAllFromChannel(JID from, String appId,
       ChannelAction.RetractAllRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
@@ -771,38 +771,38 @@ public class MMXChannelManager {
             userId : null, channel);
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
     if (!node.getOwners().contains(owner)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
           StatusCode.FORBIDDEN.getCode());
     }
     LeafNode leafNode = (LeafNode) node;
     List<PublishedItem> pubItems = leafNode.getPublishedItems();
     leafNode.deleteItems(pubItems);
-    
+
     int count = (pubItems == null) ? 0 : pubItems.size();
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" item"+((count==1)?" is":"s are")+" retracted");
     return status;
   }
-  
-  public Map<String, Integer> retractFromChannel(JID from, String appId, 
+
+  public Map<String, Integer> retractFromChannel(JID from, String appId,
       ChannelAction.RetractRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
       throw new MMXException("Cannot retract items from a collection channel",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
     if (itemIds == null || itemIds.size() == 0) {
@@ -814,7 +814,7 @@ public class MMXChannelManager {
       throw new MMXException("Items required in this channel",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     List<PublishedItem> pubItems = new ArrayList<PublishedItem>(itemIds.size());
     Map<String, Integer> results = new HashMap<String, Integer>(itemIds.size());
     for (String itemId : itemIds) {
@@ -834,14 +834,14 @@ public class MMXChannelManager {
     leafNode.deleteItems(pubItems);
     return results;
   }
-  
-  public ChannelAction.SubscribeResponse subscribeChannel(JID from, String appId, 
+
+  public ChannelAction.SubscribeResponse subscribeChannel(JID from, String appId,
               ChannelAction.SubscribeRequest rqt, List<String> userRoles) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
 
@@ -854,7 +854,7 @@ public class MMXChannelManager {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
           StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // Check if the subscription owner is a user with outcast affiliation
     NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
     if (nodeAffiliate != null &&
@@ -862,7 +862,7 @@ public class MMXChannelManager {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
           StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // Check that subscriptions to the node are enabled
     if (!node.isSubscriptionEnabled()) {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
@@ -890,17 +890,17 @@ public class MMXChannelManager {
         return resp;
       }
     }
-    
+
     subscription = subscribeToNode(node, owner, subscriber);
-    
+
     ChannelAction.SubscribeResponse resp = new ChannelAction.SubscribeResponse(
-        subscription.getID(), StatusCode.SUCCESS.getCode(), 
+        subscription.getID(), StatusCode.SUCCESS.getCode(),
         StatusCode.SUCCESS.getMessage());
     return resp;
   }
-  
-  public MMXStatus unsubscribeChannel(JID from, String appId, 
-                  ChannelAction.UnsubscribeRequest rqt) throws MMXException {    
+
+  public MMXStatus unsubscribeChannel(JID from, String appId,
+                  ChannelAction.UnsubscribeRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
     Node node = mPubSubModule.getNode(realChannel);
@@ -921,14 +921,14 @@ public class MMXChannelManager {
       throw new MMXException(StatusCode.GONE.getMessage(),
           StatusCode.GONE.getCode());
     }
-    
+
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" subscription"+((count==1)?" is":"s are")+" cancelled");
     return status;
   }
-  
-  public MMXStatus unsubscribeForDev(JID from, String appId, 
+
+  public MMXStatus unsubscribeForDev(JID from, String appId,
                   ChannelAction.UnsubscribeForDevRequest rqt) throws MMXException {
     String prefix = ChannelHelper.CHANNEL_DELIM + appId + ChannelHelper.CHANNEL_DELIM;
     int count = 0;
@@ -950,7 +950,7 @@ public class MMXChannelManager {
         .setMessage(count+" subscription"+((count==1)?" is":"s are")+" cancelled");
     return status;
   }
-  
+
   public ChannelAction.ListResponse listChannels(JID from, String appId,
                   ChannelAction.ListRequest rqt, List<String> userRoles) throws MMXException {
     ChannelAction.ListResponse resp = new ChannelAction.ListResponse();
@@ -1027,10 +1027,10 @@ public class MMXChannelManager {
     }
     return info;
   }
-  
+
   // Get all top level children nodes which are either global channels or user
   // channels.  Filter out the nodes by the search type.
-  private int getTopChildNodes(boolean recursive, Node root, 
+  private int getTopChildNodes(boolean recursive, Node root,
       ChannelAction.ListResponse resp, int limit, ListType type, String userId, List<String> roles) {
     boolean globalOnly = (type == ListType.global);
     if (roles == null || roles.isEmpty()) {
@@ -1072,10 +1072,10 @@ public class MMXChannelManager {
     }
     return limit;
   }
-  
-  // Get all children nodes recursively below the top level.  
+
+  // Get all children nodes recursively below the top level.
   // @return < 0 if exceeding the limit, >= 0 if within the limit.
-  private int getChildNodes(boolean recursive, Node node, 
+  private int getChildNodes(boolean recursive, Node node,
       ChannelAction.ListResponse resp, int limit) {
     if (!node.isCollectionNode()) {
       AppChannel channel = ChannelHelper.parseChannel(node.getNodeID());
@@ -1105,8 +1105,8 @@ public class MMXChannelManager {
     }
     return limit;
   }
-  
-  private String[] getChannels(String appId, List<MMXChannelId> list, 
+
+  private String[] getChannels(String appId, List<MMXChannelId> list,
                               int begin, int size) {
     if (list == null) {
       return null;
@@ -1120,7 +1120,7 @@ public class MMXChannelManager {
     }
     return channels;
   }
-  
+
   private static class SQLHelper {
     public static String generateArgList(int numOfArgs) {
       if (numOfArgs == 0) {
@@ -1140,15 +1140,15 @@ public class MMXChannelManager {
         pstmt.setString(index++, arg);
       }
     }
-    
-    public static void bindArgList(PreparedStatement pstmt, int index, 
+
+    public static void bindArgList(PreparedStatement pstmt, int index,
                                       List<String> args) throws SQLException {
       for (String arg : args) {
         pstmt.setString(index++, arg);
       }
     }
   }
-  
+
   public ChannelAction.SummaryResponse getSummary(JID from, String appId,
           ChannelAction.SummaryRequest rqt) throws MMXException {
     // Build a collection of channel ID's from the request; it contains channels
@@ -1225,7 +1225,7 @@ public class MMXChannelManager {
       DbConnectionManager.closeConnection(rs, pstmt, con);
     }
   }
-  
+
   public List<ChannelInfo> searchByTags(JID from, String appId,
                       TagSearch rqt) throws MMXException {
     List<TopicEntity> entities;
@@ -1263,7 +1263,7 @@ public class MMXChannelManager {
     }
     return res;
   }
-  
+
   public ChannelAction.ChannelTags getTags(JID from, String appId,
                       MMXChannelId rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getName());
@@ -1271,10 +1271,10 @@ public class MMXChannelManager {
     Node node = mPubSubModule.getNode(realChannel);
     // No need to check for permission; just check for existing.
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
-    
+
     TagDAO tagDao = DBUtil.getTagDAO();
     String serviceId = node.getService().getServiceID();
     String nodeId = node.getNodeID();
@@ -1291,7 +1291,7 @@ public class MMXChannelManager {
         rqt.getName(), tags, new Date());
     return channelTags;
   }
-  
+
   public MMXStatus setTags(JID from, String appId, ChannelAction.ChannelTags rqt)
                       throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannelName());
@@ -1311,13 +1311,14 @@ public class MMXChannelManager {
     tagDao.deleteAllTagsForTopic(appId, serviceId, nodeId);
 
     if(!Utils.isNullOrEmpty(tags)) {
-      for(String tag : tags)
-      try {
-        tagDao.createTopicTag(tag, appId, serviceId, nodeId);
-      } catch (DbInteractionException e) {
-        return (new MMXStatus())
-                .setCode(StatusCode.SERVER_ERROR.getCode())
-                .setMessage(e.getMessage());
+      for(String tag : tags) {
+        try {
+          tagDao.createTopicTag(tag, appId, serviceId, nodeId);
+        } catch (DbInteractionException e) {
+          return (new MMXStatus())
+                  .setCode(StatusCode.SERVER_ERROR.getCode())
+                  .setMessage(e.getMessage());
+        }
       }
     }
 
@@ -1326,19 +1327,19 @@ public class MMXChannelManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
-  public MMXStatus addTags(JID from, String appId, ChannelAction.ChannelTags rqt) 
+
+  public MMXStatus addTags(JID from, String appId, ChannelAction.ChannelTags rqt)
                       throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannelName());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
     Node node = mPubSubModule.getNode(realChannel);
     // No need to check for permission; just check for existing.
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
     List<String> tags = rqt.getTags();
-    
+
     String serviceId = node.getService().getServiceID();
     String nodeId = node.getNodeID();
 
@@ -1367,7 +1368,7 @@ public class MMXChannelManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
   public MMXStatus removeTags(JID from, String appId, ChannelAction.ChannelTags rqt)
                       throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannelName());
@@ -1392,7 +1393,7 @@ public class MMXChannelManager {
             .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
 
   public ChannelAction.ChannelQueryResponse searchChannel(JID from, String appId,
                                                     TopicAction.TopicSearchRequest rqt, List<String> userRoles) throws MMXException {
@@ -1430,7 +1431,7 @@ public class MMXChannelManager {
     ChannelAction.ChannelQueryResponse resp = new ChannelAction.ChannelQueryResponse(results.getTotal(), channelList);
     return resp;
   }
-  
+
   public MMXStatus processSendLastPublishedItems(JID from, String appId,
                           SendLastPublishedItems rqt) throws MMXException {
     JID fromUser = from.asBareJID();
@@ -1442,12 +1443,12 @@ public class MMXChannelManager {
     }
 
     // Don't query the DB directly because some items are cached in memory.
-    // Besides, it is faster looping through all cached nodes in memory than 
+    // Besides, it is faster looping through all cached nodes in memory than
     // query the ofPubsubSubscription table because # of nodes should be many
     // less than # of subscriptions.
-    
+
     String prefix = ChannelHelper.makePrefix(appId);
-    
+
     // Find all collection nodes subscribed by the user.
     TreeMap<String, Node> colNodes = new TreeMap<String, Node>();
     for (Node node : mPubSubModule.getNodes()) {
@@ -1463,7 +1464,7 @@ public class MMXChannelManager {
         }
       }
     }
-    
+
     int numSent = 0, numSubs = 0;
     int maxItems = rqt.getMaxItems();
     for (Node node : mPubSubModule.getNodes()) {
@@ -1533,7 +1534,7 @@ public class MMXChannelManager {
 //          LOGGER.trace("No published items in "+node.getNodeID()+", since="+since);
           continue;
         }
-        
+
         // Either the leaf node or ancestor node has subscriptions with the
         // latest published item.
         numSubs += subs.size();
@@ -1549,13 +1550,13 @@ public class MMXChannelManager {
         }
       }
     }
-    
+
     MMXStatus status = (new MMXStatus())
         .setCode(Constants.STATUS_CODE_200)
         .setMessage(numSubs+" subscriptions; "+numSent+" published items sent");
     return status;
   }
-  
+
   private Node findAncestor(TreeMap<String, Node> map, Node node) {
     Entry<String, Node> entry = map.floorEntry(node.getNodeID());
     if ((entry != null) && node.getNodeID().startsWith(entry.getKey())) {
@@ -1565,7 +1566,7 @@ public class MMXChannelManager {
     }
   }
 
-  private boolean sendLastPublishedItem(PublishedItem publishedItem, 
+  private boolean sendLastPublishedItem(PublishedItem publishedItem,
                                           NodeSubscription subNode, JID to) {
     if (!subNode.canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
       return false;
@@ -1595,7 +1596,7 @@ public class MMXChannelManager {
 //    node.getService().sendNotification(node, notification, subNode.getJID());
     return true;
   }
-  
+
   private boolean sendLastPublishedItems(List<PublishedItem> publishedItems,
                                            NodeSubscription subNode, JID to) {
     PublishedItem pubItem = publishedItems.get(0);
@@ -1633,7 +1634,7 @@ public class MMXChannelManager {
     // node.getService().sendNotification(node, notification, subNode.getJID());
     return true;
   }
-  
+
   /**
    * Create the <code>all</code> version channel of an OS.  All its parent channels
    * will be created if they do not exist.
@@ -1662,7 +1663,7 @@ public class MMXChannelManager {
       return new MMXStatus().setCode(e.getCode()).setMessage(e.getMessage());
     }
   }
-  
+
   /**
    * Delete the OS channel and its children, or a specific OS type channel.
    * @param creatorUserId The app server user ID.
@@ -1683,8 +1684,8 @@ public class MMXChannelManager {
       return new MMXStatus().setCode(e.getCode()).setMessage(e.getMessage());
     }
   }
-  
-  public ChannelAction.FetchResponse fetchItems(JID from, String appId, 
+
+  public ChannelAction.FetchResponse fetchItems(JID from, String appId,
             ChannelAction.FetchRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
@@ -1715,10 +1716,10 @@ public class MMXChannelManager {
     if (until == null) {
       until = new Date();
     }
-    
+
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
@@ -1729,13 +1730,13 @@ public class MMXChannelManager {
     // Assumed that the owner of the subscription is the bare JID of the subscription JID.
     JID owner = from.asBareJID();
     if (!node.getAccessModel().canAccessItems(node, owner, from)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
           StatusCode.FORBIDDEN.getCode());
     }
     // Check that the requester is not an outcast
     NodeAffiliate affiliate = node.getAffiliate(owner);
     if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
             StatusCode.FORBIDDEN.getCode());
     }
     // Check if the specified subId belongs to an existing node subscription
@@ -1757,7 +1758,7 @@ public class MMXChannelManager {
         (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
-      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
+      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(),
           pubItem.getPublisher().toBareJID(),
           pubItem.getCreationDate(),
           pubItem.getPayloadXML());
@@ -1769,21 +1770,21 @@ public class MMXChannelManager {
         rqt.getUserId(), channel, total, mmxItems);
     return resp;
   }
-  
-  public ChannelAction.FetchResponse getItems(JID from, String appId, 
+
+  public ChannelAction.FetchResponse getItems(JID from, String appId,
       ChannelAction.ItemsByIdsRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
     String realChannel = ChannelHelper.makeChannel(appId, rqt.getUserId(), channel);
     Node node = mPubSubModule.getNode(realChannel);
     if (node == null) {
-      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel), 
+      throw new MMXException(StatusCode.CHANNEL_NOT_FOUND.getMessage(channel),
           StatusCode.CHANNEL_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
       throw new MMXException("Cannot get items from a collection channel",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
     if (itemIds == null || itemIds.isEmpty()) {
@@ -1794,21 +1795,21 @@ public class MMXChannelManager {
     // Assumed that the owner of the subscription is the bare JID of the subscription JID.
     JID owner = from.asBareJID();
     if (!node.getAccessModel().canAccessItems(node, owner, from)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
           StatusCode.FORBIDDEN.getCode());
     }
     // Check that the requester is not an outcast
     NodeAffiliate affiliate = node.getAffiliate(owner);
     if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(channel),
             StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // TODO: do we need to check for subscription first?
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(itemIds.size());
     for (String itemId : itemIds) {
       if (itemId == null) {
-        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"), 
+        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"),
             StatusCode.BAD_REQUEST.getCode());
       }
       PublishedItem pubItem = leafNode.getPublishedItem(itemId);
@@ -1816,7 +1817,7 @@ public class MMXChannelManager {
         // Ignored the invalid item ID.
         continue;
       }
-      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
+      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(),
             pubItem.getPublisher().toBareJID(),
             pubItem.getCreationDate(),
             pubItem.getPayloadXML());
@@ -1826,7 +1827,7 @@ public class MMXChannelManager {
         rqt.getUserId(), channel, mmxItems.size(), mmxItems);
     return resp;
   }
-  
+
   public ChannelAction.SubscribersResponse getSubscribers(JID from, String appId,
       ChannelAction.SubscribersRequest rqt) throws MMXException {
     String channel = ChannelHelper.normalizePath(rqt.getChannel());
@@ -1880,9 +1881,11 @@ public class MMXChannelManager {
         }
         //TODO: Improve this
         UserEntity userEntity = userDAO.getUser(username);
-        com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
-        userInfoList.add(userInfo);
-        addedCount++;
+        if (userEntity != null) {
+          com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+          userInfoList.add(userInfo);
+          addedCount++;
+        }
       }
     }
 
@@ -1930,9 +1933,11 @@ public class MMXChannelManager {
         }
         //TODO: Improve this
         UserEntity userEntity = userDAO.getUser(username);
-        com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
-        userInfoList.add(userInfo);
-        addedCount++;
+        if (userEntity != null) {
+          com.magnet.mmx.protocol.UserInfo userInfo = UserEntity.toUserInfo(userEntity);
+          userInfoList.add(userInfo);
+          addedCount++;
+        }
       }
     }
 
@@ -1971,7 +1976,7 @@ public class MMXChannelManager {
     }
     return userHasRole;
   }
-  
+
   /**
    * Enum for the status codes
    */
@@ -2012,7 +2017,7 @@ public class MMXChannelManager {
     public String getMessage() {
       return message;
     }
-    
+
     public String getMessage(String arg) {
       return message + arg;
     }

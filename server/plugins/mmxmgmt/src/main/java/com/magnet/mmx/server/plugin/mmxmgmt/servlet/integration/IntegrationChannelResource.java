@@ -326,11 +326,7 @@ public class IntegrationChannelResource {
     private boolean isValidUser(String appId, String subscriber) {
         String mmxUsername = Helper.getMMXUsername(subscriber, appId);
         UserEntity userEntity = userDAO.getUser(mmxUsername);
-        if(userEntity == null) {
-            return false;
-        }else {
-            return true;
-        }
+        return (userEntity != null);
     }
 
 
@@ -884,17 +880,16 @@ public class IntegrationChannelResource {
                                 MMXServerConstants.SORT_ORDER_ASC);
 
                 UserEntity ownerInfo = userDAO.getUser(channelOwner.getNode());
-
-                ChannelSummaryResponse channelSummaryResponse = new ChannelSummaryResponse(
+                if (ownerInfo != null) {
+                  ChannelSummaryResponse channelSummaryResponse = new ChannelSummaryResponse(
                         userId, name,
                         ownerInfo,
                         count,lastPublishedDate,
                         subscribersResponse.getTotal(),
                         subscribersResponse.getSubscribers(),
-                        messages
-                );
-
-                summaryList.add(channelSummaryResponse);
+                        messages);
+                  summaryList.add(channelSummaryResponse);
+                }
             }
 
         }catch (Exception exc) {
@@ -1131,8 +1126,9 @@ public class IntegrationChannelResource {
     public static String encode2Hex(byte [] bytes) {
 
         //shouldnt be using this to hexify a huge binary array
-        if(bytes==null || bytes.length<1 || bytes.length>(Integer.MAX_VALUE/2))
-            return null;
+        if(bytes==null || bytes.length<1 || bytes.length>(Integer.MAX_VALUE/2)) {
+          return null;
+        }
 
         char [] hex = new char[bytes.length*2];
         for (int indx=0;indx<bytes.length;indx++) {
@@ -1164,6 +1160,7 @@ public class IntegrationChannelResource {
     private List<ChannelResource.MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList, String appId) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
+                    @Override
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
                         return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
                                 channelId.getName()),
