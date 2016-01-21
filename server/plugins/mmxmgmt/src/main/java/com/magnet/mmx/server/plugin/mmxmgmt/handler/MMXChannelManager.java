@@ -60,8 +60,17 @@ public class MMXChannelManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class);
   private static final boolean EXCLUDE_USER_CHANNELS = true;
+  private static final int MAX_ENTRIES = 100;
   private final XMPPServer mServer = XMPPServer.getInstance();
   private final PubSubService mPubSubModule = mServer.getPubSubModule();
+  private final Map<String, JID> mCachedServerUsers = Collections.synchronizedMap(
+      new LinkedHashMap<String, JID>(MAX_ENTRIES+1, 0.75f, true) {
+        private static final long serialVersionUID = 1L;
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, JID> eldest) {
+          return size() > MAX_ENTRIES;
+        }
+       });
 
   private static MMXChannelManager sInstance = null;
 
@@ -496,9 +505,33 @@ public class MMXChannelManager {
     }
   }
 
+  // Add a list of owners to a node.  The owners should be unique.
+  private void addOwnersToNode(Node node, JID[] owners) {
+    for (JID owner : owners) {
+      if (owner != null) {
+        node.addOwner(owner);
+      }
+    }
+  }
+
+  private JID getServerUser(String appId) {
+    // Use LRU cache for server user JID.
+    JID jid = mCachedServerUsers.get(appId);
+    if (jid == null) {
+      AppDAO appDAO = DBUtil.getAppDAO();
+      String userId = appDAO.getServerUserForApp(appId);
+      if (userId != null) {
+        jid = new JID(JIDUtil.makeNode(userId, appId),
+                  mServer.getServerInfo().getXMPPDomain(), null);
+        mCachedServerUsers.put(appId, jid);
+      }
+    }
+    return jid;
+  }
+
   // Create the collection node and its ancestors recursively.
   private CollectionNode createCollectionNode(int prefix, String nodeId,
-                              JID creator, JID owner) throws IllegalArgumentException {
+                              JID creator, JID[] owners) throws IllegalArgumentException {
 //    LOGGER.trace("createCollectionNode: prefix="+prefix+", nodeId="+nodeId);
     if (nodeId == null) {
       return null;
@@ -518,7 +551,7 @@ public class MMXChannelManager {
     if (parentNodeId == null) {
       parentNode = getRootAppChannel(ChannelHelper.getRootNodeId(nodeId));
     } else {
-      parentNode = createCollectionNode(prefix, parentNodeId, creator, owner);
+      parentNode = createCollectionNode(prefix, parentNodeId, creator, owners);
     }
 
     synchronized(nodeId.intern()) {
@@ -527,7 +560,7 @@ public class MMXChannelManager {
                 ((parentNode == null) ? "" : parentNode.getNodeID()));
         node = new CollectionNode(mPubSubModule, parentNode, nodeId, creator);
         setOptions(null, node, null);
-        node.addOwner(owner);
+        addOwnersToNode(node, owners);
         node.saveToDB();
 
         CacheFactory.doClusterTask(new RefreshNodeTask(node));
@@ -564,6 +597,9 @@ public class MMXChannelManager {
     }
     String userId = JIDUtil.getUserId(from);
     JID owner = from.asBareJID();
+    JID serverUser = getServerUser(appId);
+    // Don't add server user if the creator is the server user already.
+    JID[] owners = { owner, owner.equals(serverUser) ? null : serverUser };
     String channelId = ChannelHelper.makeChannel(appId, rqt.isPersonal() ?
             userId : null, channel);
 //    LOGGER.trace("createChannel realChannel="+realChannel+", channel="+channel);
@@ -588,7 +624,7 @@ public class MMXChannelManager {
     } else {
       try {
         // Recursively create the parent nodes if they don't exist.
-        parent = createCollectionNode(prefix, parentId, from, owner);
+        parent = createCollectionNode(prefix, parentId, from, owners);
       } catch (Throwable e) {
         throw new MMXException(e.getMessage(), StatusCode.BAD_REQUEST.getCode());
       }
@@ -618,7 +654,7 @@ public class MMXChannelManager {
         node = new LeafNode(mPubSubModule, parent, channelId, from);
       }
       // Add the creator as the owner.
-      node.addOwner(owner);
+      addOwnersToNode(node, owners);
       setOptions(channel, node, rqt.getOptions());
 
       // Do the auto-subscription for creator.
