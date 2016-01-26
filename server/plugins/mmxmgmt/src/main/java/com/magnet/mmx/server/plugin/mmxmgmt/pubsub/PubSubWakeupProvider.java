@@ -76,21 +76,6 @@ public class PubSubWakeupProvider implements WakeupProvider {
       return;
     }
 
-    String pubsubPayload;
-    String body = JiveProperties.getInstance().getProperty(
-        MMXConfigKeys.PUBSUB_NOTIFICATION_BODY, BODY);
-    if (action == PushMessage.Action.PUSH) {
-      // Push notification payload
-      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, JiveProperties.getInstance().getProperty(
-              MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE, (topic.getUserId() == null) ?
-                  topic.getName() : topic.toString()), body));
-    } else {
-      // Wakeup (silent) notification payload
-      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, body));
-    }
-
     if (userOrDev.getResource() != null) {
       if (sessionMgr.getSession(userOrDev) == null) {
         // Wake up this disconnected device only.
@@ -99,6 +84,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate);
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
@@ -134,6 +120,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate);
         // Wake up all disconnected devices
         PushResult result = pushMsgMgr.send(fromJID, appId, devices, action,
             PubSubNotification.getType(), pubsubPayload);
@@ -148,6 +135,24 @@ public class PubSubWakeupProvider implements WakeupProvider {
               userOrDev+", topic="+topic);
       }
     }
+  }
+
+  private String makePubsubPayload(PushMessage.Action action, AppEntity ae,
+                                   MMXTopicId topic, Date pubDate) {
+    String pubsubPayload;
+    String body = JiveProperties.getInstance().getProperty(
+        MMXConfigKeys.PUBSUB_NOTIFICATION_BODY, BODY);
+    if (action == PushMessage.Action.PUSH) {
+      // Push notification payload
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, JiveProperties.getInstance().getProperty(
+              MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE, ae.getName()), body));
+    } else {
+      // Wakeup (silent) notification payload
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, body));
+    }
+    return pubsubPayload;
   }
 
   private boolean isPushEnabled(AppEntity ae) {
