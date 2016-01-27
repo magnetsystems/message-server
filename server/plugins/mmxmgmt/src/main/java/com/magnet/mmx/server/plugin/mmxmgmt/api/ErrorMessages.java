@@ -49,7 +49,7 @@ public final class ErrorMessages {
   public static final String ERROR_TOPIC_NOT_FOUND = "Channel with name:%s not found";
   public static final String ERROR_USERNAME_NOT_FOUND = "User not found";
   public static final String ERROR_USERNAME_LIST_TOO_LONG = "Supplied user list exceeds the maximum allowed. At the most %d names are permitted";
-  public static final String ERROR_APNS_CERT_PASSWORD_MISSING = "APNS certificate password is empty or null. APNS certificate password is required";
+  public static final String ERROR_APNS_CERT_PASSWORD_MISSING = "APNS certificate password is null; it is required, but it can be empty";
   public static final String ERROR_TOPIC_PUBLISHING_NOT_ALLOWED = "Channel with name:%s doesn't allow publishing using API";
   public static final String ERROR_TOPIC_INVALID_CONTENT = "Channel message content can't be empty";
   public static final String ERROR_USERNAME_INVALID_CHARACTERS = "Invalid character specified in username";
