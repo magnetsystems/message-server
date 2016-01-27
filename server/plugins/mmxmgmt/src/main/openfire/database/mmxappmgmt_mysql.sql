@@ -1,6 +1,11 @@
 # $Revision$
 # $Date$
 
+#
+# This SQL script is for new installation only; make sure that it has the latest
+# version and schema.  The upgrade scripts are for existing installation.
+#
+
 INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 8);
 
 CREATE TABLE mmxApp (
