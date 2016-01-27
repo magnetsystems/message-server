@@ -319,7 +319,8 @@ public class AppResource {
         certificateFileStream = inputPart.getBody(InputStream.class, null);
       }
       List<InputPart> passwordParts = uploadForm.get(APNS_CERT_PASSWORD);
-      if (passwordParts == null || passwordParts.isEmpty() || passwordParts.get(0)== null ||  passwordParts.get(0).getBodyAsString().isEmpty()) {
+      // It is OK to have empty password.
+      if (passwordParts == null || passwordParts.isEmpty() || passwordParts.get(0)== null) {
         ErrorResponse error = new ErrorResponse();
         error.setMessage(ErrorMessages.ERROR_APNS_CERT_PASSWORD_MISSING);
         error.setCode(Integer.toString(ErrorCode.APNS_PASSWORD_MISSING.getCode()));
@@ -578,7 +579,7 @@ public class AppResource {
    * is converting dates to unix time stamps.
    */
   protected static class JSONFriendlyAppCreateResponseDecorator {
-    private AppCreate.Response response;
+    private final AppCreate.Response response;
 
     public JSONFriendlyAppCreateResponseDecorator(AppCreate.Response response) {
       this.response = response;
