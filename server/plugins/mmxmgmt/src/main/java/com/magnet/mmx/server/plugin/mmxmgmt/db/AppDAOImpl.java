@@ -354,7 +354,7 @@ public class AppDAOImpl implements AppDAO {
     PreparedStatement pstmt = null;
 
     if (certificate == null || certificate.length > WebConstants.APNS_CERT_MAX_SIZE) {
-      throw new IllegalArgumentException("invalid certificate value");
+      throw new IllegalArgumentException("invalid APNS certificate: null or too big");
     }
     try {
       con = connectionProvider.getConnection();
@@ -377,7 +377,7 @@ public class AppDAOImpl implements AppDAO {
     PreparedStatement pstmt = null;
 
     if (certificate == null || certificate.length > WebConstants.APNS_CERT_MAX_SIZE) {
-      throw new IllegalArgumentException("invalid certificate value");
+      throw new IllegalArgumentException("invalid APNS certificate: null or too big");
     }
     try {
       con = connectionProvider.getConnection();

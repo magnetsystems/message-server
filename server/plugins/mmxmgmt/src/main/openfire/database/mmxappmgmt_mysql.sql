@@ -6,7 +6,7 @@
 # version and schema.  The upgrade scripts are for existing installation.
 #
 
-INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 8);
+INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 9);
 
 CREATE TABLE mmxApp (
   id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -17,7 +17,7 @@ CREATE TABLE mmxApp (
   encryptedApiKey   VARCHAR(255)  DEFAULT NULL,
   googleApiKey      VARCHAR(100),
   googleProjectId   VARCHAR(100),
-  apnsCert          VARBINARY(5000), /* in .p12 binary file format */
+  apnsCert          VARBINARY(32768), /* in .p12 binary file format */
   apnsCertPlainPassword VARCHAR(100)      DEFAULT NULL,
   apnsCertEncryptedPassword VARCHAR(255)  DEFAULT NULL,
   apnsCertProduction tinyint      NULL,
