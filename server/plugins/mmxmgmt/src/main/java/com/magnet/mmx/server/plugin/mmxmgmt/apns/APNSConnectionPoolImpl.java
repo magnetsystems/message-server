@@ -268,8 +268,8 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
       String md5String = DigestUtils.md5Hex(cert);
       LOGGER.info("MD5 for apns cert for key:{} is {}", key, md5String);
 
-      if (password == null || password.isEmpty()) {
-        String template = "Certificate password for app with id:%s is null or empty";
+      if (password == null) {
+        String template = "Certificate password for app with id:%s is null";
         throw new APNSConnectionException(String.format(template, key.getAppId()));
       }
 

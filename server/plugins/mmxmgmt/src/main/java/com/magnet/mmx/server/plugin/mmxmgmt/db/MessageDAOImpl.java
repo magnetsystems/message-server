@@ -69,7 +69,7 @@ public class MessageDAOImpl implements MessageDAO {
   private static final String ME_QUERY_BY_MESSAGE_ID_AND_APP_ID = "SELECT id, messageId, deviceId, fromJID, toJID, dateQueuedUTC, state, " +
       "appId, dateAcknowledgedUTC, sourceMessageId, messageType FROM mmxMessage WHERE appId = ? AND messageId = ? ORDER BY deviceId";
 
-  private static final String ME_UPDATE_STATE_AFTER_TOKEN_INVALIDATION_QUERY = " UPDATE mmxMessage m, mmxWakeupQueue w " +
+  private static final String ME_UPDATE_STATE_AFTER_TOKEN_INVALIDATION_QUERY = "UPDATE mmxMessage m, mmxWakeupQueue w " +
       "SET m.state = ? WHERE m.messageId = w.messageId AND m.deviceId = w.deviceId AND " +
       "(m.state = 'WAKEUP_REQUIRED' OR m.state = 'WAKEUP_SENT') AND w.appId = ? AND  w.tokenType = ? AND " +
       "w.clientToken = ?";
@@ -78,7 +78,7 @@ public class MessageDAOImpl implements MessageDAO {
       "SET m.state = ? WHERE m.appId = ? AND m.messageId = ? AND m.deviceId = ? AND " +
       "(m.state = 'WAKEUP_REQUIRED' OR m.state = 'WAKEUP_SENT')  ";
 
-  private ConnectionProvider provider;
+  private final ConnectionProvider provider;
 
   private final static String ESCAPED_COMMA = Pattern.quote(",");
 
@@ -662,11 +662,11 @@ public class MessageDAOImpl implements MessageDAO {
     PreparedStatement pstmt = null;
     try {
       con = provider.getConnection();
-      pstmt = con.prepareStatement(ME_UPDATE_STATE_AFTER_TOKEN_INVALIDATION_QUERY);
+      pstmt = con.prepareStatement(ME_UPDATE_STATE_FOR_BAD_API_KEY_QUERY);
       pstmt.setString(1, MessageEntity.MessageState.PENDING.name());
       pstmt.setString(2, appId);
       pstmt.setString(3, messageId);
-      pstmt.setString(4, appId);
+      pstmt.setString(4, deviceId);
       int count = pstmt.executeUpdate();
       pstmt.close();
       con.close();
