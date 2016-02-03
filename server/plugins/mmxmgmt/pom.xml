@@ -164,7 +164,7 @@
     <dependency>
       <groupId>com.notnoop.apns</groupId>
       <artifactId>apns</artifactId>
-      <version>1.0.0.Beta7p1-SNAPSHOT</version>
+      <version>1.0.0.Beta7p1</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
