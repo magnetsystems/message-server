@@ -14,11 +14,8 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.apns;
 
-import com.magnet.mmx.server.common.data.AppEntity;
-import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.util.Base64;
 
-import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,21 +23,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.KeyStore;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.security.UnrecoverableKeyException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import javax.crypto.BadPaddingException;
+
 import static org.junit.Assert.fail;
 
 /**
+ * Test JDK 1.7 and older vs JDK 1.8 for the APNS keystore (p12 certificate)
+ * with empty password and non-empty password.  According to Oracle, JDK 1.7 and
+ * older should fail with empty password, but this test2 showed otherwise.
+ *
+ * mvn -s ~/.m2/settings.xml -Dtest=com.magnet.mmx.server.plugin.mmxmgmt.apns.APNSKeyStorePasswordTest test
  */
 public class APNSKeyStorePasswordTest {
   private static final Logger LOGGER = LoggerFactory.getLogger(APNSKeyStorePasswordTest.class);
@@ -75,10 +71,45 @@ public class APNSKeyStorePasswordTest {
       "1QM/YjFtTvtQys4aE6wqse6vyTAC+yuknIXeNMom3A1KeB2Hu6FcQYad3me1I4Tox4sWSc+7VqvmH2t4SFUkSf2TiLzjDat+9RG/cjY/ZxDcogvcumN7foHi/Ro9B6wWTcUB2PYQFOQzk9+CjbPikdQ"+
       "M7bQE8plzIQYBg7hg616UEUMnwgR8fvnxTRXOwTIv3IdWycvfX7b7zv88stVR/edvgxSDAhBgkqhkiG9w0BCRQxFB4SAFAAYQB1AGwAIABDAGgAYQBuMCMGCSqGSIb3DQEJFTEWBBTc/tOt2CE1rTeA"+
       "HtGWftHStgpC3TAwMCEwCQYFKw4DAhoFAAQUQZ01cTApdTe7g6GRssF1RQCEhZwECP2up3nWaiJdAgEB";
+  private final static String mP12CertWithPassword =
+      "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";
+
 
   @BeforeClass
   public static void setUp() throws Exception {
-    // version format is 1.x.xxxx
+    // version format is 1.8.xxxx
     String v = System.getProperty("java.version");
     sPreJava_1_8 = v.startsWith("1.") && v.charAt(3) == '.' && (v.charAt(2) - '0') < 8;
   }
@@ -88,17 +119,68 @@ public class APNSKeyStorePasswordTest {
   }
 
   @Test
-  public void testEmptyPassword() {
+  public void test1Password() {
+    try {
+      byte[] cert = Base64.decode(mP12CertWithPassword);
+      KeyStore ks = KeyStore.getInstance("PKCS12");
+      ks.load(new ByteArrayInputStream(cert), "magnetqe".toCharArray());
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("Unexpected failure in password keystore in all Java versions");
+    }
+  }
+
+  @Test
+  public void test2WrongPassword() {
+    try {
+      byte[] cert = Base64.decode(mP12CertWithPassword);
+      KeyStore ks = KeyStore.getInstance("PKCS12");
+      ks.load(new ByteArrayInputStream(cert), "bogus".toCharArray());
+      fail("Expect failure with wrong password keystore in all Java versions");
+    } catch (Throwable e) {
+      if (e instanceof IOException) {
+        if (sPreJava_1_8) {
+          if (e.getCause() instanceof BadPaddingException) {
+            return;
+          }
+        } else {
+          if (e.getCause() instanceof UnrecoverableKeyException) {
+            // Expected: keystore password was incorrect
+            return;
+          }
+        }
+      }
+      e.printStackTrace();
+      fail("Unexpected exception: "+e.getMessage());
+    }
+  }
+
+  @Test
+  public void test3NullPassword() {
     try {
       byte[] cert = Base64.decode(mP12CertWithEmptyPassword);
-      KeyStore ks = KeyStore.getInstance("TLS");
+      KeyStore ks = KeyStore.getInstance("PKCS12");
+      ks.load(new ByteArrayInputStream(cert), null);
+      // No integrity check.
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("Expecting no integrity check for keystore for all Java versions");
+    }
+  }
+
+  @Test
+  public void test4EmptyPassword() {
+    try {
+      byte[] cert = Base64.decode(mP12CertWithEmptyPassword);
+      KeyStore ks = KeyStore.getInstance("PKCS12");
       ks.load(new ByteArrayInputStream(cert), "".toCharArray());
       if (sPreJava_1_8) {
-        fail("Expect pre-java 1.8 failure with empty password for keystore");
+        // It didn't fail in 1.7 anymore.
+//        fail("Expecting failure in Java 1.7 or older with empty password for keystore");
       }
     } catch (Exception e) {
       if (!sPreJava_1_8) {
-        fail("Expect Java 1.8 or above having empty password for keystore fixed");
+        fail("Expecting Java 1.8 or newer having empty password for keystore fixed");
       }
     }
   }
