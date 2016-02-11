@@ -39,6 +39,7 @@ import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.*;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -857,6 +858,12 @@ public class IntegrationChannelResource {
                 } else {
                     channelId = new MMXChannelId(name);
                 }
+
+                String realChannel = ChannelHelper.makeChannel(channelSummaryRequest.getAppId(), channelId.getEscUserId(),
+                        ChannelHelper.normalizePath(channelId.getName()));
+                LOGGER.info("realChannel " + realChannel);
+                PubSubPersistenceManager.loadNode(XMPPServer.getInstance().getPubSubModule(), realChannel);
+
                 Node node = MMXChannelManager.getInstance().getChannelNode(channelSummaryRequest.getAppId(), channelId);
 
                 ChannelInfo channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(userId, node);
@@ -888,7 +895,7 @@ public class IntegrationChannelResource {
                                 MMXServerConstants.SORT_ORDER_ASC);
 
                 UserEntity ownerInfo = userDAO.getUser(channelOwner.getNode());
-                if (ownerInfo != null) {
+                //if (ownerInfo != null) {
                   ChannelSummaryResponse channelSummaryResponse = new ChannelSummaryResponse(
                         userId, name,
                         ownerInfo,
@@ -897,7 +904,7 @@ public class IntegrationChannelResource {
                         subscribersResponse.getSubscribers(),
                         messages);
                   summaryList.add(channelSummaryResponse);
-                }
+                //}
             }
 
         } catch (Exception exc) {
