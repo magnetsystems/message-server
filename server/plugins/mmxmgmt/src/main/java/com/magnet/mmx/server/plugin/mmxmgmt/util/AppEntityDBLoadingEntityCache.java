@@ -26,17 +26,14 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import java.util.concurrent.ExecutionException;
 
 /**
+ * LRU cache
  */
 public class AppEntityDBLoadingEntityCache  implements DBEntityCache<AppEntity> {
-
-  private static AppEntityDBLoadingEntityCache INSTANCE;
-  private static int CACHE_SIZE = 100;
-
-  private LoadingCache<String,AppEntity> cache;
+  private final LoadingCache<String,AppEntity> cache;
 
   public AppEntityDBLoadingEntityCache(int size, CacheLoader<String, AppEntity> appEntityCacheLoader) {
     cache = CacheBuilder.newBuilder()
-        .maximumSize(CACHE_SIZE)
+        .maximumSize(size)
         .build(appEntityCacheLoader);
   }
 
@@ -62,7 +59,7 @@ public class AppEntityDBLoadingEntityCache  implements DBEntityCache<AppEntity> 
   }
 
   public static class AppEntityDBLoader extends CacheLoader<String, AppEntity> {
-    private ConnectionProvider provider;
+    private final ConnectionProvider provider;
 
     public AppEntityDBLoader (ConnectionProvider provider) {
       this.provider = provider;
@@ -73,6 +70,7 @@ public class AppEntityDBLoadingEntityCache  implements DBEntityCache<AppEntity> 
     }
 
 
+    @Override
     public AppEntity load(String key) throws AppEntityNotFoundException {
       AppDAO appDAO = new AppDAOImpl(this.provider);
       AppEntity entity = appDAO.getAppForAppKey(key);

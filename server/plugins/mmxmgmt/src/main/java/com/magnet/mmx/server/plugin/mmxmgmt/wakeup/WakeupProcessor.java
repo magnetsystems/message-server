@@ -16,6 +16,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.wakeup;
 
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DevicePushTokenInvalidator;
@@ -45,7 +47,8 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
   private final Logger LOGGER = LoggerFactory.getLogger(WakeupProcessor.class);
   private final int WAKE_UP_CHUNK = 1000;
   private static final int CACHE_SIZE = 100;
-  private static AppEntityDBLoadingEntityCache appCache = new AppEntityDBLoadingEntityCache(CACHE_SIZE, new AppEntityDBLoadingEntityCache.AppEntityDBLoader());
+  private static AppEntityDBLoadingEntityCache appCache =
+      new AppEntityDBLoadingEntityCache(CACHE_SIZE, new AppEntityDBLoadingEntityCache.AppEntityDBLoader());
 
   public WakeupProcessor(Lock lock) {
     super(lock);
@@ -58,18 +61,16 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
         LOGGER.trace("WakeupProcessor.run() : Unable to acquire clustered lock, not running");
         return;
       }
-      LOGGER.debug("WakeupProcessor.run() : Successfully acquired wakeupProcessor lock");
-      Date d = new Date();
-      LOGGER.info("Processing wakeup at:" + d);
+      LOGGER.info("Start processing wakeup...");
       WakeupEntityDAO dao = getWakeupEntityDAO();
       MessageDAO messageDAO = getMessageDAO();
 
       List<WakeupEntity> wakeupList = retrievePendingList(dao);
-
       if (wakeupList.isEmpty()) {
-        LOGGER.info("Wakeup list is empty");
+        LOGGER.info("No pending wakeup entries found; nothing to process.");
         return;
       }
+
       long startTime = System.nanoTime();
       int count = 0;
       /**
@@ -78,18 +79,20 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
       WakeupNotifier gcmNotifier = getGCMWakeupNotifier();
       WakeupNotifier apnsNotifier = getAPNSWakeupNotifier();
       List<WakeupEntity> completed = new LinkedList<WakeupEntity>();
-      List<WakeupEntity> badGoogleAPIKey = new LinkedList<WakeupEntity>();
+      List<WakeupEntity> badWakeupEntity = new LinkedList<WakeupEntity>();
 
       for (WakeupEntity wkEntity : wakeupList) {
         String token = wkEntity.getToken();
         String appId = wkEntity.getAppId();
         if (token == null || appId == null) {
           LOGGER.info("Skipping (no token or appId) wakeup record:" + wkEntity.toString());
+          badWakeupEntity.add(wkEntity);
           continue;
         }
         if (wkEntity.getType() == PushType.GCM) {
           if (wkEntity.getGoogleApiKey() == null) {
             LOGGER.info("Skipping (no apikey) wakeup record:" + wkEntity.toString());
+            badWakeupEntity.add(wkEntity);
             continue;
           }
           List<NotificationResult> results = gcmNotifier.sendNotification(
@@ -103,11 +106,17 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
             DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
             invalidator.invalidateToken(appId, PushType.GCM, token);
           } else if (results.get(0) == NotificationResult.DELIVERY_FAILED_INVALID_API_KEY) {
-            badGoogleAPIKey.add(wkEntity);
+            LOGGER.info("Igoring wakeup record with invalid apikey: "+wkEntity.toString());
+            badWakeupEntity.add(wkEntity);
           }
         } else if (wkEntity.getType() == PushType.APNS) {
           //handle APNS wake up notification
           AppEntity appEntity = getAppEntity(appId);
+          if (appEntity == null) {
+            LOGGER.info("Skipping a wakeup record with invalid appId: "+appId);
+            badWakeupEntity.add(wkEntity);
+            continue;
+          }
           WakeupNotifier.NotificationSystemContext context =
               new APNSWakeupNotifierImpl.APNSNotificationSystemContext(
                   appId, appEntity.isApnsCertProduction());
@@ -117,6 +126,8 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
           if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
             completed.add(wkEntity);
             count++;
+          } else {
+            LOGGER.info("Skipping wakeup record with APNS because of "+results.get(0));
           }
         }
       }
@@ -132,7 +143,8 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
        * for wakeup entries that are identified as having bad api keys
        * delete the wakeup entries and change the message status to pending
        */
-      for (WakeupEntity wk : badGoogleAPIKey) {
+      for (WakeupEntity wk : badWakeupEntity) {
+        LOGGER.warn("Removing wakeup record with bad data: "+wk.toString());
         messageDAO.changeStateToPending(wk.getAppId(), wk.getMessageId(), wk.getDeviceId());
         dao.remove(wk.getId());
       }
@@ -146,7 +158,7 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
     } catch (Throwable t) {
       //catching throwable here with the assumption that it is transient and subsequent runs will
       //be ok.
-      LOGGER.warn("Throwable in WakeupProcessor", t);
+      LOGGER.warn("Throwable in WakeupProcessor is ignored; please handle it properly", t);
     }
   }
 
