@@ -20,6 +20,9 @@ import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.pubsub.CollectionNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -35,6 +38,7 @@ import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.GCM;
 import com.magnet.mmx.protocol.MMXStatus;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppAlreadyExistsException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
@@ -55,7 +59,7 @@ public class MMXAppManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class) ;
 
-  private XMPPServer server = XMPPServer.getInstance();
+  private final XMPPServer server = XMPPServer.getInstance();
 
   private static MMXAppManager instance = null;
 
@@ -205,75 +209,99 @@ public class MMXAppManager {
     return result;
   }
 
-  public void deleteApp(String appId) throws AppDoesntExistException, UserNotFoundException {
+  /**
+   * Delete the app.  This operation is not transactional, so any errors will
+   * abort the operation and it will require manual clean up.  This method is
+   * not recommended.
+   * @param appId
+   * @throws AppDoesntExistException
+   * @throws UserNotFoundException
+   * @throws MMXException
+   * @deprecate Use {@link #deleteAppQuietly(String)}
+   */
+  @Deprecated
+  public void deleteApp(String appId)
+      throws AppDoesntExistException, UserNotFoundException, MMXException {
+    LOGGER.info("Deleting app: appID="+appId);
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     String userName = appEntity.getServerUserId();
     if (userName != null) {
       String userId = JIDUtil.makeNode(userName,appId);
       User user = server.getUserManager().getUser(userId);
-      if (user != null) {
-        // delete the OS topic and its children.
-        MMXTopicManager topicManager =  MMXTopicManager.getInstance();
-        // delete the app server user.
-        server.getUserManager().deleteUser(user);
-      }
+      // delete the app server user.
+      server.getUserManager().deleteUser(user);
     }
     // now delete the bootstrap client user
     String clientBootstrapUserId = appEntity.getGuestUserId();
     if (clientBootstrapUserId != null) {
       User user = server.getUserManager().getUser(clientBootstrapUserId);
-      if (user != null) {
-        server.getUserManager().deleteUser(user);
-      }
+      server.getUserManager().deleteUser(user);
     }
 
     //TODO cleanup pending messages, devices, message status
     // delete all the users for this appId
 
+    // delete the app node and its children.
+    MMXTopicManager topicManager =  MMXTopicManager.getInstance();
+    CollectionNode appNode = topicManager.getRootAppTopic(appId);
+    if (appNode != null) {
+      int count = topicManager.deleteNode(appNode, null);
+      LOGGER.info("Number of nodes deleted: "+count);
+    }
+
     appDAO.deleteApp(appId);
+    LOGGER.info("App deleted: appID="+appId);
   }
 
-
-  // not quite sure what the significance of not finding server user is in the above codeblock. Will suppress UserNotFoundException
-  // rrao
+  /**
+   * Delete the app with the best effort.  Ignore error if the server user is
+   * not found.
+   * @param appId
+   * @throws AppDoesntExistException
+   */
   public void deleteAppQuietly(String appId) throws AppDoesntExistException {
+    LOGGER.info("Deleting app: appID="+appId);
+
     AppDAO appDAO = new AppDAOImpl(new OpenFireDBConnectionProvider());
     AppEntity appEntity = appDAO.getAppForAppKey(appId);
     String userName = appEntity.getServerUserId();
     if (userName != null) {
       String userId = JIDUtil.makeNode(userName,appId);
-      User user = null;
       try {
-        user = server.getUserManager().getUser(userId);
-      } catch (UserNotFoundException e) {
-        e.printStackTrace();
-      }
-      if (user != null) {
-        // delete the OS topic and its children.
-        MMXTopicManager topicManager =  MMXTopicManager.getInstance();
-        // delete the app server user.
+        User user = server.getUserManager().getUser(userId);
         server.getUserManager().deleteUser(user);
+      } catch (UserNotFoundException e) {
+        LOGGER.warn("Server user not found: "+userId);
       }
     }
     // now delete the bootstrap client user
     String clientBootstrapUserId = appEntity.getGuestUserId();
     if (clientBootstrapUserId != null) {
-      User user = null;
       try {
-        user = server.getUserManager().getUser(clientBootstrapUserId);
-      } catch (UserNotFoundException e) {
-        e.printStackTrace();
-      }
-      if (user != null) {
+        User user = server.getUserManager().getUser(clientBootstrapUserId);
         server.getUserManager().deleteUser(user);
+      } catch (UserNotFoundException e) {
+        LOGGER.warn("Guest user not found: "+clientBootstrapUserId);
       }
     }
 
     //TODO cleanup pending messages, devices, message status
     // delete all the users for this appId
+    try {
+      // delete the app node and its children.
+      MMXTopicManager topicManager =  MMXTopicManager.getInstance();
+      CollectionNode appNode = topicManager.getRootAppTopic(appId);
+      if (appNode != null) {
+        int count = topicManager.deleteNode(appNode, null);
+        LOGGER.info("Number of nodes deleted: "+count);
+      }
+    } catch (MMXException e) {
+      LOGGER.error("Failed deleting app root node: "+appId+"; require manual clean up", e);
+    }
 
     appDAO.deleteApp(appId);
+    LOGGER.info("App deleted: appID="+appId);
   }
 
   private User createUser(String userName, String password, String displayName)
@@ -297,7 +325,7 @@ public class MMXAppManager {
     XMPPServer server = XMPPServer.getInstance();
     server.getUserManager().deleteUser(serverUser);
   }
-  
+
   // Keep letters or digits before % or @.  First letter will be capitalized.
   private String userNameToDisplayName(String prefix, String userName, String suffix) {
     int len;
@@ -311,15 +339,17 @@ public class MMXAppManager {
     boolean is1stLetter = true;
     for (int i = 0; i < len; i++) {
       char c = userName.charAt(i);
-      if (c == '@')
+      if (c == '@') {
         break;
+      }
       if (Character.isLetterOrDigit(c)) {
         c = is1stLetter ? Character.toUpperCase(c) : Character.toLowerCase(c);
         sb.append(c);
         is1stLetter = false;
       } else {
-        if (!is1stLetter)
+        if (!is1stLetter) {
           sb.append(' ');
+        }
         is1stLetter = true;
       }
     }
@@ -327,20 +357,23 @@ public class MMXAppManager {
     if (sb.charAt(sb.length()-1) == ' ') {
       sb.setLength(sb.length()-1);
     }
-    
+
     int maxPreLen = 0, preLen = 0, maxSufLen = 0, sufLen = 0;
-    if (prefix != null)
+    if (prefix != null) {
       maxPreLen = preLen = prefix.length();
-    if (suffix != null)
+    }
+    if (suffix != null) {
       maxSufLen = sufLen = suffix.length();
+    }
     // DB schema limits the display name to be 100 characters.
     if ((preLen + sufLen + sb.length()) > 100) {
       len = (100 - sb.length()) / 2;
       maxPreLen = Math.min(len, preLen);
       maxSufLen = Math.min((len + len - maxPreLen), sufLen);
     }
-    if ((maxPreLen + maxSufLen) == 0)
+    if ((maxPreLen + maxSufLen) == 0) {
       return sb.toString();
+    }
     StringBuilder buf = new StringBuilder(maxPreLen + sb.length() + maxSufLen);
     if (prefix != null) {
       buf.append(maxPreLen != preLen ? prefix.substring(0, maxPreLen) : prefix);

@@ -26,6 +26,7 @@ import com.magnet.mmx.protocol.MMXStatus;
 import com.magnet.mmx.protocol.MyAppsRead;
 import com.magnet.mmx.protocol.StatusCode;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppAlreadyExistsException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
@@ -53,7 +54,7 @@ public class AppHandler extends IQHandler {
 
   private static final Logger Log = LoggerFactory.getLogger(AppHandler.class);
 
-  private MMXAppManager mmxAppManager = MMXAppManager.getInstance();
+  private final MMXAppManager mmxAppManager = MMXAppManager.getInstance();
 
   public AppHandler(String moduleName) {
     super(moduleName);
@@ -368,12 +369,12 @@ public class AppHandler extends IQHandler {
 
     MMXStatus appResp = null;
     try {
-      mmxAppManager.deleteApp(appDeleteRqt.getAppId());
+      mmxAppManager.deleteAppQuietly(appDeleteRqt.getAppId());
       appResp = new MMXStatus();
       appResp.setCode(HttpServletResponse.SC_OK);
     } catch (AppDoesntExistException e) {
       return IQUtils.createErrorIQ(iq, e.getMessage(), StatusCode.NOT_FOUND);
-    } catch(UserNotFoundException e) {
+    } catch (Throwable e) {
       return IQUtils.createErrorIQ(iq, e.getMessage(), StatusCode.INTERNAL_ERROR);
     }
     return IQUtils.createResultIQ(iq, appResp.toJson());

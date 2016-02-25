@@ -439,14 +439,14 @@ public class MMXMessageHandlingRule {
 
   private void handleBareJID(Message message) {
     if (message.getTo().getNode() == null) {
-      LOGGER.trace("handleBareJID: ignoring a multicast message={}", message);
+      LOGGER.trace("handleBareJID: ignoring a multicast messageID={}", message.getID());
       // It is a multicast message (XEP-0033); let MulticastRouter handle it.
       return;
     }
     // annotate the message to indicate that we have distributed it.
     MessageAnnotator annotator = new MessageDistributedAnnotator();
     annotator.annotate(message);
-    LOGGER.trace("handleBareJID : message={}", message);
+    LOGGER.trace("handleBareJID : messageID={}", message.getID());
     MessageEntity messageEntity = MMXMessageHandlingRule
         .getMessageEntity(message);
     String domain = message.getTo().getDomain();

@@ -23,7 +23,6 @@ import com.magnet.mmx.server.api.v2.MMXVersionResource;
 import com.magnet.mmx.server.api.v2.MessageResource;
 import com.magnet.mmx.server.api.v2.PushMessageResource;
 import com.magnet.mmx.server.api.v2.UserResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.message.AdminMessageResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PingMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResource;
@@ -59,9 +58,9 @@ public final class RESTResourceListing {
       TopicResource.class.getName(),
       MMXTopicSummaryResource.class.getName(),
       DevicesResource.class.getName(),
-      AdminMessageResource.class.getName(),
+      // AdminMessageResource.class.getName(),   // TODO: this one belongs to AdminRESTREsourceListing
   };
-  
+
   private static final String[] v2resourceClasses = {
     // New v2 API
     MMXVersionResource.class.getName(),
@@ -75,7 +74,7 @@ public final class RESTResourceListing {
   public static String[] getV1Resources() {
     return v1resourceClasses;
   }
-  
+
   public static String[] getV2Resources() {
     return v2resourceClasses;
   }

@@ -78,7 +78,7 @@ public class MessageDistributedAnnotator implements MessageAnnotator {
       }
     }
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Checking if message :{} result:{}", message, rv);
+      LOGGER.debug("Checking if message ID:{} is annotated: {}", message.getID(), rv);
     }
     return rv;
   }

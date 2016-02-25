@@ -71,6 +71,9 @@ public class AdminMessageResource extends AbstractBaseResource {
       MessageDAO messageDAO = new MessageDAOImpl(getConnectionProvider());
       List<MessageEntity> messageEntityList = messageDAO.getMessages(appId, messageId);
 
+      LOGGER.trace("getMessageById: appId={}, messageId={}, count={}", appId,
+          messageId, messageEntityList.size());
+
       List<SentMessage> sentMessageList = new ArrayList<SentMessage>(messageEntityList.size());
       for (MessageEntity me : messageEntityList) {
         sentMessageList.add(SentMessage.from(me));

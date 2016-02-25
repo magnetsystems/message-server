@@ -46,23 +46,23 @@ public class MmxLockoutProvider extends DefaultLockOutProvider {
 
   @Override
   public LockOutFlag getDisabledStatus(String username) {
-    Log.info("MmxLockoutProvider: getDisabledStatus user "+username);
-
     LockOutFlag lockOutFlag = super.getDisabledStatus(username);
-    if ( lockOutFlag != null) {
+    if (lockOutFlag != null) {
+      Log.info("MmxLockoutProvider: user="+username+", lockOutFlag="+lockOutFlag);
       return lockOutFlag;
     }
 
-    String xid = null;
+    String xid = MmxAppUtil.extractUserName(username.trim().toLowerCase());
     try {
-      xid = MmxAppUtil.extractUserName(username.trim().toLowerCase());
       MmxAppUtil.checkAppId(xid);
+      Log.trace("MmxLockoutProvider: xid="+xid+", lockOutFlag="+lockOutFlag);
       return lockOutFlag; // fall back to default (null)
 
     } catch (UnauthorizedException e) {
       // this username is invalid wrt the app id; mark lockout for subsequent logins
       lockOutFlag = new LockOutFlag(xid, null, null);
       setDisabledStatus(lockOutFlag);
+      Log.info("MmxLockoutProvider: Unauthorized user="+username+", lockOutFlag="+lockOutFlag);
       return lockOutFlag;
     }
   }
