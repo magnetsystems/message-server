@@ -60,6 +60,13 @@ import com.magnet.mmx.server.plugin.mmxmgmt.servlet.AppInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JSONFriendlyAppEntityDecorator;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 
+/**
+ * An integrated App Resource.
+ *
+ * TODO: it is missing the API to specify the APNS certificate in app creation,
+ * get and update.
+ *
+ */
 @Path("/integration/apps")
 public class IntegrationAppResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationAppResource.class);
@@ -130,8 +137,6 @@ public class IntegrationAppResource {
         }
       }
 
-
-
       return Response.status(Response.Status.CREATED)
           .entity(new JSONFriendlyAppEntityDecorator(appEntity))
           .build();
@@ -159,6 +164,7 @@ public class IntegrationAppResource {
       if(entity == null) {
         return RestUtils.getJAXRSResp(Response.Status.NOT_FOUND, new ErrorResponse(ErrorCode.AUTH_BAD_APP_ID, "App not found"));
       }
+      // TODO: shouldn't the status code be OK instead of CREATED?
       Response createdResponse = Response.status(Response.Status.CREATED)
           .entity(new JSONFriendlyAppEntityDecorator((entity)))
           .build();
