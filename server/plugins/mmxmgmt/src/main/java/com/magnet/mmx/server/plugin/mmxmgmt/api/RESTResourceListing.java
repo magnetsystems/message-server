@@ -37,6 +37,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.servlet.JacksonJSONObjectMapperProvi
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 
 /**
+ * Grouping MMX REST API into v1 and v2.  The v1 API uses appKey and appId
+ * headers as its proprietary authorization mechanism.  The v2 API uses a
+ * standard token based authorization mechanism.
  */
 public final class RESTResourceListing {
 
