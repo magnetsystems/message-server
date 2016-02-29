@@ -32,6 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
@@ -1232,6 +1233,64 @@ public class IntegrationChannelResource {
         return Response.ok().build();
 
     }
+	
+	@PUT
+    @Path("/message/delete")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response deleteMessage(@Context HttpHeaders headers,
+                                  DeleteMessageRequest request) {
+
+        DeleteMessageResponse response = new DeleteMessageResponse();
+
+        TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
+
+        if(entity == null) {
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id is not found");
+            return RestUtils.getOKJAXRSResp(response);
+        }
+
+        if(!allowDelete(request,entity)) {
+            response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
+            response.setMessage("Insufficient privilege to delete the message");
+            return RestUtils.getOKJAXRSResp(response);
+
+        }
+
+        int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
+        if(result != 1) {
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("message id is not found");
+            return RestUtils.getOKJAXRSResp(response);
+
+        }else {
+            response.setCode(200);
+            response.setMessage("message has been deleted successfully");
+            return RestUtils.getOKJAXRSResp(response);
+        }
+
+    }
+
+    private boolean allowDelete(DeleteMessageRequest request, TopicItemEntity entity) {
+
+        if((request.getRoles() != null && request.getRoles().equals("admin"))){
+            return true;
+        }
+
+        Node node = MMXChannelManager.getInstance().getTopicNode(entity.getNodeId());
+
+        if(node == null) {
+            LOGGER.error("Node is null for the id " + entity.getNodeId());
+            return false;
+        }
+        String messageOwner = JIDUtil.getUserId(node.getCreator());
+        String channelOwner = JIDUtil.getUserId(node.getOwners().iterator().next());
+        if(request.getUserId() != null && (request.getUserId().equals(messageOwner) || request.getUserId().equals(channelOwner))) {
+            return true;
+        }
+        return false;
+    } 
 
 
 }
