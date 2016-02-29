@@ -81,7 +81,9 @@ public enum ErrorCode {
   MESSAGE_SENDER_NOT_MATCHED(69),
   MESSAGE_STATUS_NOT_FOUND(70),
   TOPIC_NOT_OWNER(71),
+  INSUFFICIENT_PRIVILEGES(72),
   ;
+
 
   private int code;
 

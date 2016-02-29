@@ -32,5 +32,9 @@ public interface TopicItemDAO {
   public List<TopicItemEntity> getItems(String serviceId, String nodeId, int maxItems,
                                         String since, String until, String order);
 
+  public int deleteTopicItem(String id);
+
+  public TopicItemEntity findById(String id);
+
 
 }
