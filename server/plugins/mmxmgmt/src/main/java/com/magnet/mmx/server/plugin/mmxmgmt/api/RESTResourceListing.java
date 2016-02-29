@@ -23,6 +23,7 @@ import com.magnet.mmx.server.api.v2.MMXVersionResource;
 import com.magnet.mmx.server.api.v2.MessageResource;
 import com.magnet.mmx.server.api.v2.PushMessageResource;
 import com.magnet.mmx.server.api.v2.UserResource;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.message.MessageStatusResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PingMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResource;
@@ -42,7 +43,7 @@ public final class RESTResourceListing {
   // Any new resources added should be added to this list at compile time.
   // we maintain this list statically because I am not able to get
   // resteasy to scan all classes and bind the resources automatically.
-  private static final String[] v1resourceClasses = {
+  private static final String[] v1ResourceClasses = {
       MMXDeviceTagsResource.class.getName(),
       MMXUserTagsResource.class.getName(),
       MMXTopicTagsResource.class.getName(),
@@ -58,11 +59,11 @@ public final class RESTResourceListing {
       TopicResource.class.getName(),
       MMXTopicSummaryResource.class.getName(),
       DevicesResource.class.getName(),
-      // AdminMessageResource.class.getName(),   // TODO: this one belongs to AdminRESTREsourceListing
+      MessageStatusResource.class.getName(),
   };
 
-  private static final String[] v2resourceClasses = {
-    // New v2 API
+  // New v2 API
+  private static final String[] v2ResourceClasses = {
     MMXVersionResource.class.getName(),
     ChannelResource.class.getName(),
     UserResource.class.getName(),
@@ -72,11 +73,11 @@ public final class RESTResourceListing {
   };
 
   public static String[] getV1Resources() {
-    return v1resourceClasses;
+    return v1ResourceClasses;
   }
 
   public static String[] getV2Resources() {
-    return v2resourceClasses;
+    return v2ResourceClasses;
   }
 
   private static final String[] providers = {
