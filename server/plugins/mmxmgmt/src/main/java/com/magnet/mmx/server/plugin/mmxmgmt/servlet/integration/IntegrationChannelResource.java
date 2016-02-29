@@ -1192,47 +1192,7 @@ public class IntegrationChannelResource {
         return items2;
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/reports")
-    public Response getnerateReport(@Context HttpHeaders headers) {
-
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        Map<String, Integer> channelCountMap = new HashMap<String, Integer>(3);
-        Map<String, Integer> channelSubscriptionMap = new HashMap<String, Integer>(3);
-        try {
-
-
-            List<AppEntity> apps = appDAO.getAllApps();
-
-            for(AppEntity app: apps) {
-
-                int messageCount;
-
-                con = DbConnectionManager.getConnection();
-
-
-                String sql = "SELECT ,count(*) FROM ofPubsubItem where nodeID " +
-                        "like '" + "/" + app.getAppId() + "%'";
-
-                pstmt = con.prepareStatement(sql);
-                rs = pstmt.executeQuery();
-
-                while (rs.next()) {
-                    System.out.println("appId = " + app.getName() + " count = " + rs.getInt(1));
-                }
-
-
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
-        return Response.ok().build();
-
-    }
+    
 	
 	@PUT
     @Path("/message/delete")
