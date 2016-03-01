@@ -363,10 +363,27 @@ public class MessageSenderImpl implements MessageSender {
     List<String> userList = request.getRecipientUserIds();
     String deviceId = request.getDeviceId();
 
-    if ((userList == null || userList.isEmpty()) && deviceId == null && request.getTarget() == null) {
-      //neither device id nor userid is present.
-      return ValidationResult.failure(ErrorMessages.ERROR_SEND_MESSAGE_INVALID_USER_ID_DEVICE_ID,
-          ErrorCode.SEND_MESSAGE_NO_TARGET.getCode());
+    int numOfTargets = 0;
+    if (userList != null && !userList.isEmpty()) {
+      ++numOfTargets;
+    }
+    if (deviceId != null && !deviceId.isEmpty()) {
+      ++numOfTargets;
+    }
+    if (request.getTarget() != null) {
+      ++numOfTargets;
+    }
+
+    if (numOfTargets != 1) {
+      if (numOfTargets == 0) {
+        // No device id, userid or query target is present.
+        return ValidationResult.failure(ErrorMessages.ERROR_SEND_MESSAGE_INVALID_USER_ID_DEVICE_ID,
+            ErrorCode.SEND_MESSAGE_NO_TARGET.getCode());
+      } else {
+        // More than one target is specified.
+        return ValidationResult.failure(ErrorMessages.ERROR_SEND_MESSAGE_TOO_MANY_TARGETS,
+            ErrorCode.SEND_MESSAGE_TOO_MANY_TARGETS.getCode());
+      }
     }
     if (userList != null) {
       int size = userList.size();

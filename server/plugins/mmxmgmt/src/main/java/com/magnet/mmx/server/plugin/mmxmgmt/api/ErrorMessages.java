@@ -33,6 +33,8 @@ public final class ErrorMessages {
   public static final String ERROR_SEND_PUSH_INVALID_TARGET = "Request doesn't define valid targets";
   public static final String ERROR_SEND_MESSAGE_INVALID_USER_ID_DEVICE_ID = "Request doesn't contain a valid " +
       "user/device/target information";
+  public static final String ERROR_SEND_MESSAGE_TOO_MANY_TARGETS = "Request has too many targets; "+
+      "user/device/target information must be mutually exclusive";
   public static final String ERROR_UNDELIVERABLE_TOKEN = "Push service has reported token as being undeliverable";
   public static final String ERROR_INVALID_DEVICE_ID = "Supplied deviceId is invalid or empty";
   public static final String ERROR_DEVICE_NOT_FOUND = "Device with supplied id not found";
