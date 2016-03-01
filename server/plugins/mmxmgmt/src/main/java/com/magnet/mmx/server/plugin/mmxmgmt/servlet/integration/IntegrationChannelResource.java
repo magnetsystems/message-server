@@ -882,7 +882,8 @@ public class IntegrationChannelResource {
                     sinceDate = new Date(channelSummaryRequest.getMessagesSince());
                 }
 
-                JID channelOwner = node.getOwners() == null ? null : node.getOwners().iterator().next();
+                JID channelOwner = getChannelOwner(channelSummaryRequest.getAppId(),node);
+
                 int messageOffset = 0;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
                         this.fetchItemsForChannel(
@@ -917,6 +918,25 @@ public class IntegrationChannelResource {
 
     }
 
+    private JID getChannelOwner(String appId, Node node) {
+        JID channelOwner = null;
+        if(node.getOwners() != null) {
+            JID serverUser = MMXChannelManager.getInstance().getServerUser(appId);
+            Iterator<JID> list = node.getOwners().iterator();
+            while(list.hasNext()){
+                JID owner = list.next();
+                if(owner != null) {
+                    if (owner.equals(serverUser)){
+                        continue;
+                    }else{
+                        channelOwner = owner;
+                        break;
+                    }
+                }
+            }
+        }
+        return channelOwner;
+    }
 
     private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,
                                                                              String appId,
@@ -1192,7 +1212,7 @@ public class IntegrationChannelResource {
         return items2;
     }
 
-    
+
 	
 	@PUT
     @Path("/message/delete")

@@ -514,7 +514,7 @@ public class MMXChannelManager {
     }
   }
 
-  private JID getServerUser(String appId) {
+  public JID getServerUser(String appId) {
     // Use LRU cache for server user JID.
     JID jid = mCachedServerUsers.get(appId);
     if (jid == null) {
