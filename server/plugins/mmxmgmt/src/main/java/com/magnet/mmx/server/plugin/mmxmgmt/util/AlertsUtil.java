@@ -29,7 +29,7 @@ public class AlertsUtil {
     int maxAppPerCluster = getMaxAppLimit();
 
     if(maxAppPerCluster > 0 && appids != null && appids.size() >= maxAppPerCluster) {
-      LOGGER.trace("maxAppsLimitReached : {}", maxAppPerCluster);
+      LOGGER.warn("Max apps per cluster has reached its limit: {}", maxAppPerCluster);
       return true;
     }
     return false;
@@ -42,7 +42,7 @@ public class AlertsUtil {
     LOGGER.trace("maxDevicesPerAppLimitReached : result = {}, devicePerAppLimit = {}", result, devicePerAppLimit);
 
     if(devicePerAppLimit > 0 && result.getDevicesPerApp() >= devicePerAppLimit) {
-      LOGGER.trace("maxDevicesPerAppLimitReached : {}", devicePerAppLimit);
+      LOGGER.warn("Max devices in app (id={}) has reached its limit: {}", appId, devicePerAppLimit);
       return true;
     }
     return false;

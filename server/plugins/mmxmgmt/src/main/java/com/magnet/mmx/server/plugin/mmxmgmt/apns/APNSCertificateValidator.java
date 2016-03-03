@@ -38,13 +38,9 @@ public class APNSCertificateValidator {
         LOGGER.info("alias" + " - " + alias);
         X509Certificate c = (X509Certificate) p12.getCertificate(alias);
         Principal subject = c.getSubjectDN();
-        String subjectArray[] = subject.toString().split(",");
-        for (String s : subjectArray) {
-          String[] str = s.trim().split("=");
-          String key = str[0];
-          String value = str[1];
-          LOGGER.info(key + ":" + value);
-        }
+        // Fix MAX-266: don't try to parse the subject DN which may have
+        // embedded commas in RDN's (e.g. O=Magnet Systems\, Inc, C=US)
+        LOGGER.info(subject.toString());
       }
     } catch (CertificateException e) {
       LOGGER.info("Certification exception", e);
