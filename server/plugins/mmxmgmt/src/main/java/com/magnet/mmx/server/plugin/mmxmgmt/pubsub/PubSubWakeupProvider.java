@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@ package com.magnet.mmx.server.plugin.mmxmgmt.pubsub;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.WakeupProvider;
-import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
@@ -44,15 +44,22 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.util.GsonData;
 import com.magnet.mmx.util.TopicHelper;
+import com.magnet.mmx.util.Utils;
 
+/**
+ * Wakeup provider for pubsub notification.  The notification can be push
+ * notification (push) or silent notification (wakeup.)  The push notification
+ * consists of a parameterized title and body.  Currently only ${application.name}
+ * ${channel.name}, ${channel.desc} are available to title and body.  For
+ * example, the body or title can have a template as
+ * "New message is available in ${channel.name}."
+ */
 public class PubSubWakeupProvider implements WakeupProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubWakeupProvider.class);
   private static final String BODY = "New message is available";
-  private static final String PROP_PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
-  private static final String PROP_PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
-  private static final String PROP_PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
 
   @Override
   public void wakeup(WakeupProvider.Scope scope, JID userOrDev, Node node, Date pubDate) {
@@ -66,9 +73,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
     MMXTopicId topic = TopicHelper.parseNode(node.getNodeID());
     PushMessage.Action action;
     try {
-      // Default is "push".  Other options are: wakeup or "" (disabling.)
+      // Default is "push".  Other options are: "wakeup" or "" (disabling.)
       String type = JiveProperties.getInstance().getProperty(
-          PROP_PUBSUB_NOTIFICATION_TYPE, PushMessage.Action.PUSH.toString());
+          MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE, PushMessage.Action.PUSH.toString());
       action = PushMessage.Action.valueOf(type.toUpperCase());
     } catch (Throwable e) {
       action = null;
@@ -80,21 +87,6 @@ public class PubSubWakeupProvider implements WakeupProvider {
       return;
     }
 
-    String pubsubPayload;
-    String body = JiveProperties.getInstance().getProperty(
-        PROP_PUBSUB_NOTIFICATION_BODY, BODY);
-    if (action == PushMessage.Action.PUSH) {
-      // Push notification payload
-      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, JiveProperties.getInstance().getProperty(
-              PROP_PUBSUB_NOTIFICATION_TITLE, (topic.getUserId() == null) ?
-                  topic.getName() : topic.toString()), body));
-    } else {
-      // Wakeup (silent) notification payload
-      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, body));
-    }
-
     if (userOrDev.getResource() != null) {
       if (sessionMgr.getSession(userOrDev) == null) {
         // Wake up this disconnected device only.
@@ -103,6 +95,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate, node);
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
@@ -138,6 +131,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate, node);
         // Wake up all disconnected devices
         PushResult result = pushMsgMgr.send(fromJID, appId, devices, action,
             PubSubNotification.getType(), pubsubPayload);
@@ -152,6 +146,43 @@ public class PubSubWakeupProvider implements WakeupProvider {
               userOrDev+", topic="+topic);
       }
     }
+  }
+
+  // Build a context with ${application.name}, ${channel.name}, ${channel.desc}
+  // for title and body.
+  private Map<String, String> makeContext(AppEntity ae, MMXTopicId topic,
+                                          Date pubDate, Node node) {
+    HashMap<String, String> context = new HashMap<String, String>();
+    context.put("application.name", ae.getName());
+    context.put("channel.name", node.getName());      // just its name (no user id)
+    context.put("channel.desc", node.getDescription());
+    return context;
+  }
+
+  private String makePubsubPayload(PushMessage.Action action, AppEntity ae,
+                                   MMXTopicId topic, Date pubDate, Node node) {
+    String pubsubPayload;
+    Map<String, String> context = makeContext(ae, topic, pubDate, node);
+    String body = JiveProperties.getInstance().getProperty(
+        MMXConfigKeys.PUBSUB_NOTIFICATION_BODY, BODY);
+    if (body != null) {
+      body = Utils.eval(body, context).toString();
+    }
+    if (action == PushMessage.Action.PUSH) {
+      // Push notification payload
+      String title = JiveProperties.getInstance().getProperty(
+          MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE, null);
+      if (title != null) {
+        title = Utils.eval(title, context).toString();
+      }
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, title, body));
+    } else {
+      // Wakeup (silent) notification payload
+      pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
+          pubDate, body));
+    }
+    return pubsubPayload;
   }
 
   private boolean isPushEnabled(AppEntity ae) {

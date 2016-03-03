@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Properties;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  */
@@ -93,6 +94,7 @@ public class UserDAOImplTest {
     for(int i=0; i < userList.size(); i++) {
       TestUserDao.UserEntity tue = userList.get(i);
       UserEntity ue = DBTestUtil.getUserDao().getUser(tue.getUsername());
+      assertNotNull(ue);
       assertEquals(ue.getEmail(), tue.getEmail());
       assertEquals(ue.getUsername(), tue.getUsername());
       assertEquals(ue.getName(), tue.getName());
@@ -107,7 +109,7 @@ public class UserDAOImplTest {
     Connection conn =  UnitTestDSProvider.getDataSource().getConnection();
     PreparedStatement pstmt = null;
     ResultSet rs = null;
-    
+
     try {
       pstmt = conn.prepareStatement(statementStr);
       pstmt.execute();

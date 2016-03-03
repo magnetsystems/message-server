@@ -67,7 +67,7 @@ public class AppDAOImpl implements AppDAO {
 
   private static final String QUERY_MY_APPS = AppEntity.APP_QUERY_STRING + " WHERE ownerId = ?";
 
-  private ConnectionProvider connectionProvider;
+  private final ConnectionProvider connectionProvider;
 
   public AppDAOImpl(ConnectionProvider provider) {
     this.connectionProvider = provider;
@@ -88,11 +88,7 @@ public class AppDAOImpl implements AppDAO {
       rs = pstmt.executeQuery();
       if (rs.first()) {
         rv = new AppEntity.AppEntityBuilder().build(rs);
-      } else {
-        return null;
       }
-      rs.close();
-      pstmt.close();
     } catch (SQLException sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
       throw new DbInteractionException(sqle);
@@ -120,8 +116,6 @@ public class AppDAOImpl implements AppDAO {
       } else {
         return null;
       }
-      rs.close();
-      pstmt.close();
     } catch (SQLException sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
       throw new DbInteractionException(sqle);
@@ -131,10 +125,12 @@ public class AppDAOImpl implements AppDAO {
     return rv;
   }
 
+  @Override
   public void persist(AppEntity a) throws AppAlreadyExistsException {
      createApp(a.getServerUserId(), a.getName(), a.getAppId(), a.getAppAPIKey(), a.getGoogleAPIKey(), a.getGoogleProjectId(), a.getApnsCertPassword(), a.getOwnerId(), a.getOwnerEmail(), a.getGuestSecret(), a.isApnsCertProduction());
   }
 
+  @Override
   public AppEntity createApp(String serverUserID, String appName,
                              String appId, String apiKey, String googleApiKey,
                              String googleProjectId,
@@ -197,7 +193,6 @@ public class AppDAOImpl implements AppDAO {
       if (rs.next()) {
         id = Integer.valueOf(rs.getInt(1));
       }
-      rs.close();
 
       entity = new AppEntity();
       entity.setId(id);
@@ -224,20 +219,19 @@ public class AppDAOImpl implements AppDAO {
     return entity;
   }
 
+  @Override
   public void deleteApp(String id) {
     Connection con = null;
     PreparedStatement pstmt = null;
-    ResultSet rs = null;
     try {
       con = connectionProvider.getConnection();
       pstmt = con.prepareStatement(DELETE_APP_BY_ID);
       pstmt.setString(1, id);
       pstmt.executeUpdate();
-      pstmt.close();
     } catch (SQLException sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
     } finally {
-      CloseUtil.close(LOGGER, rs, pstmt, con);
+      CloseUtil.close(LOGGER, pstmt, con);
     }
   }
 
@@ -311,8 +305,6 @@ public class AppDAOImpl implements AppDAO {
       if (rs.first()) {
         rv = new AppEntity.AppEntityBuilder().build(rs);
       }
-      rs.close();
-      pstmt.close();
     } catch (SQLException sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
       throw new DbInteractionException(sqle);
@@ -324,27 +316,36 @@ public class AppDAOImpl implements AppDAO {
 
   @Override
   public String getOwnerEmailForApp(String appId) {
-    final String queryString = "select ownerEmail from mmxApp where appid = ?";
+    return getColumnByNameForApp("ownerEmail", appId);
+  }
+
+  @Override
+  public String getServerUserForApp(String appId) {
+    return getColumnByNameForApp("serverUserId", appId);
+  }
+
+  private String getColumnByNameForApp(String columnName, String appId) {
+    final String queryString = "select "+columnName+" from mmxApp where appid = ?";
     Connection con = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
-    String ownerEmail = null;
+    String value = null;
     try {
       con = connectionProvider.getConnection();
       pstmt = con.prepareStatement(queryString);
       pstmt.setString(1, appId);
 
       rs = pstmt.executeQuery();
-      ownerEmail = rs.getString(1);
-      rs.close();
-      pstmt.close();
+      if (rs.first()) {
+        value = rs.getString(1);
+      }
     } catch (SQLException sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
       throw new DbInteractionException(sqle);
     } finally {
       CloseUtil.close(LOGGER, rs, pstmt, con);
     }
-    return ownerEmail;
+    return value;
   }
 
   @Override
@@ -353,7 +354,7 @@ public class AppDAOImpl implements AppDAO {
     PreparedStatement pstmt = null;
 
     if (certificate == null || certificate.length > WebConstants.APNS_CERT_MAX_SIZE) {
-      throw new IllegalArgumentException("invalid certificate value");
+      throw new IllegalArgumentException("invalid APNS certificate: null or too big");
     }
     try {
       con = connectionProvider.getConnection();
@@ -362,8 +363,6 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(2, appId);
       LOGGER.trace("updateAPNsCertificate :appId={}, certificate={} ", new Object[]{appId, Base64.encodeBytes(certificate)});
       int count = pstmt.executeUpdate();
-      pstmt.close();
-      con.close();
     } catch (SQLException e) {
       LOGGER.warn("SQL Exception in updating APNs certificate", e);
       throw new DbInteractionException(e);
@@ -378,7 +377,7 @@ public class AppDAOImpl implements AppDAO {
     PreparedStatement pstmt = null;
 
     if (certificate == null || certificate.length > WebConstants.APNS_CERT_MAX_SIZE) {
-      throw new IllegalArgumentException("invalid certificate value");
+      throw new IllegalArgumentException("invalid APNS certificate: null or too big");
     }
     try {
       con = connectionProvider.getConnection();
@@ -390,8 +389,6 @@ public class AppDAOImpl implements AppDAO {
 
       LOGGER.trace("updateAPNsCertificateAndPassword :appId={}, certificate={} ", new Object[]{appId, Base64.encodeBytes(certificate)});
       int count = pstmt.executeUpdate();
-      pstmt.close();
-      con.close();
     } catch (SQLException e) {
       LOGGER.warn("SQL Exception in updating APNs certificate", e);
       throw new DbInteractionException(e);
@@ -410,8 +407,6 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(1, appId);
       LOGGER.trace("clearAPNsCertificate :appId={}, statement={}", new Object[]{appId,  pstmt});
       int count = pstmt.executeUpdate();
-      pstmt.close();
-      con.close();
     } catch (SQLException e) {
       LOGGER.warn("SQL Exception in clearAPNsCertificate", e);
       throw new DbInteractionException(e);
@@ -430,8 +425,6 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setString(1, appId);
       LOGGER.trace("clearAPNsCertificate :appId={}, statement={}", new Object[]{appId,  pstmt});
       int count = pstmt.executeUpdate();
-      pstmt.close();
-      con.close();
     } catch (SQLException e) {
       LOGGER.warn("SQL Exception in clearAPNsCertificateAndPassword", e);
       throw new DbInteractionException(e);
@@ -592,7 +585,6 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setTimestamp(ind++, new Timestamp(new java.util.Date().getTime()));
       pstmt.setString(ind++, appId);
       int updatedCount = pstmt.executeUpdate();
-      pstmt.close();
 
       if (updatedCount != 1) {
         throw new AppDoesntExistException("No app found with appId = " + appId);
@@ -604,10 +596,10 @@ public class AppDAOImpl implements AppDAO {
       CloseUtil.close(LOGGER, rs, pstmt, con);
     }
   }
-  
+
   @Override
-  public void updateApp(String appId, String appName, String googleApiKey, 
-      String googleProjectId, String apnsCertPwd, String ownerEmail, 
+  public void updateApp(String appId, String appName, String googleApiKey,
+      String googleProjectId, String apnsCertPwd, String ownerEmail,
       String guestSecret, boolean productionApnsCert, String serverUserId) throws
       AppDoesntExistException {
     StringBuilder sb = new StringBuilder();
@@ -659,7 +651,7 @@ public class AppDAOImpl implements AppDAO {
     }
     sb.append("apnsCertProduction = ?");
     count++;
-    
+
     if (serverUserId != null) {
       if (count > 0) {
         sb.append(", ");
@@ -667,7 +659,7 @@ public class AppDAOImpl implements AppDAO {
       sb.append("serverUserId = ?");
       count++;
     }
-    
+
     if (count > 0) {
       sb.append(", ");
     }
@@ -721,7 +713,6 @@ public class AppDAOImpl implements AppDAO {
       pstmt.setTimestamp(ind++, new Timestamp(new java.util.Date().getTime()));
       pstmt.setString(ind++, appId);
       int updatedCount = pstmt.executeUpdate();
-      pstmt.close();
 
       if (updatedCount != 1) {
         throw new AppDoesntExistException("No app found with appId = " + appId);

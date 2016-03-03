@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  *  limitations under the License.
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
+
+import com.magnet.mmx.protocol.PushMessage;
 
 /**
  * Keys for the configuration values.
@@ -99,6 +101,7 @@ public interface MMXConfigKeys {
   public static final String APNS_POOL_MAX_TOTAL_CONNECTIONS = "mmx.apns.pool.max.connections";
   public static final String APNS_POOL_MAX_CONNECTIONS_PER_APP = "mmx.apns.pool.max.app.connections";
   public static final String APNS_POOL_MAX_IDLE_CONNECTIONS_PER_APP = "mmx.apns.pool.max.idle.count";
+  public static final String APNS_POOL_WAIT_SECONDS = "mmx.apns.pool.wait.sec";
   public static final String APNS_POOL_IDLE_TTL_MINUTES = "mmx.apns.pool.idle.ttl.min";
 
   /**
@@ -150,4 +153,12 @@ public interface MMXConfigKeys {
    */
   public static final String APNS_FEEDBACK_PROCESS_INITIAL_DELAY_MINUTES = "mmx.apns.feedback.initialwait.min";
   public static final String APNS_FEEDBACK_PROCESS_FREQUENCY_MINUTES = "mmx.apns.feedback.frequency.min";
+
+  /*
+   * Pubsub Notification.  The types are defined in PushMessage.Action (case
+   * insensitive.)  An empty string will disable the pubsub notification.
+   */
+  public static final String PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
+  public static final String PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
+  public static final String PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
 }

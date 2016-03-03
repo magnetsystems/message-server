@@ -43,7 +43,6 @@ public class WebConstants {
   public static final String STATUS_OK = "OK";
   public static final String STATUS_ERROR = "ERROR";
 
-
-  public static final int APNS_CERT_MAX_SIZE = 5000;
-
+  // This size is limited by row size in DB, practical cert size is <= 8KB
+  public static final int APNS_CERT_MAX_SIZE = 32768;
 }

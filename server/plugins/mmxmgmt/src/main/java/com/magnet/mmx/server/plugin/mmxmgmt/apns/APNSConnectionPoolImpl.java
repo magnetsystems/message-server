@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.ApnsServiceBuilder;
@@ -30,6 +32,7 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
+import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +61,14 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
     return instance;
   }
 
+  private static int getIntProperty(String name, int defValue) {
+    String value;
+    if ((value = JiveProperties.getInstance().getProperty(name, null)) == null) {
+      return defValue;
+    }
+    return Integer.parseInt(value);
+  }
+
   /**
    * Lifecycle method.
    * Initializes the connection pool with the default object factory and configuration.
@@ -65,17 +76,25 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
    */
   public static void initialize() {
     GenericKeyedObjectPoolConfig config = new GenericKeyedObjectPoolConfig();
-    config.setMaxIdlePerKey(1);
-    config.setMaxTotalPerKey(5);
-    config.setMaxTotal(50);
-    initialize(new APNSConnectionKeyedPooledObjectFactory(new OpenFireDBConnectionProvider()), config);
+    config.setMaxIdlePerKey(getIntProperty(
+        MMXConfigKeys.APNS_POOL_MAX_IDLE_CONNECTIONS_PER_APP,
+        MMXServerConstants.APNS_POOL_MAX_IDLE_CONNECTIONS_PER_APP));
+    config.setMaxTotalPerKey(getIntProperty(
+        MMXConfigKeys.APNS_POOL_MAX_CONNECTIONS_PER_APP,
+        MMXServerConstants.APNS_POOL_MAX_CONNECTIONS_PER_APP));
+    config.setMaxTotal(getIntProperty(
+        MMXConfigKeys.APNS_POOL_MAX_TOTAL_CONNECTIONS,
+        MMXServerConstants.APNS_POOL_MAX_TOTAL_CONNECTIONS));
+    initialize(new APNSConnectionKeyedPooledObjectFactory(
+        new OpenFireDBConnectionProvider()), config);
   }
 
   public static void initialize(GenericKeyedObjectPoolConfig configuration) {
     if (initialized.get()) {
       throw new IllegalStateException("Can't initialize multiple times");
     }
-    initialize(new APNSConnectionKeyedPooledObjectFactory(new OpenFireDBConnectionProvider()), configuration);
+    initialize(new APNSConnectionKeyedPooledObjectFactory(
+        new OpenFireDBConnectionProvider()), configuration);
   }
 
   /**
@@ -84,11 +103,16 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
    * @param configuration
    * @throws java.lang.IllegalStateException if the pool instance has already been initialized.
    */
-  public static void initialize(KeyedPooledObjectFactory<APNSConnectionKey, APNSConnection> factory, GenericKeyedObjectPoolConfig configuration) {
+  public static void initialize(KeyedPooledObjectFactory<APNSConnectionKey, APNSConnection> factory,
+      GenericKeyedObjectPoolConfig configuration) {
     if (initialized.get()) {
       throw new IllegalStateException("Can't initialize multiple times");
     }
-    instance.connectionPool = new GenericKeyedObjectPool<APNSConnectionKey, APNSConnection>(factory, configuration);
+    instance.connectionPool = new GenericKeyedObjectPool<APNSConnectionKey, APNSConnection>(
+        factory, configuration);
+    instance.connectionPool.setMaxWaitMillis(1000L * getIntProperty(
+        MMXConfigKeys.APNS_POOL_WAIT_SECONDS,
+        MMXServerConstants.APNS_POOL_WAIT_SECONDS));
     initialized.set(true);
     LOGGER.info("APNS Connection pool is initialized");
   }
@@ -114,7 +138,16 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
     }
     APNSConnectionKey key = new APNSConnectionKey(appId, productionCert);
     try {
-      return connectionPool.borrowObject(key);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("APNS pool: key={}, total={}, check-out={}, idle={}", key,
+            connectionPool.getMaxTotalPerKey(), connectionPool.getNumActive(key),
+            connectionPool.getNumIdle());
+      }
+      APNSConnection connection = connectionPool.borrowObject(key);
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Got connection={} with key={}", connection, key);
+      }
+      return connection;
     } catch (Exception e) {
       LOGGER.warn("Couldn't get connection for key:" + key , e);
       return null;
@@ -123,11 +156,13 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
 
   @Override
   public void returnConnection (APNSConnection connection) {
-    APNSConnectionKey key = new APNSConnectionKey(connection.getAppId(), connection.isApnsProductionCert());
-    if (LOGGER.isTraceEnabled()) {
-      LOGGER.trace("Returning object with code:{} and key:{} to pool", connection.hashCode(), key);
+    if (connection != null && connectionPool != null) {
+      APNSConnectionKey key = new APNSConnectionKey(connection.getAppId(), connection.isApnsProductionCert());
+      if (LOGGER.isTraceEnabled()) {
+        LOGGER.trace("Return connection={} with key={} to pool", connection, key);
+      }
+      connectionPool.returnObject(key, connection);
     }
-    connectionPool.returnObject(key, connection);
   }
 
   @Override
@@ -141,8 +176,8 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
    * Protected class for defining the keys in the object pool
    */
   protected static class APNSConnectionKey {
-    private String appId;
-    private boolean production;
+    private final String appId;
+    private final boolean production;
 
     protected APNSConnectionKey(String appId, boolean production) {
       if (appId == null) {
@@ -162,15 +197,19 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
       APNSConnectionKey that = (APNSConnectionKey) o;
-
-      if (production != that.production) return false;
-      if (!appId.equals(that.appId)) return false;
-
-      return true;
+      if (production != that.production) {
+        return false;
+      }
+      // Finally compare the app ID.
+      return appId.equals(that.appId);
     }
 
     @Override
@@ -193,9 +232,10 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
   /**
    * Factory that can build the APNS connections using the APNS Library and the AppEntity definition.
    */
-  protected static class APNSConnectionKeyedPooledObjectFactory extends BaseKeyedPooledObjectFactory <APNSConnectionKey, APNSConnection> {
+  protected static class APNSConnectionKeyedPooledObjectFactory extends
+              BaseKeyedPooledObjectFactory <APNSConnectionKey, APNSConnection> {
     private static Logger LOGGER = LoggerFactory.getLogger(APNSConnectionKeyedPooledObjectFactory.class);
-    private ConnectionProvider provider;
+    private final ConnectionProvider provider;
 
     public APNSConnectionKeyedPooledObjectFactory(ConnectionProvider provider) {
       this.provider = provider;
@@ -228,8 +268,8 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
       String md5String = DigestUtils.md5Hex(cert);
       LOGGER.info("MD5 for apns cert for key:{} is {}", key, md5String);
 
-      if (password == null || password.isEmpty()) {
-        String template = "Certificate password for app with id:%s is null or empty";
+      if (password == null) {
+        String template = "Certificate password for app with id:%s is null";
         throw new APNSConnectionException(String.format(template, key.getAppId()));
       }
 
@@ -260,7 +300,8 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
       APNSConnectionImpl apnsConnection = new APNSConnectionImpl(apnsService, key);
       apnsConnection.open();
       if (LOGGER.isInfoEnabled()) {
-        LOGGER.info("Opened APNS Connection for appId:{} and production:{}", key.getAppId(), key.isProduction());
+        LOGGER.info("Opened APNS Connection for appId:{} and production:{}",
+            key.getAppId(), key.isProduction());
       }
       return apnsConnection;
     }
@@ -275,7 +316,5 @@ public class APNSConnectionPoolImpl implements APNSConnectionPool {
       AppEntity appEntity = appDAO.getAppForAppKey(appId);
       return appEntity;
     }
-
   }
-
 }

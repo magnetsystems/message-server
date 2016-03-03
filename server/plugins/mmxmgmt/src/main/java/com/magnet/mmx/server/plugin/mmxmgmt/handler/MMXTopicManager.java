@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,7 @@ import com.magnet.mmx.protocol.TopicSummary;
 import com.magnet.mmx.server.api.v1.protocol.TopicCreateInfo;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.ConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DbInteractionException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
@@ -101,8 +103,17 @@ public class MMXTopicManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MMXAppManager.class);
   private static final boolean EXCLUDE_USER_TOPICS = true;
-  private XMPPServer mServer = XMPPServer.getInstance();
-  private PubSubService mPubSubModule = mServer.getPubSubModule();
+  private static final int MAX_ENTRIES = 100;
+  private final XMPPServer mServer = XMPPServer.getInstance();
+  private final PubSubService mPubSubModule = mServer.getPubSubModule();
+  private final Map<String, JID> mCachedServerUsers = Collections.synchronizedMap(
+      new LinkedHashMap<String, JID>(MAX_ENTRIES+1, 0.75f, true) {
+        private static final long serialVersionUID = 1L;
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, JID> eldest) {
+          return size() > MAX_ENTRIES;
+        }
+       });
 
   private static MMXTopicManager sInstance = null;
 
@@ -164,7 +175,7 @@ public class MMXTopicManager {
    * @return
    */
   public List<com.magnet.mmx.server.api.v1.protocol.TopicInfo> getTopicInfo(String appId) {
-    ArrayList<com.magnet.mmx.server.api.v1.protocol.TopicInfo> result = 
+    ArrayList<com.magnet.mmx.server.api.v1.protocol.TopicInfo> result =
         new ArrayList<com.magnet.mmx.server.api.v1.protocol.TopicInfo>();
     CollectionNode rootNode = getRootAppTopic(appId);
     if (rootNode != null) {
@@ -177,7 +188,7 @@ public class MMXTopicManager {
         String identifier = node.getNodeID();
         boolean isAppTopic = TopicHelper.isAppTopic(identifier, appId);
         if (isAppTopic) {
-          com.magnet.mmx.server.api.v1.protocol.TopicInfo info = 
+          com.magnet.mmx.server.api.v1.protocol.TopicInfo info =
               getTopicInfoFromNode(appId, node);
           result.add(info);
         }
@@ -188,7 +199,7 @@ public class MMXTopicManager {
 
   public com.magnet.mmx.server.api.v1.protocol.TopicInfo getTopicInfoFromNode(
                   String appId, Node node) {
-    com.magnet.mmx.server.api.v1.protocol.TopicInfo info = new 
+    com.magnet.mmx.server.api.v1.protocol.TopicInfo info = new
         com.magnet.mmx.server.api.v1.protocol.TopicInfo();
     info.setDescription(node.getDescription());
     info.setTopicName(node.getName());
@@ -202,7 +213,7 @@ public class MMXTopicManager {
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
-  
+
   /**
    * Get a list of subscriptions for a specific topic
    * @param topicId
@@ -348,7 +359,7 @@ public class MMXTopicManager {
       form.setNodeType(ConfigureForm.NodeType.collection);
       form.setPublishModel(ConfigureForm.PublishModel.open);
       LOGGER.trace("Collection config form: " + form);
-      
+
       JID jid = new JID(creatorUsername, mServer.getServerInfo().getXMPPDomain(), null);
       CollectionNode node = new CollectionNode(mPubSubModule, parent, nodeId, jid);
       node.addOwner(jid);
@@ -373,7 +384,7 @@ public class MMXTopicManager {
    * @throws TopicExistsException   -- if topic already exists
    * @throws NotAcceptableException -- if an exception is thrown by openfire during topic creation.
    */
-  private LeafNode createLeafNode(String createUsername, String topicId, 
+  private LeafNode createLeafNode(String createUsername, String topicId,
                     CollectionNode parentNode, TopicCreateInfo topicInfo)
                         throws TopicExistsException, NotAcceptableException {
 
@@ -422,12 +433,12 @@ public class MMXTopicManager {
         LOGGER.warn("NotAcceptableException", e);
         throw e;
       }
-      
+
       if (topicInfo.isSubscribeOnCreate()) {
         NodeSubscription subscription = subscribeToNode(node, jid, jid);
         // TODO: not returning the subscription ID yet.
       }
-      
+
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       createdNode = node;
@@ -500,7 +511,7 @@ public class MMXTopicManager {
       super(message);
     }
   }
-  
+
   private void setOptions(String topicName, Node node, MMXTopicOptions options) {
     ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
     form.setSendItemSubscribe(true);
@@ -522,7 +533,7 @@ public class MMXTopicManager {
     } else {
       // Set the default values if not specified.
       options.fillWithDefaults();
-      
+
       form.setPublishModel(ConfigureForm.convert(options.getPublisherType()));
       form.setPersistentItems(options.getMaxItems() != 0);
       form.setMaxItems(options.getMaxItems());
@@ -536,10 +547,34 @@ public class MMXTopicManager {
       e.printStackTrace();
     }
   }
-  
+
+  // Add a list of owners to a node.  The owners should be unique.
+  private void addOwnersToNode(Node node, JID[] owners) {
+    for (JID owner : owners) {
+      if (owner != null) {
+        node.addOwner(owner);
+      }
+    }
+  }
+
+  private JID getServerUser(String appId) {
+    // Use LRU cache for server user JID.
+    JID jid = mCachedServerUsers.get(appId);
+    if (jid == null) {
+      AppDAO appDAO = DBUtil.getAppDAO();
+      String userId = appDAO.getServerUserForApp(appId);
+      if (userId != null) {
+        jid = new JID(JIDUtil.makeNode(userId, appId),
+                  mServer.getServerInfo().getXMPPDomain(), null);
+        mCachedServerUsers.put(appId, jid);
+      }
+    }
+    return jid;
+  }
+
   // Create the collection node and its ancestors recursively.
-  private CollectionNode createCollectionNode(int prefix, String nodeId, 
-                              JID creator, JID owner) throws IllegalArgumentException {
+  private CollectionNode createCollectionNode(int prefix, String nodeId,
+                              JID creator, JID[] owners) throws IllegalArgumentException {
 //    LOGGER.trace("createCollectionNode: prefix="+prefix+", nodeId="+nodeId);
     if (nodeId == null) {
       return null;
@@ -559,25 +594,25 @@ public class MMXTopicManager {
     if (parentNodeId == null) {
       parentNode = getRootAppTopic(TopicHelper.getRootNodeId(nodeId));
     } else {
-      parentNode = createCollectionNode(prefix, parentNodeId, creator, owner);
+      parentNode = createCollectionNode(prefix, parentNodeId, creator, owners);
     }
-    
+
     synchronized(nodeId.intern()) {
       if ((node = mPubSubModule.getNode(nodeId)) == null) {
         LOGGER.trace("create collection node=" + nodeId + ", parent=" +
                 ((parentNode == null) ? "" : parentNode.getNodeID()));
         node = new CollectionNode(mPubSubModule, parentNode, nodeId, creator);
         setOptions(null, node, null);
-        node.addOwner(owner);
+        addOwnersToNode(node, owners);
         node.saveToDB();
-        
+
         CacheFactory.doClusterTask(new RefreshNodeTask(node));
       }
     }
     LOGGER.trace("return new collection node=" + nodeId);
     return (CollectionNode) node;
   }
-  
+
   /**
    * Create an application-wide or personal topic and create all parent nodes
    * if needed.
@@ -587,7 +622,7 @@ public class MMXTopicManager {
    * @return
    * @throws MMXException
    */
-  public MMXStatus createTopic(JID from, String appId, TopicAction.CreateRequest rqt) 
+  public MMXStatus createTopic(JID from, String appId, TopicAction.CreateRequest rqt)
                           throws MMXException {
     String topic = rqt.getTopicName();
     try {
@@ -605,6 +640,9 @@ public class MMXTopicManager {
     }
     String userId = JIDUtil.getUserId(from);
     JID owner = from.asBareJID();
+    JID serverUser = getServerUser(appId);
+    // Don't add server user if the creator is the server user already.
+    JID[] owners = { owner, owner.equals(serverUser) ? null : serverUser };
     String topicId = TopicHelper.makeTopic(appId, rqt.isPersonal() ?
         userId : null, topic);
 //    LOGGER.trace("createTopic realTopic="+realTopic+", topic="+topic);
@@ -624,12 +662,12 @@ public class MMXTopicManager {
     int prefix = TopicHelper.getPrefixLength(topicId);
     String parentId = TopicHelper.getParent(prefix, topicId);
     CollectionNode parent;
-    if (parentId == null)
+    if (parentId == null) {
       parent = getRootAppTopic(appId);
-    else {
+    } else {
       try {
         // Recursively create the parent nodes if they don't exist.
-        parent = createCollectionNode(prefix, parentId, from, owner);
+        parent = createCollectionNode(prefix, parentId, from, owners);
       } catch (Throwable e) {
         throw new MMXException(e.getMessage(), StatusCode.BAD_REQUEST.getCode());
       }
@@ -637,7 +675,7 @@ public class MMXTopicManager {
     if (parent != null && !rqt.isCollection()) {
       if (!parent.isAssociationAllowed(from)) {
         // Check if requester is allowed to add a new leaf node to the parent.
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
             StatusCode.FORBIDDEN.getCode());
       }
       if (parent.isMaxLeafNodeReached()) {
@@ -645,7 +683,7 @@ public class MMXTopicManager {
             StatusCode.CONFLICT.getCode());
       }
     }
-    
+
     synchronized(topicId.intern()) {
       if (mPubSubModule.getNode(topicId) != null) {
         throw new MMXException(StatusCode.TOPIC_EXISTS.getMessage(topic),
@@ -653,13 +691,13 @@ public class MMXTopicManager {
       }
 //      LOGGER.trace("create node="+realTopic+", parent="+parent);
       Node node;
-      if (rqt.isCollection())
+      if (rqt.isCollection()) {
         node = new CollectionNode(mPubSubModule, parent, topicId, from);
-      else {
+      } else {
         node = new LeafNode(mPubSubModule, parent, topicId, from);
       }
       // Add the creator as the owner.
-      node.addOwner(owner);
+      addOwnersToNode(node, owners);
       setOptions(topic, node, rqt.getOptions());
 
       // Do the auto-subscription for creator.
@@ -667,7 +705,7 @@ public class MMXTopicManager {
         NodeSubscription subscription = subscribeToNode(node, owner, owner);
         // TODO: not returning the subscription ID yet.
       }
-      
+
       node.saveToDB();
       CacheFactory.doClusterTask(new RefreshNodeTask(node));
       /**
@@ -689,7 +727,7 @@ public class MMXTopicManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
   private NodeSubscription subscribeToNode(Node node, JID owner, JID subscriber) {
     SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
     // Receive notification of new items only.
@@ -697,13 +735,13 @@ public class MMXTopicManager {
     optionsForm.setSubscriptionDepth("all");
     // Don't set other options; it will change the subscription state to
     // pending because it will wait for the owner's approval.
-    
+
     // Need a modified Node.java from mmx-openfire repo.
     NodeSubscription subscription = node.createSubscription(null, owner,
         subscriber, false, optionsForm);
     return subscription;
   }
-  
+
   private int deleteNode(Node node, JID owner) throws MMXException {
     if (!node.getOwners().contains(owner)) {
       AppTopic topic = TopicHelper.parseTopic(node.getNodeID());
@@ -721,7 +759,7 @@ public class MMXTopicManager {
             throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
                 StatusCode.FORBIDDEN.getCode());
           }
-          
+
 //          LOGGER.trace("delete leaf node=" + node.getNodeID());
           child.delete();
           ++count;
@@ -733,8 +771,8 @@ public class MMXTopicManager {
     ++count;
     return count;
   }
-  
-  public MMXStatus deleteTopic(JID from, String appId, 
+
+  public MMXStatus deleteTopic(JID from, String appId,
                           TopicAction.DeleteRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String userId = JIDUtil.getUserId(from);
@@ -743,23 +781,23 @@ public class MMXTopicManager {
         userId : null, topic);
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
-    int count = deleteNode(node, owner);    
+    int count = deleteNode(node, owner);
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" topic"+((count==1)?" is":"s are")+" deleted");
     return status;
   }
-  
+
   public TopicInfo getTopic(JID from, String appId, MMXTopicId topic)
                           throws MMXException {
     String realTopic = TopicHelper.makeTopic(appId, topic.getEscUserId(),
         TopicHelper.normalizePath(topic.getName()));
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic.getName()), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic.getName()),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
 //    // A user can get the topic info if the topic is a global topic, or the owner
@@ -771,7 +809,7 @@ public class MMXTopicManager {
 //    }
     return nodeToInfo(topic.getUserId(), topic.getName(), node);
   }
-  
+
   public List<TopicInfo> getTopics(JID from, String appId, List<MMXTopicId> topics)
                             throws MMXException {
     List<TopicInfo> infos = new ArrayList<TopicInfo>(topics.size());
@@ -784,48 +822,48 @@ public class MMXTopicManager {
     }
     return infos;
   }
-  
+
   public MMXStatus retractAllFromTopic(JID from, String appId,
       TopicAction.RetractAllRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String userId = JIDUtil.getUserId(from);
     JID owner = from.asBareJID();
-    String realTopic = TopicHelper.makeTopic(appId, rqt.isPersonal() ? 
+    String realTopic = TopicHelper.makeTopic(appId, rqt.isPersonal() ?
         userId : null, topic);
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
     if (!node.getOwners().contains(owner)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
     LeafNode leafNode = (LeafNode) node;
     List<PublishedItem> pubItems = leafNode.getPublishedItems();
     leafNode.deleteItems(pubItems);
-    
+
     int count = (pubItems == null) ? 0 : pubItems.size();
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" item"+((count==1)?" is":"s are")+" retracted");
     return status;
   }
-  
-  public Map<String, Integer> retractFromTopic(JID from, String appId, 
+
+  public Map<String, Integer> retractFromTopic(JID from, String appId,
       TopicAction.RetractRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
       throw new MMXException("Cannot retract items from a collection topic",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
     if (itemIds == null || itemIds.size() == 0) {
@@ -837,7 +875,7 @@ public class MMXTopicManager {
       throw new MMXException("Items required in this topic",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     List<PublishedItem> pubItems = new ArrayList<PublishedItem>(itemIds.size());
     Map<String, Integer> results = new HashMap<String, Integer>(itemIds.size());
     for (String itemId : itemIds) {
@@ -857,17 +895,17 @@ public class MMXTopicManager {
     leafNode.deleteItems(pubItems);
     return results;
   }
-  
-  public TopicAction.SubscribeResponse subscribeTopic(JID from, String appId, 
+
+  public TopicAction.SubscribeResponse subscribeTopic(JID from, String appId,
               TopicAction.SubscribeRequest rqt, List<String> userRoles) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
-    
+
     JID owner = from.asBareJID();
     // The subscriber can specify a different resource or without resource.
     JID subscriber = new JID(from.getNode(), from.getDomain(), rqt.getDevId());
@@ -877,7 +915,7 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // Check if the subscription owner is a user with outcast affiliation
     NodeAffiliate nodeAffiliate = node.getAffiliate(owner);
     if (nodeAffiliate != null &&
@@ -885,7 +923,7 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // Check that subscriptions to the node are enabled
     if (!node.isSubscriptionEnabled()) {
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
@@ -913,17 +951,17 @@ public class MMXTopicManager {
         return resp;
       }
     }
-    
+
     subscription = subscribeToNode(node, owner, subscriber);
-    
+
     TopicAction.SubscribeResponse resp = new TopicAction.SubscribeResponse(
-        subscription.getID(), StatusCode.SUCCESS.getCode(), 
+        subscription.getID(), StatusCode.SUCCESS.getCode(),
         StatusCode.SUCCESS.getMessage());
     return resp;
   }
-  
-  public MMXStatus unsubscribeTopic(JID from, String appId, 
-                  TopicAction.UnsubscribeRequest rqt) throws MMXException {    
+
+  public MMXStatus unsubscribeTopic(JID from, String appId,
+                  TopicAction.UnsubscribeRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
@@ -944,14 +982,14 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.GONE.getMessage(),
           StatusCode.GONE.getCode());
     }
-    
+
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
         .setMessage(count+" subscription"+((count==1)?" is":"s are")+" cancelled");
     return status;
   }
-  
-  public MMXStatus unsubscribeForDev(JID from, String appId, 
+
+  public MMXStatus unsubscribeForDev(JID from, String appId,
                   TopicAction.UnsubscribeForDevRequest rqt) throws MMXException {
     String prefix = TopicHelper.TOPIC_DELIM + appId + TopicHelper.TOPIC_DELIM;
     int count = 0;
@@ -973,7 +1011,7 @@ public class MMXTopicManager {
         .setMessage(count+" subscription"+((count==1)?" is":"s are")+" cancelled");
     return status;
   }
-  
+
   public TopicAction.ListResponse listTopics(JID from, String appId,
                   TopicAction.ListRequest rqt, List<String> userRoles) throws MMXException {
     TopicAction.ListResponse resp = new TopicAction.ListResponse();
@@ -1021,7 +1059,7 @@ public class MMXTopicManager {
     }
     return resp;
   }
-  
+
   private TopicInfo nodeToInfo(String userId, String topic, Node node) {
     TopicInfo info = new TopicInfo(
         userId, node.getName() != null ? node.getName() : topic, node.isCollectionNode())
@@ -1045,10 +1083,10 @@ public class MMXTopicManager {
     }
     return info;
   }
-  
+
   // Get all top level children nodes which are either global topics or user
   // topics.  Filter out the nodes by the search type.
-  private int getTopChildNodes(boolean recursive, Node root, 
+  private int getTopChildNodes(boolean recursive, Node root,
       TopicAction.ListResponse resp, int limit, ListType type, String userId, List<String> roles) {
     boolean globalOnly = (type == ListType.global);
     if (roles == null || roles.isEmpty()) {
@@ -1090,10 +1128,10 @@ public class MMXTopicManager {
     }
     return limit;
   }
-  
-  // Get all children nodes recursively below the top level.  
+
+  // Get all children nodes recursively below the top level.
   // @return < 0 if exceeding the limit, >= 0 if within the limit.
-  private int getChildNodes(boolean recursive, Node node, 
+  private int getChildNodes(boolean recursive, Node node,
       TopicAction.ListResponse resp, int limit) {
     if (!node.isCollectionNode()) {
       AppTopic topic = TopicHelper.parseTopic(node.getNodeID());
@@ -1123,8 +1161,8 @@ public class MMXTopicManager {
     }
     return limit;
   }
-  
-  private String[] getTopics(String appId, List<MMXTopicId> list, 
+
+  private String[] getTopics(String appId, List<MMXTopicId> list,
                               int begin, int size) {
     if (list == null) {
       return null;
@@ -1138,7 +1176,7 @@ public class MMXTopicManager {
     }
     return topics;
   }
-  
+
   private static class SQLHelper {
     public static String generateArgList(int numOfArgs) {
       if (numOfArgs == 0) {
@@ -1158,15 +1196,15 @@ public class MMXTopicManager {
         pstmt.setString(index++, arg);
       }
     }
-    
-    public static void bindArgList(PreparedStatement pstmt, int index, 
+
+    public static void bindArgList(PreparedStatement pstmt, int index,
                                       List<String> args) throws SQLException {
       for (String arg : args) {
         pstmt.setString(index++, arg);
       }
     }
   }
-  
+
   public TopicAction.SummaryResponse getSummary(JID from, String appId,
           TopicAction.SummaryRequest rqt) throws MMXException {
     // Build a collection of topic ID's from the request; it contains topics
@@ -1243,7 +1281,7 @@ public class MMXTopicManager {
       DbConnectionManager.closeConnection(rs, pstmt, con);
     }
   }
-  
+
   public List<TopicInfo> searchByTags(JID from, String appId,
                       TagSearch rqt) throws MMXException {
     List<TopicEntity> entities;
@@ -1281,7 +1319,7 @@ public class MMXTopicManager {
     }
     return res;
   }
-  
+
   public TopicAction.TopicTags getTags(JID from, String appId,
                       MMXTopicId rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getName());
@@ -1289,10 +1327,10 @@ public class MMXTopicManager {
     Node node = mPubSubModule.getNode(realTopic);
     // No need to check for permission; just check for existing.
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
-    
+
     TagDAO tagDao = DBUtil.getTagDAO();
     String serviceId = node.getService().getServiceID();
     String nodeId = node.getNodeID();
@@ -1309,7 +1347,7 @@ public class MMXTopicManager {
         rqt.getName(), tags, new Date());
     return topicTags;
   }
-  
+
   public MMXStatus setTags(JID from, String appId, TopicAction.TopicTags rqt)
                       throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopicName());
@@ -1329,13 +1367,14 @@ public class MMXTopicManager {
     tagDao.deleteAllTagsForTopic(appId, serviceId, nodeId);
 
     if(!Utils.isNullOrEmpty(tags)) {
-      for(String tag : tags)
-      try {
-        tagDao.createTopicTag(tag, appId, serviceId, nodeId);
-      } catch (DbInteractionException e) {
-        return (new MMXStatus())
-                .setCode(StatusCode.SERVER_ERROR.getCode())
-                .setMessage(e.getMessage());
+      for(String tag : tags) {
+        try {
+          tagDao.createTopicTag(tag, appId, serviceId, nodeId);
+        } catch (DbInteractionException e) {
+          return (new MMXStatus())
+                  .setCode(StatusCode.SERVER_ERROR.getCode())
+                  .setMessage(e.getMessage());
+        }
       }
     }
 
@@ -1344,19 +1383,19 @@ public class MMXTopicManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
-  public MMXStatus addTags(JID from, String appId, TopicAction.TopicTags rqt) 
+
+  public MMXStatus addTags(JID from, String appId, TopicAction.TopicTags rqt)
                       throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopicName());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
     // No need to check for permission; just check for existing.
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
     List<String> tags = rqt.getTags();
-    
+
     String serviceId = node.getService().getServiceID();
     String nodeId = node.getNodeID();
 
@@ -1385,7 +1424,7 @@ public class MMXTopicManager {
         .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
   public MMXStatus removeTags(JID from, String appId, TopicAction.TopicTags rqt)
                       throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopicName());
@@ -1410,9 +1449,9 @@ public class MMXTopicManager {
             .setMessage(StatusCode.SUCCESS.getMessage());
     return status;
   }
-  
+
   @Deprecated
-  public TopicAction.TopicQueryResponse queryTopic(JID from, String appId, 
+  public TopicAction.TopicQueryResponse queryTopic(JID from, String appId,
       TopicAction.TopicQueryRequest rqt) throws MMXException {
     String userId = JIDUtil.getUserId(from);
     int offset = rqt.getOffset();
@@ -1535,7 +1574,7 @@ public class MMXTopicManager {
     String prefix = TopicHelper.makePrefix(appId);
 
     // Don't query the DB directly because some items are cached in memory.
-    // Besides, it is faster looping through all cached nodes in memory than 
+    // Besides, it is faster looping through all cached nodes in memory than
     // query the ofPubsubSubscription table because # of nodes should be many
     // less than # of subscriptions.
     // TODO: optimize it to traverse from the appID root node.
@@ -1640,13 +1679,13 @@ public class MMXTopicManager {
         }
       }
     }
-    
+
     MMXStatus status = (new MMXStatus())
         .setCode(Constants.STATUS_CODE_200)
         .setMessage(numSubs+" subscriptions; "+numSent+" published items sent");
     return status;
   }
-  
+
   private Node findAncestor(TreeMap<String, Node> map, Node node) {
     Entry<String, Node> entry = map.floorEntry(node.getNodeID());
     if ((entry != null) && node.getNodeID().startsWith(entry.getKey())) {
@@ -1656,7 +1695,7 @@ public class MMXTopicManager {
     }
   }
 
-  private boolean sendLastPublishedItem(PublishedItem publishedItem, 
+  private boolean sendLastPublishedItem(PublishedItem publishedItem,
                                           NodeSubscription subNode, JID to) {
     if (!subNode.canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
       return false;
@@ -1686,7 +1725,7 @@ public class MMXTopicManager {
 //    node.getService().sendNotification(node, notification, subNode.getJID());
     return true;
   }
-  
+
   private boolean sendLastPublishedItems(List<PublishedItem> publishedItems,
                                            NodeSubscription subNode, JID to) {
     PublishedItem pubItem = publishedItems.get(0);
@@ -1724,7 +1763,7 @@ public class MMXTopicManager {
     // node.getService().sendNotification(node, notification, subNode.getJID());
     return true;
   }
-  
+
   /**
    * Create the <code>all</code> version topic of an OS.  All its parent topics
    * will be created if they do not exist.
@@ -1753,7 +1792,7 @@ public class MMXTopicManager {
       return new MMXStatus().setCode(e.getCode()).setMessage(e.getMessage());
     }
   }
-  
+
   /**
    * Delete the OS topic and its children, or a specific OS type topic.
    * @param creatorUserId The app server user ID.
@@ -1774,8 +1813,8 @@ public class MMXTopicManager {
       return new MMXStatus().setCode(e.getCode()).setMessage(e.getMessage());
     }
   }
-  
-  public TopicAction.FetchResponse fetchItems(JID from, String appId, 
+
+  public TopicAction.FetchResponse fetchItems(JID from, String appId,
             TopicAction.FetchRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
@@ -1806,10 +1845,10 @@ public class MMXTopicManager {
     if (until == null) {
       until = new Date();
     }
-    
+
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
@@ -1820,13 +1859,13 @@ public class MMXTopicManager {
     // Assumed that the owner of the subscription is the bare JID of the subscription JID.
     JID owner = from.asBareJID();
     if (!node.getAccessModel().canAccessItems(node, owner, from)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
     // Check that the requester is not an outcast
     NodeAffiliate affiliate = node.getAffiliate(owner);
     if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
             StatusCode.FORBIDDEN.getCode());
     }
     // Check if the specified subId belongs to an existing node subscription
@@ -1848,7 +1887,7 @@ public class MMXTopicManager {
         (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
-      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
+      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(),
           pubItem.getPublisher().toBareJID(),
           pubItem.getCreationDate(),
           pubItem.getPayloadXML());
@@ -1860,21 +1899,21 @@ public class MMXTopicManager {
         rqt.getUserId(), topic, total, mmxItems);
     return resp;
   }
-  
-  public TopicAction.FetchResponse getItems(JID from, String appId, 
+
+  public TopicAction.FetchResponse getItems(JID from, String appId,
       TopicAction.ItemsByIdsRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
     String realTopic = TopicHelper.makeTopic(appId, rqt.getUserId(), topic);
     Node node = mPubSubModule.getNode(realTopic);
     if (node == null) {
-      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic), 
+      throw new MMXException(StatusCode.TOPIC_NOT_FOUND.getMessage(topic),
           StatusCode.TOPIC_NOT_FOUND.getCode());
     }
     if (node.isCollectionNode()) {
       throw new MMXException("Cannot get items from a collection topic",
           StatusCode.NOT_IMPLEMENTED.getCode());
     }
-    
+
     LeafNode leafNode = (LeafNode) node;
     List<String> itemIds = rqt.getItemIds();
     if (itemIds == null || itemIds.isEmpty()) {
@@ -1885,21 +1924,21 @@ public class MMXTopicManager {
     // Assumed that the owner of the subscription is the bare JID of the subscription JID.
     JID owner = from.asBareJID();
     if (!node.getAccessModel().canAccessItems(node, owner, from)) {
-      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
           StatusCode.FORBIDDEN.getCode());
     }
     // Check that the requester is not an outcast
     NodeAffiliate affiliate = node.getAffiliate(owner);
     if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.outcast) {
-        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic), 
+        throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic),
             StatusCode.FORBIDDEN.getCode());
     }
-    
+
     // TODO: do we need to check for subscription first?
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(itemIds.size());
     for (String itemId : itemIds) {
       if (itemId == null) {
-        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"), 
+        throw new MMXException(StatusCode.BAD_REQUEST.getMessage("null item ID"),
             StatusCode.BAD_REQUEST.getCode());
       }
       PublishedItem pubItem = leafNode.getPublishedItem(itemId);
@@ -1907,7 +1946,7 @@ public class MMXTopicManager {
         // Ignored the invalid item ID.
         continue;
       }
-      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(), 
+      MMXPublishedItem mmxItem = new MMXPublishedItem(pubItem.getID(),
             pubItem.getPublisher().toBareJID(),
             pubItem.getCreationDate(),
             pubItem.getPayloadXML());
@@ -1917,7 +1956,7 @@ public class MMXTopicManager {
         rqt.getUserId(), topic, mmxItems.size(), mmxItems);
     return resp;
   }
-  
+
   public TopicAction.SubscribersResponse getSubscribers(JID from, String appId,
       TopicAction.SubscribersRequest rqt) throws MMXException {
     String topic = TopicHelper.normalizePath(rqt.getTopic());
@@ -2017,7 +2056,7 @@ public class MMXTopicManager {
     }
     return userHasRole;
   }
-  
+
   /**
    * Enum for the status codes
    */
@@ -2058,7 +2097,7 @@ public class MMXTopicManager {
     public String getMessage() {
       return message;
     }
-    
+
     public String getMessage(String arg) {
       return message + arg;
     }

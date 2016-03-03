@@ -75,7 +75,7 @@ import java.util.concurrent.Future;
 @Path("apps")
 public class AppResource {
   private static final Logger LOGGER = LoggerFactory.getLogger(AppResource.class);
-  private static final String APNS_CERT_SIZE_TOO_BIG = "Supplied APNs certificate exceeds the maximum allowed size.";
+  private static final String APNS_CERT_SIZE_TOO_BIG = "Supplied APNS certificate exceeds the maximum allowed size: "+WebConstants.APNS_CERT_MAX_SIZE;
   private static final String INVALID_APP_NAME_MSG = "Supplied app name is invalid.";
   private static final String APP_NAME_TOO_LONG_MSG = "Supplied app name is too long.";
   private static final String INVALID_APP_OWNER_ID_MSG = "Supplied app owner is invalid.";
@@ -319,7 +319,8 @@ public class AppResource {
         certificateFileStream = inputPart.getBody(InputStream.class, null);
       }
       List<InputPart> passwordParts = uploadForm.get(APNS_CERT_PASSWORD);
-      if (passwordParts == null || passwordParts.isEmpty() || passwordParts.get(0)== null ||  passwordParts.get(0).getBodyAsString().isEmpty()) {
+      // It is OK to have empty password.
+      if (passwordParts == null || passwordParts.isEmpty() || passwordParts.get(0)== null) {
         ErrorResponse error = new ErrorResponse();
         error.setMessage(ErrorMessages.ERROR_APNS_CERT_PASSWORD_MISSING);
         error.setCode(Integer.toString(ErrorCode.APNS_PASSWORD_MISSING.getCode()));
@@ -331,21 +332,23 @@ public class AppResource {
         );
       }
       String password = passwordParts.get(0).getBodyAsString();
-      ByteArrayOutputStream bufferStream = new ByteArrayOutputStream(WebConstants.APNS_CERT_MAX_SIZE);
-      byte[] buffer = new byte[1024];
+      byte[] buffer = new byte[8*1024];
       int read = -1;
       int totalRead = 0;
       boolean tooBig = false;
-      while ((read = certificateFileStream.read(buffer, 0, buffer.length)) != -1 && !tooBig) {
-        if (totalRead + read > WebConstants.APNS_CERT_MAX_SIZE) {
+      ByteArrayOutputStream bufferStream = new ByteArrayOutputStream(buffer.length);
+      while ((read = certificateFileStream.read(buffer, 0, buffer.length)) != -1) {
+        if ((totalRead + read) > WebConstants.APNS_CERT_MAX_SIZE) {
           tooBig = true;
+          break;
         } else {
-          totalRead = totalRead + read;
+          totalRead += read;
           bufferStream.write(buffer, 0, read);
         }
       }
       bufferStream.flush();
       bufferStream.close();
+      certificateFileStream.close();
       if (tooBig) {
         ErrorResponse error = new ErrorResponse();
         error.setMessage(APNS_CERT_SIZE_TOO_BIG);
@@ -578,7 +581,7 @@ public class AppResource {
    * is converting dates to unix time stamps.
    */
   protected static class JSONFriendlyAppCreateResponseDecorator {
-    private AppCreate.Response response;
+    private final AppCreate.Response response;
 
     public JSONFriendlyAppCreateResponseDecorator(AppCreate.Response response) {
       this.response = response;

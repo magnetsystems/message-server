@@ -1224,7 +1224,7 @@ public class ChannelResource {
         UserDAO userDAO = new UserDAOImpl( new OpenFireDBConnectionProvider());
         public MMXPubSubItemChannel2Ext(MMXPubSubItemChannel item, String appId) {
             super(item);
-            publisherInfo = userDAO.getUser(item.getPublisher().getUserId() + "%" + appId);
+            publisherInfo = userDAO.getUser(JIDUtil.makeNode(item.getPublisher().getUserId(), appId));
         }
 
         public UserEntity getPublisherInfo() {

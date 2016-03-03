@@ -66,6 +66,11 @@ public interface AppDAO {
    */
   public void deleteApp (String appId);
 
+  /**
+   * Get the ID of all apps owned by a user.
+   * @param ownerId
+   * @return
+   */
   public List<String> getAllAppIds(String ownerId);
 
   /**
@@ -82,8 +87,6 @@ public interface AppDAO {
    * @return AppEntity if one exists or null if no app with that name exists.
    */
   public AppEntity getAppForName(String appName, String ownerId);
-
-  public String getOwnerEmailForApp(String appId);
 
   /**
    * Update the apns certificate for the supplied appId
@@ -125,7 +128,6 @@ public interface AppDAO {
                         String googleProjectId, String apnsCertPwd, String ownerEmail, String guestSecret, boolean productionApnsCert)
       throws AppDoesntExistException;
 
-
   /**
    * Update app information.
    * @param appId
@@ -141,11 +143,14 @@ public interface AppDAO {
                         String googleProjectId, String apnsCertPwd, String ownerEmail,
                         String guestSecret, boolean productionApnsCert, String serverUserId)
       throws AppDoesntExistException;
-  
+
   /**
    * Get a list of all apps currently defined in the database.
    * @return
    */
   public List<AppEntity> getAllApps();
 
+  public String getOwnerEmailForApp(String appId);
+
+  public String getServerUserForApp(String appId);
 }

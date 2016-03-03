@@ -1,4 +1,4 @@
-/*   Copyright (c) 2015 Magnet Systems, Inc.
+/*   Copyright (c) 2015-2016 Magnet Systems, Inc.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public final class MMXServerConstants {
   public static final int APNS_POOL_MAX_CONNECTIONS_PER_APP = 20;
   public static final int APNS_POOL_MAX_IDLE_CONNECTIONS_PER_APP = 1;
   public static final int APNS_POOL_IDLE_TTL_MINUTES = 10;
+  public static final int APNS_POOL_WAIT_SECONDS = 15;
 
   /**
    * Default values  related to https for the rest API
@@ -125,7 +126,7 @@ public final class MMXServerConstants {
 
   public final static String SINCE_PARAM = "since";
   public final static String UNTIL_PARAM = "until";
-  
+
   public final static Integer DEFAULT_PAGE_SIZE = Integer.valueOf(100);
   public final static Integer DEFAULT_OFFSET = Integer.valueOf(0);
   public final static String MMX_APP_ENTITY_PROPERTY = "mmxAppEntityProperty";
@@ -161,7 +162,7 @@ public final class MMXServerConstants {
   public final static String RPSLS_APP = "rpsls";
 
   public final static String DISTRIBUTED_KEY = "mmxdistributed";
-  
+
   /**
    * Content is included in meta using the following key.
    */
