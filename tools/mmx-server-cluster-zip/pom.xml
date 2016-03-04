@@ -48,7 +48,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx.ext</groupId>
                                     <artifactId>openfire</artifactId>
-                                    <version>${version.addon}</version>
+                                    <version>2.5.0</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${sandbox.dir}/mmx-server</outputDirectory>
@@ -93,7 +93,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx</groupId>
                                     <artifactId>mmx-server-providers-lockout</artifactId>
-                                    <version>${version.addon}</version>
+                                    <version>2.5.0</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${sandbox.dir}/mmx-server/openfire/lib</outputDirectory>
