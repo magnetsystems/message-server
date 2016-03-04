@@ -887,6 +887,7 @@ public class IntegrationChannelResource {
                 int messageOffset = 0;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
                         this.fetchItemsForChannel(
+                                userRequestingSummary,
                                 channelOwner,
                                 channelSummaryRequest.getAppId(),
                                 channelId,
@@ -938,7 +939,8 @@ public class IntegrationChannelResource {
         return channelOwner;
     }
 
-    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,
+    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID userRequestingSummary,
+                                                                             JID channelOwner,
                                                                              String appId,
                                                                              MMXChannelId channelId,
                                                                              Date since,
@@ -958,7 +960,8 @@ public class IntegrationChannelResource {
         ChannelAction.FetchRequest rqt = new ChannelAction.FetchRequest(channelId.getEscUserId(), channelId
                 .getName(),
                 opt);
-        ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        //ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        ChannelAction.FetchResponse resp = channelManager.fetchItems(userRequestingSummary, appId, rqt);
 
         String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
         List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());

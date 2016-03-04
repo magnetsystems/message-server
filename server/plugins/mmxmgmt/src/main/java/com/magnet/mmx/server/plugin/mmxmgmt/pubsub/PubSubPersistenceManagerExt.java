@@ -60,6 +60,9 @@ import java.util.List;
  */
 public class PubSubPersistenceManagerExt {
   private static Logger LOGGER = LoggerFactory.getLogger(PubSubPersistenceManagerExt.class);
+
+  private static final String PRIVACY_LIST_NAME = "default";
+
   public static final int MAX_ROWS_RETURN = JiveGlobals.getIntProperty(
           "mmx.topic.query.max", 5000);
   private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty(
@@ -388,14 +391,13 @@ public class PubSubPersistenceManagerExt {
   }
 
   private static List<JID> getBlockedUsersList(JID from) {
-    PrivacyList privacyList = PrivacyListManager.getInstance().getPrivacyList(from.getNode(),"default");
+    PrivacyList privacyList = PrivacyListManager.getInstance().getPrivacyList(from.getNode(),PRIVACY_LIST_NAME);
 
-    if( privacyList == null) {
+    if( privacyList == null || !privacyList.isDefault()) {
       return new ArrayList<JID>();
     }else{
       return privacyList.getBlockedUsers();
     }
-
 
   }
 
