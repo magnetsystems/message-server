@@ -65,7 +65,7 @@
                 <artifactItem>
                   <groupId>com.magnet.mmx.ext</groupId>
                   <artifactId>openfire</artifactId>
-                  <version>${project.version}</version>
+                  <version>2.5.0</version>
                   <type>zip</type>
                   <overWrite>false</overWrite>
                   <outputDirectory>${project.build.directory}/mmx-openfire</outputDirectory>
@@ -97,12 +97,12 @@
     <dependency>
         <groupId>com.magnet.mmx</groupId>
         <artifactId>mmx-server-common</artifactId>
-        <version>${project.version}</version>
+        <version>2.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.magnet.mmx</groupId>
       <artifactId>mmx-server-providers-lockout</artifactId>
-      <version>${project.version}</version>
+      <version>2.5.0</version>
     </dependency>
     <dependency>
         <groupId>org.apache.commons</groupId>
