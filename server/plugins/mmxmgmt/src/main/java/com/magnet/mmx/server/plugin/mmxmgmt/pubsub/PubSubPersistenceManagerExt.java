@@ -32,6 +32,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.util.TopicHelper;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.privacy.PrivacyList;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceManager;
 import org.jivesoftware.openfire.pubsub.PublishedItem;
@@ -41,7 +43,6 @@ import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -63,9 +64,11 @@ public class PubSubPersistenceManagerExt {
   private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty(
       "xmpp.pubsub.fetch.max", 2000);
   private static final String LOAD_ITEMS_PREDICATE = 
-      "WHERE serviceID=? AND nodeID=? AND creationDate >= ? ORDER BY creationDate DESC";
+      "WHERE serviceID=? AND nodeID=? AND creationDate >= ? ";
+
   private static final String LOAD_ITEMS_BTWN_PREDICATE =
-      "WHERE serviceID=? AND nodeID=? AND creationDate BETWEEN ? AND ? ORDER BY creationDate DESC";
+      "WHERE serviceID=? AND nodeID=? AND creationDate BETWEEN ? AND ? ";
+
   private static final String LOAD_ITEMS_COUNT = "SELECT count(*) FROM ofPubsubItem "
       + LOAD_ITEMS_PREDICATE;
   private static final String LOAD_ITEMS = "SELECT id,jid,creationDate,payload FROM ofPubsubItem "
@@ -75,6 +78,9 @@ public class PubSubPersistenceManagerExt {
   private static final String LOAD_ITEMS_BTWN = "SELECT id,jid,creationDate,payload FROM ofPubsubItem "
       + LOAD_ITEMS_BTWN_PREDICATE;
   private static final String LOAD_ITEMS_BTWN_WITH_OFFSET = LOAD_ITEMS_BTWN + " LIMIT ? OFFSET ? ";
+
+  private static final String OFFSET = " LIMIT ? OFFSET ? ";
+
   private static final String GET_ITEM_COUNT = "SELECT count(*) from ofPubsubItem WHERE nodeID=? AND serviceID=?";
   private static final String SEARCH_PROJECTION = 
       "nodeID,leaf,name,description,persistItems,maxItems,maxPayloadSize,publisherModel,creationDate,modificationDate,creator,subscriptionEnabled";
@@ -98,7 +104,7 @@ public class PubSubPersistenceManagerExt {
   private static final int INDEX_SRCH_CREATOR = 11;
   private static final int INDEX_SRCH_SUB_ENABLED = 12;
 
-  public static List<PublishedItem> getPublishedItems(LeafNode node,
+  public static List<PublishedItem> getPublishedItems(JID from,LeafNode node,
                                                     int maxRows, Date since) {
 
 //    LOGGER.trace("getPublishedItems : nodeId={}, maxRows={}, since={}", node, maxRows, since);
@@ -126,15 +132,29 @@ public class PubSubPersistenceManagerExt {
     boolean descending = JiveGlobals.getBooleanProperty(
         "xmpp.pubsub.order.descending", false);
     try {
+
       con = DbConnectionManager.getConnection();
+
+      List<JID> blockedList = getBlockedUsersList(from);
+
       // Get published items of the specified node
-      pstmt = con.prepareStatement(LOAD_ITEMS);
+      pstmt = con.prepareStatement(appendBlockedUser(LOAD_ITEMS,blockedList.size()));
       pstmt.setMaxRows(max);
       pstmt.setString(1, node.getService().getServiceID());
       pstmt.setString(2, encodeNodeID(node.getNodeID()));
       String dateString = StringUtils.dateToMillis(since);
       LOGGER.trace("getPublishedItems : dateString={}", dateString);
       pstmt.setString(3, dateString);
+
+      if(blockedList.size() > 0) {
+        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+        for (int i = 1; i < blockedList.size(); i++) {
+          regxList.append("|").append(blockedList.get(i).toString());
+        }
+        pstmt.setString(4, regxList.toString());
+
+      }
+
       LOGGER.trace("getPublishedItems : executing statement={}", pstmt);
       rs = pstmt.executeQuery();
       int counter = 0;
@@ -171,17 +191,30 @@ public class PubSubPersistenceManagerExt {
     return results;
   }
 
-  public static int getPublishedItemCount(LeafNode node, Date since) {
+  public static int getPublishedItemCount(JID from,LeafNode node, Date since) {
     Connection con = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
     int count = 0;
     try {
+
+      List<JID> blockedList = getBlockedUsersList(from);
       con = DbConnectionManager.getConnection();
-      pstmt = con.prepareStatement(LOAD_ITEMS_COUNT);
+
+      pstmt = con.prepareStatement(appendBlockedUser(LOAD_ITEMS_COUNT,blockedList.size()));
       pstmt.setString(1, node.getService().getServiceID());
       pstmt.setString(2, encodeNodeID(node.getNodeID()));
       pstmt.setString(3, StringUtils.dateToMillis(since));
+
+      if(blockedList.size() > 0) {
+        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+        for (int i = 1; i < blockedList.size(); i++) {
+          regxList.append("|").append(blockedList.get(i).toString());
+        }
+        pstmt.setString(4, regxList.toString());
+
+      }
+
       rs = pstmt.executeQuery();
       while (rs.next()) {
         count = rs.getInt(1);
@@ -194,7 +227,7 @@ public class PubSubPersistenceManagerExt {
     return count;
   }
 
-  public static List<PublishedItem> getPublishedItems(LeafNode node,
+  public static List<PublishedItem> getPublishedItems(JID from,LeafNode node,
       int offset, int maxRows, Date since, Date until, boolean asc) {
 
 //    LOGGER.trace(
@@ -224,11 +257,12 @@ public class PubSubPersistenceManagerExt {
     boolean descending = !asc;
     try {
       con = DbConnectionManager.getConnection();
+      List<JID> blockedList = getBlockedUsersList(from);
       // Get published items of the specified node
       if(offset > 0) {
-        pstmt = con.prepareStatement(LOAD_ITEMS_BTWN_WITH_OFFSET);
+        pstmt = con.prepareStatement(appendBlockedUser(LOAD_ITEMS_BTWN,blockedList.size()) + OFFSET);
       } else {
-        pstmt = con.prepareStatement(LOAD_ITEMS_BTWN);
+        pstmt = con.prepareStatement(appendBlockedUser(LOAD_ITEMS_BTWN,blockedList.size()));
         pstmt.setMaxRows(max);
       }
       pstmt.setString(1, node.getService().getServiceID());
@@ -237,9 +271,25 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(3, sinceString);
       String untilString = StringUtils.dateToMillis(until);
       pstmt.setString(4, untilString);
+
+      if(blockedList.size() > 0) {
+        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+        for (int i = 1; i < blockedList.size(); i++) {
+          regxList.append("|").append(blockedList.get(i).toString());
+        }
+        pstmt.setString(5, regxList.toString());
+
+      }
+
+
       if(offset > 0) {
-        pstmt.setInt(5, max);
-        pstmt.setInt(6, offset);
+        if(blockedList.size() > 0) {
+          pstmt.setInt(6, max);
+          pstmt.setInt(7, offset);
+        }else{
+          pstmt.setInt(5, max);
+          pstmt.setInt(6, offset);
+        }
       }
       rs = pstmt.executeQuery();
       int counter = 0;
@@ -275,23 +325,52 @@ public class PubSubPersistenceManagerExt {
     LOGGER.trace("getPublishedItems : returning list : {}", results);
     return results;
   }
-  
-  public static int getPublishedItemCount(LeafNode node, Date since, Date until) {
+
+  private static String appendBlockedUser(String where, int size) {
+    if(size == 0) {
+      return where + " ORDER BY creationDate DESC";
+    }
+    StringBuffer buffer = new StringBuffer(where);
+    buffer.append(" AND jid NOT REGEXP (?)  ORDER BY creationDate DESC");
+//    for (int i = 1; i < size; i++) {
+//      buffer.append("?,");
+//    }
+//    if(size > 0) {
+//      buffer.append("?)");
+//    }else{
+//      buffer.append(")  ORDER BY creationDate DESC");
+//    }
+    return buffer.toString();
+
+  }
+
+  public static int getPublishedItemCount(JID from, LeafNode node, Date since, Date until) {
     Connection con = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
     int count = 0;
     try {
-      con = DbConnectionManager.getConnection();
-      pstmt = con.prepareStatement(LOAD_ITEMS_BTWN_COUNT);
-      pstmt.setString(1, node.getService().getServiceID());
-      pstmt.setString(2, encodeNodeID(node.getNodeID()));
-      pstmt.setString(3, StringUtils.dateToMillis(since));
-      pstmt.setString(4, StringUtils.dateToMillis(until));
-      rs = pstmt.executeQuery();
-      while (rs.next()) {
-        count = rs.getInt(1);
-      }
+        List<JID> blockedList = getBlockedUsersList(from);
+
+        con = DbConnectionManager.getConnection();
+        pstmt = con.prepareStatement(appendBlockedUser(LOAD_ITEMS_BTWN_COUNT,blockedList.size()));
+        pstmt.setString(1, node.getService().getServiceID());
+        pstmt.setString(2, encodeNodeID(node.getNodeID()));
+        pstmt.setString(3, StringUtils.dateToMillis(since));
+        pstmt.setString(4, StringUtils.dateToMillis(until));
+
+        if(blockedList.size() > 0) {
+          StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+          for (int i = 1; i < blockedList.size(); i++) {
+            regxList.append("|").append(blockedList.get(i).toString());
+          }
+          pstmt.setString(4, regxList.toString());
+        }
+
+        rs = pstmt.executeQuery();
+        while (rs.next()) {
+          count = rs.getInt(1);
+        }
     } catch (Exception sqle) {
       LOGGER.error(sqle.getMessage(), sqle);
     } finally {
@@ -299,12 +378,24 @@ public class PubSubPersistenceManagerExt {
     }
     return count;
   }
-  
-  public static PublishedItemsResult getPublishedItemsResult(LeafNode node,
+
+  private static List<JID> getBlockedUsersList(JID from) {
+    PrivacyList privacyList = PrivacyListManager.getInstance().getPrivacyList(from.getNode(),"default");
+
+    if( privacyList == null) {
+      return new ArrayList<JID>();
+    }else{
+      return privacyList.getBlockedUsers();
+    }
+
+
+  }
+
+  public static PublishedItemsResult getPublishedItemsResult(JID from,LeafNode node,
                                                       int maxRows, Date since) {
 //    LOGGER.trace("getPublishedItems : nodeId={}, maxRows={}, since={}", node, maxRows, since);
-    List<PublishedItem> items = getPublishedItems(node, maxRows, since);
-    int count = getPublishedItemCount(node.getNodeID(), 
+    List<PublishedItem> items = getPublishedItems(from,node, maxRows, since);
+    int count = getPublishedItemCount(from, node.getNodeID(),
                     XMPPServer.getInstance().getPubSubModule().getServiceID());
     return new PublishedItemsResult(count, items);
   }
@@ -327,16 +418,26 @@ public class PubSubPersistenceManagerExt {
     }
   }
 
-  public static int getPublishedItemCount(String nodeID, String serviceID) {
+  public static int getPublishedItemCount(JID from,String nodeID, String serviceID) {
     Connection con = null;
     PreparedStatement pstmt = null;
     ResultSet rs = null;
     int count = 0;
     try {
+      List<JID> blockedList = getBlockedUsersList(from);
       con = DbConnectionManager.getConnection();
-      pstmt = con.prepareStatement(GET_ITEM_COUNT);
+      pstmt = con.prepareStatement(appendBlockedUser(GET_ITEM_COUNT,blockedList.size()));
       pstmt.setString(1, nodeID);
       pstmt.setString(2, serviceID);
+
+      if(blockedList.size() > 0) {
+        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+        for (int i = 1; i < blockedList.size(); i++) {
+          regxList.append("|").append(blockedList.get(i).toString());
+        }
+        pstmt.setString(3, regxList.toString());
+      }
+
       LOGGER.trace("getPublishedItemCount : executing statement={}", pstmt);
       rs = pstmt.executeQuery();
       if(rs.next())
