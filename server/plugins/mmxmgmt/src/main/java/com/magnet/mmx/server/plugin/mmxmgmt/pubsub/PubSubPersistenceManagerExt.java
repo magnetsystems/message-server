@@ -29,6 +29,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.QueryParam;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.SearchResult;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.ConfigureForm;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.util.TopicHelper;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -147,7 +148,10 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(3, dateString);
 
       if(blockedList.size() > 0) {
-        pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
+        //pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
+        for(int i=0;i<blockedList.size();i++) {
+          pstmt.setString(4+i,JIDUtil.getUserId(blockedList.get(i)));
+        }
 
       }
 
@@ -203,7 +207,11 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(3, StringUtils.dateToMillis(since));
 
       if(blockedList.size() > 0) {
-        pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
+        //pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
+        for(int i=0;i<blockedList.size();i++) {
+          pstmt.setString(4+i,JIDUtil.getUserId(blockedList.get(i)));
+        }
+
       }
 
       rs = pstmt.executeQuery();
@@ -264,13 +272,16 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(4, untilString);
 
       if(blockedList.size() > 0) {
-        pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
+        //pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
+        for(int i=0;i<blockedList.size();i++) {
+          pstmt.setString(5+i, JIDUtil.getUserId(blockedList.get(i)));
+        }
       }
 
       if(offset > 0) {
         if(blockedList.size() > 0) {
-          pstmt.setInt(6, max);
-          pstmt.setInt(7, offset);
+          pstmt.setInt(5+blockedList.size(), max);
+          pstmt.setInt(6+blockedList.size(), offset);
         }else{
           pstmt.setInt(5, max);
           pstmt.setInt(6, offset);
@@ -312,11 +323,23 @@ public class PubSubPersistenceManagerExt {
   }
 
   private static String appendBlockedUser(String where, int size) {
+//    if(size == 0) {
+//      return where + " ORDER BY creationDate DESC";
+//    }else{
+//      return where + " AND jid NOT REGEXP (?)  ORDER BY creationDate DESC";
+//    }
     if(size == 0) {
       return where + " ORDER BY creationDate DESC";
     }else{
-      return where + " AND jid NOT REGEXP (?)  ORDER BY creationDate DESC";
+      where = where + "AND LEFT(`jid`, LOCATE('%', `jid`) - 1) NOT IN (";
+      where = where + "?";
+      for(int i=1; i < size;i++){
+        where = where + ",?";
+      }
+      where = where + ")  ORDER BY creationDate DESC";
+      return where;
     }
+
   }
 
   private static String getBlockedUsersRegxValue(List<JID> blockedList) {
@@ -346,7 +369,10 @@ public class PubSubPersistenceManagerExt {
         pstmt.setString(4, StringUtils.dateToMillis(until));
 
         if(blockedList.size() > 0) {
-          pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
+          //pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
+          for(int i=0;i<blockedList.size();i++) {
+            pstmt.setString(5+i,JIDUtil.getUserId(blockedList.get(i)));
+          }
         }
 
         rs = pstmt.executeQuery();
@@ -413,7 +439,10 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(2, serviceID);
 
       if(blockedList.size() > 0) {
-        pstmt.setString(3, getBlockedUsersRegxValue(blockedList));
+        //pstmt.setString(3, getBlockedUsersRegxValue(blockedList));
+        for(int i=0;i<blockedList.size();i++) {
+          pstmt.setString(3+i,JIDUtil.getUserId(blockedList.get(i)));
+        }
       }
 
       LOGGER.trace("getPublishedItemCount : executing statement={}", pstmt);
