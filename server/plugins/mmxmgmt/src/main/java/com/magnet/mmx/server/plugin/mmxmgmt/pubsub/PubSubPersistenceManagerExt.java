@@ -147,11 +147,7 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(3, dateString);
 
       if(blockedList.size() > 0) {
-        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
-        for (int i = 1; i < blockedList.size(); i++) {
-          regxList.append("|").append(blockedList.get(i).toString());
-        }
-        pstmt.setString(4, regxList.toString());
+        pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
 
       }
 
@@ -207,12 +203,7 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(3, StringUtils.dateToMillis(since));
 
       if(blockedList.size() > 0) {
-        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
-        for (int i = 1; i < blockedList.size(); i++) {
-          regxList.append("|").append(blockedList.get(i).toString());
-        }
-        pstmt.setString(4, regxList.toString());
-
+        pstmt.setString(4, getBlockedUsersRegxValue(blockedList));
       }
 
       rs = pstmt.executeQuery();
@@ -273,14 +264,8 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(4, untilString);
 
       if(blockedList.size() > 0) {
-        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
-        for (int i = 1; i < blockedList.size(); i++) {
-          regxList.append("|").append(blockedList.get(i).toString());
-        }
-        pstmt.setString(5, regxList.toString());
-
+        pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
       }
-
 
       if(offset > 0) {
         if(blockedList.size() > 0) {
@@ -329,21 +314,22 @@ public class PubSubPersistenceManagerExt {
   private static String appendBlockedUser(String where, int size) {
     if(size == 0) {
       return where + " ORDER BY creationDate DESC";
+    }else{
+      return where + " AND jid NOT REGEXP (?)  ORDER BY creationDate DESC";
     }
-    StringBuffer buffer = new StringBuffer(where);
-    buffer.append(" AND jid NOT REGEXP (?)  ORDER BY creationDate DESC");
-//    for (int i = 1; i < size; i++) {
-//      buffer.append("?,");
-//    }
-//    if(size > 0) {
-//      buffer.append("?)");
-//    }else{
-//      buffer.append(")  ORDER BY creationDate DESC");
-//    }
-    return buffer.toString();
-
   }
 
+  private static String getBlockedUsersRegxValue(List<JID> blockedList) {
+    if(blockedList == null || blockedList.size() == 0){
+      return "";
+    }
+
+    StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
+    for (int i = 1; i < blockedList.size(); i++) {
+      regxList.append("|").append(blockedList.get(i).toString());
+    }
+    return regxList.toString();
+  }
   public static int getPublishedItemCount(JID from, LeafNode node, Date since, Date until) {
     Connection con = null;
     PreparedStatement pstmt = null;
@@ -360,11 +346,7 @@ public class PubSubPersistenceManagerExt {
         pstmt.setString(4, StringUtils.dateToMillis(until));
 
         if(blockedList.size() > 0) {
-          StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
-          for (int i = 1; i < blockedList.size(); i++) {
-            regxList.append("|").append(blockedList.get(i).toString());
-          }
-          pstmt.setString(4, regxList.toString());
+          pstmt.setString(5, getBlockedUsersRegxValue(blockedList));
         }
 
         rs = pstmt.executeQuery();
@@ -431,11 +413,7 @@ public class PubSubPersistenceManagerExt {
       pstmt.setString(2, serviceID);
 
       if(blockedList.size() > 0) {
-        StringBuffer regxList = new StringBuffer(blockedList.get(0).toString());
-        for (int i = 1; i < blockedList.size(); i++) {
-          regxList.append("|").append(blockedList.get(i).toString());
-        }
-        pstmt.setString(3, regxList.toString());
+        pstmt.setString(3, getBlockedUsersRegxValue(blockedList));
       }
 
       LOGGER.trace("getPublishedItemCount : executing statement={}", pstmt);
