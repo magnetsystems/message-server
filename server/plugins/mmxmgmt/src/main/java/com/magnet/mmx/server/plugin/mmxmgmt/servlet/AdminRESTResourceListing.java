@@ -33,7 +33,7 @@ public final class AdminRESTResourceListing {
       IntegrationUserResource.class.getName(),
       IntegrationDeviceResource.class.getName(),
       IntegrationChannelResource.class.getName(),
-      AdminResource.class.getName()
+      AdminResource.class.getName(),
   };
 
 

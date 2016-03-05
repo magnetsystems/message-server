@@ -261,12 +261,14 @@ public class AppResource {
         throw build(AppErrorCode.INVALID_APP_ID.name(), APP_NOT_FOUND, Response.Status.NOT_FOUND);
       }
       MMXAppManager manager = MMXAppManager.getInstance();
-      manager.deleteApp(appId);
+      manager.deleteAppQuietly(appId);
       Response response = Response.status(Response.Status.OK).build();
       return response;
     } catch (WebApplicationException e) {
+      LOGGER.error("Delete app failed", e);
       throw e;
     } catch (Throwable t) {
+      LOGGER.error("Delete app failed", t);
       throw build(WebConstants.STATUS_ERROR, t.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
     }
   }

@@ -40,7 +40,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
 public class MMXPacketInterceptor implements PacketInterceptor {
   private static Logger LOGGER = LoggerFactory.getLogger(MMXPacketInterceptor.class);
   private final String ID = RandomStringUtils.randomAlphanumeric(10);
-  private MMXMessageHandlingRule messageHandlingRule;
+  private final MMXMessageHandlingRule messageHandlingRule;
 
   public MMXPacketInterceptor(MMXMessageHandlingRule messageHandlingRule){
     this.messageHandlingRule = messageHandlingRule;
@@ -64,10 +64,11 @@ public class MMXPacketInterceptor implements PacketInterceptor {
       return;
     }
 
-    if(!MMXMessageUtil.isValidDistributableMessage(packet))
+    if(!MMXMessageUtil.isValidDistributableMessage(packet)) {
       return;
+    }
 
-    LOGGER.debug("interceptPacket : message={}", packet.toString());
+    LOGGER.trace("interceptPacket : message={}", packet.toString());
 
     Message mmxMessage = (Message) packet;
 

@@ -222,4 +222,58 @@ public class TopicItemDAOImpl implements TopicItemDAO {
     }
     return topicItemEntityList;
   }
+
+  @Override
+  public int deleteTopicItem(String id) {
+
+    final String unboundStatementStr = "DELETE FROM ofPubsubItem WHERE ID = ? ";
+
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+
+
+    try {
+      conn = provider.getConnection();
+      pstmt = conn.prepareStatement(unboundStatementStr);
+      pstmt.setString(1, id);
+      LOGGER.trace("deleteTopicItem : executing statement={}", pstmt);
+      pstmt.execute();
+      return pstmt.getUpdateCount();
+
+    } catch (SQLException e) {
+      LOGGER.error("deleteTopicItem : caught exception id={}",
+              new Object[]{id});
+      return -1;
+    } finally {
+      CloseUtil.close(LOGGER, rs, pstmt, conn);
+    }
+  }
+
+  @Override
+  public TopicItemEntity findById(String id) {
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    TopicItemEntity e = null;
+    List<TopicItemEntity> topicItemEntityList = new ArrayList<TopicItemEntity>();
+
+    try {
+      final String unboundStatementStr = "SELECT * FROM ofPubsubItem WHERE ID = ? ";
+      conn = provider.getConnection();
+      pstmt = conn.prepareStatement(unboundStatementStr);
+      pstmt.setString(1, id);
+      LOGGER.trace("findById : executing statement={}", pstmt);
+      rs = pstmt.executeQuery();
+      while(rs.next()) {
+        e = new TopicItemEntity.TopicItemEntityBuilder().build(rs);
+      }
+    } catch (SQLException ex) {
+      LOGGER.error("findById : caught exception id={}",
+              new Object[]{id});
+    } finally {
+      CloseUtil.close(LOGGER, rs, pstmt, conn);
+    }
+    return e;
+  }
 }

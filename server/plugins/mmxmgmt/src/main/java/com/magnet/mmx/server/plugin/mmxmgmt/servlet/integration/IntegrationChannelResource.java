@@ -32,6 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
@@ -881,10 +882,12 @@ public class IntegrationChannelResource {
                     sinceDate = new Date(channelSummaryRequest.getMessagesSince());
                 }
 
-                JID channelOwner = node.getOwners() == null ? null : node.getOwners().iterator().next();
+                JID channelOwner = getChannelOwner(channelSummaryRequest.getAppId(),node);
+
                 int messageOffset = 0;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
                         this.fetchItemsForChannel(
+                                userRequestingSummary,
                                 channelOwner,
                                 channelSummaryRequest.getAppId(),
                                 channelId,
@@ -916,8 +919,28 @@ public class IntegrationChannelResource {
 
     }
 
+    private JID getChannelOwner(String appId, Node node) {
+        JID channelOwner = null;
+        if(node.getOwners() != null) {
+            JID serverUser = MMXChannelManager.getInstance().getServerUser(appId);
+            Iterator<JID> list = node.getOwners().iterator();
+            while(list.hasNext()){
+                JID owner = list.next();
+                if(owner != null) {
+                    if (owner.equals(serverUser)){
+                        continue;
+                    }else{
+                        channelOwner = owner;
+                        break;
+                    }
+                }
+            }
+        }
+        return channelOwner;
+    }
 
-    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,
+    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID userRequestingSummary,
+                                                                             JID channelOwner,
                                                                              String appId,
                                                                              MMXChannelId channelId,
                                                                              Date since,
@@ -937,7 +960,8 @@ public class IntegrationChannelResource {
         ChannelAction.FetchRequest rqt = new ChannelAction.FetchRequest(channelId.getEscUserId(), channelId
                 .getName(),
                 opt);
-        ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        //ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        ChannelAction.FetchResponse resp = channelManager.fetchItems(userRequestingSummary, appId, rqt);
 
         String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
         List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
@@ -1191,47 +1215,71 @@ public class IntegrationChannelResource {
         return items2;
     }
 
-    @GET
+
+	
+	@PUT
+    @Path("/message/delete")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/reports")
-    public Response getnerateReport(@Context HttpHeaders headers) {
+    public Response deleteMessage(@Context HttpHeaders headers,
+                                  DeleteMessageRequest request) {
 
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        Map<String, Integer> channelCountMap = new HashMap<String, Integer>(3);
-        Map<String, Integer> channelSubscriptionMap = new HashMap<String, Integer>(3);
-        try {
+        DeleteMessageResponse response = new DeleteMessageResponse();
 
+        TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
 
-            List<AppEntity> apps = appDAO.getAllApps();
-
-            for(AppEntity app: apps) {
-
-                int messageCount;
-
-                con = DbConnectionManager.getConnection();
-
-
-                String sql = "SELECT ,count(*) FROM ofPubsubItem where nodeID " +
-                        "like '" + "/" + app.getAppId() + "%'";
-
-                pstmt = con.prepareStatement(sql);
-                rs = pstmt.executeQuery();
-
-                while (rs.next()) {
-                    System.out.println("appId = " + app.getName() + " count = " + rs.getInt(1));
-                }
-
-
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
+        if(entity == null) {
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id is not found");
+            return RestUtils.getOKJAXRSResp(response);
         }
-        return Response.ok().build();
+
+        if(!allowDelete(request,entity)) {
+            response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
+            response.setMessage("Insufficient privilege to delete the message");
+            return RestUtils.getOKJAXRSResp(response);
+
+        }
+
+        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id and app id mismatch");
+            return RestUtils.getOKJAXRSResp(response);
+        }
+
+        int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
+        if(result != 1) {
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id is not found");
+            return RestUtils.getOKJAXRSResp(response);
+
+        }else {
+            response.setCode(200);
+            response.setMessage("Message has been deleted successfully");
+            return RestUtils.getOKJAXRSResp(response);
+        }
 
     }
+
+    private boolean allowDelete(DeleteMessageRequest request, TopicItemEntity entity) {
+
+        if((request.getRoles() != null && request.getRoles().equals("developer"))){
+            return true;
+        }
+
+        Node node = MMXChannelManager.getInstance().getTopicNode(entity.getNodeId());
+
+        if(node == null) {
+            LOGGER.error("Node is null for the id " + entity.getNodeId());
+            return false;
+        }
+        String messageOwner = JIDUtil.getUserId(node.getCreator());
+        String channelOwner = JIDUtil.getUserId(node.getOwners().iterator().next());
+        if(request.getUserId() != null && (request.getUserId().equals(messageOwner) || request.getUserId().equals(channelOwner))) {
+            return true;
+        }
+        return false;
+    } 
 
 
 }

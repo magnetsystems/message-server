@@ -35,7 +35,7 @@ public final class MmxAppUtil {
   private static final String APPID_DELIMITER = "%";
 
 
-  public static String extractUserName(String username) throws UnauthorizedException {
+  public static String extractUserName(String username) {
     String result = username.trim().toLowerCase();
     if (username.contains(DOMAIN_DELIMITER)) {
       // Check that the specified domain matches the server's domain

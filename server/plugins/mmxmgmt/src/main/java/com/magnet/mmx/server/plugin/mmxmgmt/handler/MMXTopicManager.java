@@ -742,8 +742,17 @@ public class MMXTopicManager {
     return subscription;
   }
 
-  private int deleteNode(Node node, JID owner) throws MMXException {
-    if (!node.getOwners().contains(owner)) {
+  /**
+   * Delete a node recursively.  When an app is deleted, this method can be used
+   * to remove the app node (i.e. appID) and its child nodes without specifying
+   * the owner JID (use with care.)
+   * @param node
+   * @param owner
+   * @return
+   * @throws MMXException
+   */
+  public int deleteNode(Node node, JID owner) throws MMXException {
+    if (owner != null && !node.getOwners().contains(owner)) {
       AppTopic topic = TopicHelper.parseTopic(node.getNodeID());
       throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
           StatusCode.FORBIDDEN.getCode());
@@ -754,7 +763,7 @@ public class MMXTopicManager {
         if (child.isCollectionNode()) {
           count += deleteNode(child, owner);
         } else {
-          if (!child.getOwners().contains(owner)) {
+          if (owner != null && !child.getOwners().contains(owner)) {
             AppTopic topic = TopicHelper.parseTopic(child.getNodeID());
             throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
                 StatusCode.FORBIDDEN.getCode());
@@ -1552,7 +1561,7 @@ public class MMXTopicManager {
         }
       }
     } else {
-      List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(
+      List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
           (LeafNode) node, maxItems, since);
       if (items != null) {
         for (PublishedItem item : items) {
@@ -1657,7 +1666,7 @@ public class MMXTopicManager {
         }
 
 //        LOGGER.trace("Fetch published items from "+node.getNodeID()+", since="+since);
-        List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(
+        List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
             (LeafNode) node, maxItems, since);
         if (items == null || items.size() == 0) {
 //          LOGGER.trace("No published items in "+node.getNodeID()+", since="+since);
@@ -1883,7 +1892,7 @@ public class MMXTopicManager {
       }
     }
 
-    List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(
+    List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(from,
         (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
@@ -1893,7 +1902,7 @@ public class MMXTopicManager {
           pubItem.getPayloadXML());
       mmxItems.add(mmxItem);
     }
-    int total = PubSubPersistenceManagerExt.getPublishedItemCount(
+    int total = PubSubPersistenceManagerExt.getPublishedItemCount(from,
         (LeafNode) node, since, until);
     TopicAction.FetchResponse resp = new TopicAction.FetchResponse(
         rqt.getUserId(), topic, total, mmxItems);
