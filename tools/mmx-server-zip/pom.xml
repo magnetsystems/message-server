@@ -76,7 +76,7 @@
                                 <artifactItem>
                                     <groupId>com.magnet.mmx</groupId>
                                     <artifactId>mmxmgmt</artifactId>
-                                    <version>2.5.0</version>
+                                    <version>2.5.1</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${sandbox.dir}/mmx-server/openfire/plugins</outputDirectory>
