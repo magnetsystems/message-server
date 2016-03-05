@@ -22,11 +22,15 @@ import java.util.Map;
 
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.jivesoftware.openfire.pubsub.WakeupProvider;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
@@ -62,7 +66,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
   private static final String BODY = "New message is available";
 
   @Override
-  public void wakeup(WakeupProvider.Scope scope, JID userOrDev, Node node, Date pubDate) {
+  public void wakeup(WakeupProvider.Scope scope, JID userOrDev, Node node,
+                     Message notification, PublishedItem pubItem) {
     String appId = JIDUtil.getAppId(userOrDev);
     String userId = JIDUtil.getUserId(userOrDev);
     String userName = userOrDev.getNode();
@@ -95,7 +100,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
-        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate, node);
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubItem,
+                                                  node, notification);
         JID fromJID = new JID(JIDUtil.makeNode(ae.getServerUserId(), appId),
             domain, null);
         PushResult result = pushMsgMgr.send(fromJID, appId, new MMXid(userId,
@@ -131,7 +137,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
-        String pubsubPayload = makePubsubPayload(action, ae, topic, pubDate, node);
+        String pubsubPayload = makePubsubPayload(action, ae, topic, pubItem,
+                                                 node, notification);
         // Wake up all disconnected devices
         PushResult result = pushMsgMgr.send(fromJID, appId, devices, action,
             PubSubNotification.getType(), pubsubPayload);
@@ -148,21 +155,53 @@ public class PubSubWakeupProvider implements WakeupProvider {
     }
   }
 
+  private static class NameDesc {
+    public final String name;
+    public final String desc;
+
+    public NameDesc(String name, String desc) {
+      this.name = name;
+      this.desc = desc;
+    }
+  }
+
+  private static class MsgData {
+    public final String from;
+    public final Date date;
+    public final Map<String, String> content;
+
+    public MsgData(String from, Date pubDate, Map<String, String> content) {
+      this.from = from;
+      this.date = pubDate;
+      this.content = content;
+    }
+  }
+
   // Build a context with ${application.name}, ${channel.name}, ${channel.desc}
   // for title and body.
-  private Map<String, String> makeContext(AppEntity ae, MMXTopicId topic,
-                                          Date pubDate, Node node) {
-    HashMap<String, String> context = new HashMap<String, String>();
-    context.put("application.name", ae.getName());
-    context.put("channel.name", node.getName());      // just its name (no user id)
-    context.put("channel.desc", node.getDescription());
+  private Map<String, Object> makeContext(AppEntity ae, MMXTopicId topic,
+                                          PublishedItem pubItem, Node node,
+                                          Message notification) {
+    HashMap<String, Object> context = new HashMap<String, Object>();
+    context.put("application", new NameDesc(ae.getName(), null));
+    // just its name (no user id for user topic)
+    context.put("channel", new NameDesc(node.getName(), node.getDescription()));
+    String displayName;
+    try {
+      displayName = UserManager.getInstance().getUser(pubItem.getPublisher()
+          .getNode()).getName();
+    } catch (UserNotFoundException e) {
+      displayName = null;
+    }
+    context.put("msg", new MsgData(displayName, pubItem.getCreationDate(), null));
     return context;
   }
 
   private String makePubsubPayload(PushMessage.Action action, AppEntity ae,
-                                   MMXTopicId topic, Date pubDate, Node node) {
+                                   MMXTopicId topic, PublishedItem pubItem,
+                                   Node node, Message notification) {
     String pubsubPayload;
-    Map<String, String> context = makeContext(ae, topic, pubDate, node);
+    Map<String, Object> context = makeContext(ae, topic, pubItem, node, notification);
     String body = JiveProperties.getInstance().getProperty(
         MMXConfigKeys.PUBSUB_NOTIFICATION_BODY, BODY);
     if (body != null) {
@@ -176,11 +215,11 @@ public class PubSubWakeupProvider implements WakeupProvider {
         title = Utils.eval(title, context).toString();
       }
       pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, title, body));
+          pubItem.getCreationDate(), title, body));
     } else {
       // Wakeup (silent) notification payload
       pubsubPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
-          pubDate, body));
+          pubItem.getCreationDate(), body));
     }
     return pubsubPayload;
   }
