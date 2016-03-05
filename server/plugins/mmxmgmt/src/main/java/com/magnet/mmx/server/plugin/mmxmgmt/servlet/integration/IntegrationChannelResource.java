@@ -887,6 +887,7 @@ public class IntegrationChannelResource {
                 int messageOffset = 0;
                 List<ChannelResource.MMXPubSubItemChannel2> messages =
                         this.fetchItemsForChannel(
+                                userRequestingSummary,
                                 channelOwner,
                                 channelSummaryRequest.getAppId(),
                                 channelId,
@@ -938,7 +939,8 @@ public class IntegrationChannelResource {
         return channelOwner;
     }
 
-    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID channelOwner,
+    private List<ChannelResource.MMXPubSubItemChannel2> fetchItemsForChannel(JID userRequestingSummary,
+                                                                             JID channelOwner,
                                                                              String appId,
                                                                              MMXChannelId channelId,
                                                                              Date since,
@@ -958,7 +960,8 @@ public class IntegrationChannelResource {
         ChannelAction.FetchRequest rqt = new ChannelAction.FetchRequest(channelId.getEscUserId(), channelId
                 .getName(),
                 opt);
-        ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        //ChannelAction.FetchResponse resp = channelManager.fetchItems(channelOwner, appId, rqt);
+        ChannelAction.FetchResponse resp = channelManager.fetchItems(userRequestingSummary, appId, rqt);
 
         String nodeId = ChannelHelper.makeChannel(appId, channelId.getEscUserId(), channelId.getName());
         List<TopicItemEntity> channelItemEntities = toTopicItemEntity(nodeId, resp.getItems());
@@ -1238,15 +1241,21 @@ public class IntegrationChannelResource {
 
         }
 
+        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id and app id mismatch");
+            return RestUtils.getOKJAXRSResp(response);
+        }
+
         int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
         if(result != 1) {
             response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-            response.setMessage("message id is not found");
+            response.setMessage("Message id is not found");
             return RestUtils.getOKJAXRSResp(response);
 
         }else {
             response.setCode(200);
-            response.setMessage("message has been deleted successfully");
+            response.setMessage("Message has been deleted successfully");
             return RestUtils.getOKJAXRSResp(response);
         }
 
@@ -1254,7 +1263,7 @@ public class IntegrationChannelResource {
 
     private boolean allowDelete(DeleteMessageRequest request, TopicItemEntity entity) {
 
-        if((request.getRoles() != null && request.getRoles().equals("admin"))){
+        if((request.getRoles() != null && request.getRoles().equals("developer"))){
             return true;
         }
 

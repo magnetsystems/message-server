@@ -1561,7 +1561,7 @@ public class MMXTopicManager {
         }
       }
     } else {
-      List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(
+      List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
           (LeafNode) node, maxItems, since);
       if (items != null) {
         for (PublishedItem item : items) {
@@ -1666,7 +1666,7 @@ public class MMXTopicManager {
         }
 
 //        LOGGER.trace("Fetch published items from "+node.getNodeID()+", since="+since);
-        List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(
+        List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
             (LeafNode) node, maxItems, since);
         if (items == null || items.size() == 0) {
 //          LOGGER.trace("No published items in "+node.getNodeID()+", since="+since);
@@ -1892,7 +1892,7 @@ public class MMXTopicManager {
       }
     }
 
-    List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(
+    List<PublishedItem> pubItems = PubSubPersistenceManagerExt.getPublishedItems(from,
         (LeafNode) node, offset, maxItems, since, until, ascending);
     List<MMXPublishedItem> mmxItems = new ArrayList<MMXPublishedItem>(pubItems.size());
     for (PublishedItem pubItem : pubItems) {
@@ -1902,7 +1902,7 @@ public class MMXTopicManager {
           pubItem.getPayloadXML());
       mmxItems.add(mmxItem);
     }
-    int total = PubSubPersistenceManagerExt.getPublishedItemCount(
+    int total = PubSubPersistenceManagerExt.getPublishedItemCount(from,
         (LeafNode) node, since, until);
     TopicAction.FetchResponse resp = new TopicAction.FetchResponse(
         rqt.getUserId(), topic, total, mmxItems);
