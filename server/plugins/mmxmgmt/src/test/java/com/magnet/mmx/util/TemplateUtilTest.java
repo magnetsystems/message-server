@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -61,6 +62,7 @@ public class TemplateUtilTest {
   }
 
   @Test
+  @Ignore
   public void test01EvalVar() {
     User user = new User();
     user.firstName = "First";
@@ -98,6 +100,7 @@ public class TemplateUtilTest {
   }
 
   @Test
+  @Ignore
   public void test02Eval() {
     Map<String, Object> maps = new HashMap<String, Object>() {{
       Map<String, String> content = new HashMap<String, String>() {{
