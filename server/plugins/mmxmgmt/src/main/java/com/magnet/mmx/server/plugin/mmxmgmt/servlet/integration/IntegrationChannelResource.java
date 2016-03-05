@@ -1241,15 +1241,21 @@ public class IntegrationChannelResource {
 
         }
 
+        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
+            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+            response.setMessage("Message id and app id mismatch");
+            return RestUtils.getOKJAXRSResp(response);
+        }
+
         int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
         if(result != 1) {
             response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-            response.setMessage("message id is not found");
+            response.setMessage("Message id is not found");
             return RestUtils.getOKJAXRSResp(response);
 
         }else {
             response.setCode(200);
-            response.setMessage("message has been deleted successfully");
+            response.setMessage("Message has been deleted successfully");
             return RestUtils.getOKJAXRSResp(response);
         }
 
@@ -1257,7 +1263,7 @@ public class IntegrationChannelResource {
 
     private boolean allowDelete(DeleteMessageRequest request, TopicItemEntity entity) {
 
-        if((request.getRoles() != null && request.getRoles().equals("admin"))){
+        if((request.getRoles() != null && request.getRoles().equals("developer"))){
             return true;
         }
 
