@@ -1255,7 +1255,7 @@ public class IntegrationChannelResource {
 
         }else {
             response.setCode(200);
-            response.setMessage("Message has been deleted successfully");
+            response.setMessage("message has been deleted successfully");
             return RestUtils.getOKJAXRSResp(response);
         }
 
