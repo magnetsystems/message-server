@@ -1241,11 +1241,11 @@ public class IntegrationChannelResource {
 
         }
 
-        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
-            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-            response.setMessage("Message id and app id mismatch");
-            return RestUtils.getOKJAXRSResp(response);
-        }
+//        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
+//            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+//            response.setMessage("Message id and app id mismatch");
+//            return RestUtils.getOKJAXRSResp(response);
+//        }
 
         int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
         if(result != 1) {
