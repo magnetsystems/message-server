@@ -1263,7 +1263,7 @@ public class IntegrationChannelResource {
 
     private boolean allowDelete(DeleteMessageRequest request, TopicItemEntity entity) {
 
-        if((request.getRoles() != null && request.getRoles().equals("developer"))){
+        if((request.getRoles() != null && request.getRoles().contains("DEVELOPER"))){
             return true;
         }
 
