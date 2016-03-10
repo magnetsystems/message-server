@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -62,7 +61,6 @@ public class TemplateUtilTest {
   }
 
   @Test
-  @Ignore
   public void test01EvalVar() {
     User user = new User();
     user.firstName = "First";
@@ -100,7 +98,6 @@ public class TemplateUtilTest {
   }
 
   @Test
-  @Ignore
   public void test02Eval() {
     Map<String, Object> maps = new HashMap<String, Object>() {{
       Map<String, String> content = new HashMap<String, String>() {{
@@ -119,7 +116,7 @@ public class TemplateUtilTest {
     CharSequence output = Utils.eval(template, maps);
 
 //    System.out.println(output);
-    assertEquals("Quickstart: KOIT - Tue Mar 01 12:31:02 PST 2016\n"+
+    assertEquals("Quickstart: KOIT - 2016-03-01T20:31:02.705Z\n"+
                  "New message from Adrian Cronauer: Good morning Vietnam",
                  output.toString());
   }
