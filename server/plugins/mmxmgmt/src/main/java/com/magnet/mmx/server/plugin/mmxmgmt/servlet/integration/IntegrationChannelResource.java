@@ -120,6 +120,7 @@ public class IntegrationChannelResource {
                 channelInfo.getDeviceId());
         try {
             ChannelAction.CreateRequest rqt = toCreateRequest(channelInfo);
+            rqt.getOptions().setWhiteList(channelInfo.getSubscribers());
             channelManager.createChannel(from, channelInfo.getMmxAppId(), rqt);
 
         } catch (MMXException e) {
@@ -1121,7 +1122,8 @@ public class IntegrationChannelResource {
                 .setMaxItems(createInfo.getMaxItems())
                 .setSubscribeOnCreate(createInfo.isSubscribeOnCreate())
                 .setSubscriptionEnabled(createInfo.isSubscriptionEnabled())
-                .setPublisherType(createInfo.getPublishPermission());
+                .setPublisherType(createInfo.getPublishPermission())
+                ;
         ChannelAction.CreateRequest rqt = new ChannelAction.CreateRequest(createInfo.getChannelName(),
                 createInfo.isPrivateChannel(), options);
         return rqt;
