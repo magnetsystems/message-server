@@ -935,6 +935,10 @@ public class IntegrationChannelResource {
                     }
                 }
             }
+            if (channelOwner == null ) {
+               LOGGER.info("Channel Owner is null. Setting server user as channel owner");
+               channelOwner = serverUser;
+            }
         }
         return channelOwner;
     }
