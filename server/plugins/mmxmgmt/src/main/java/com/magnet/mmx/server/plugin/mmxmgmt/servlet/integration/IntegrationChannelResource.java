@@ -1220,7 +1220,7 @@ public class IntegrationChannelResource {
     }
 
 
-	
+
 	@PUT
     @Path("/message/delete")
     @Produces(MediaType.APPLICATION_JSON)
@@ -1230,38 +1230,83 @@ public class IntegrationChannelResource {
 
         DeleteMessageResponse response = new DeleteMessageResponse();
 
-        TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
+        if (request.getChannelId() != null) {
+          // The new version requires channel ID and uses OF Pubsub Module for
+          // deletion.  But it does not support "roles".
+          int code;
+          try {
+            String appId = request.getAppId();
+            JID from = JIDUtil.makeJID(request.getUserId(), appId, null);
+            ChannelAction.RetractRequest rqt = new ChannelAction.RetractRequest(
+                request.getOwnerId(), request.getChannelId(),
+                Arrays.asList(request.getMessageId()));
 
-        if(entity == null) {
-            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-            response.setMessage("Message id is not found");
-            return RestUtils.getOKJAXRSResp(response);
-        }
+            Map<String, Integer> res = MMXChannelManager.getInstance()
+                .retractFromChannel(from, appId, rqt);
+            code = res.get(request.getMessageId());
 
-        if(!allowDelete(request,entity)) {
-            response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
-            response.setMessage("Insufficient privilege to delete the message");
-            return RestUtils.getOKJAXRSResp(response);
+            if (code == MMXChannelManager.StatusCode.GONE.getCode()) {
+              response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+              response.setMessage("Message id is not found");
+            } else if (code == MMXChannelManager.StatusCode.FORBIDDEN.getCode()) {
+              response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
+              response.setMessage("Insufficient privilege to delete the message");
+            } else {
+              response.setCode(200);
+              response.setMessage("message has been deleted successfully");
+            }
+          } catch (MMXException e) {
+            code = e.getCode();
+            if (code == MMXChannelManager.StatusCode.CHANNEL_NOT_FOUND.getCode()) {
+              response.setCode(ErrorCode.TOPIC_NOT_EXIST.getCode());
+              response.setMessage("Channel is not found");
+            } else {
+              response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+              response.setMessage(e.getMessage());
+            }
+          }
+          return RestUtils.getOKJAXRSResp(response);
+        } else {
+          // The following codes are for backward compatible; developer should
+          // not use it anymore.  The request should include the channel ID.
+          TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
 
-        }
+          if(entity == null) {
+            LOGGER.debug("@@@ Message id {} not found on delete", request.getMessageId());
 
-//        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
-//            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-//            response.setMessage("Message id and app id mismatch");
-//            return RestUtils.getOKJAXRSResp(response);
-//        }
+              response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+              response.setMessage("Message id is not found");
+              return RestUtils.getOKJAXRSResp(response);
+          }
 
-        int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
-        if(result != 1) {
-            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
-            response.setMessage("Message id is not found");
-            return RestUtils.getOKJAXRSResp(response);
+          if(!allowDelete(request,entity)) {
+            LOGGER.debug("@@@ Insufficient privilege to delete the message");
 
-        }else {
-            response.setCode(200);
-            response.setMessage("message has been deleted successfully");
-            return RestUtils.getOKJAXRSResp(response);
-        }
+              response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
+              response.setMessage("Insufficient privilege to delete the message");
+              return RestUtils.getOKJAXRSResp(response);
+
+          }
+
+  //        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
+  //            response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+  //            response.setMessage("Message id and app id mismatch");
+  //            return RestUtils.getOKJAXRSResp(response);
+  //        }
+
+          int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
+          if(result != 1) {
+            LOGGER.debug("@@@ Message id {} not found on delete", request.getMessageId());
+              response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
+              response.setMessage("Message id is not found");
+              return RestUtils.getOKJAXRSResp(response);
+
+          }else {
+              response.setCode(200);
+              response.setMessage("message has been deleted successfully");
+              return RestUtils.getOKJAXRSResp(response);
+          }
+      }
 
     }
 
@@ -1278,12 +1323,19 @@ public class IntegrationChannelResource {
             return false;
         }
         String messageOwner = JIDUtil.getUserId(node.getCreator());
-        String channelOwner = JIDUtil.getUserId(node.getOwners().iterator().next());
-        if(request.getUserId() != null && (request.getUserId().equals(messageOwner) || request.getUserId().equals(channelOwner))) {
-            return true;
+        if (messageOwner.equals(request.getUserId())) {
+          return true;
         }
+        for (JID owner : node.getOwners()) {
+          String channelOwner = JIDUtil.getUserId(owner);
+          if (channelOwner.equals(request.getUserId())) {
+            return true;
+          }
+        }
+        LOGGER.error("@@@ request userID={}, msgOwner={}, channelOwners={}",
+            request.getUserId(), messageOwner, node.getOwners());
         return false;
-    } 
+    }
 
 
 }

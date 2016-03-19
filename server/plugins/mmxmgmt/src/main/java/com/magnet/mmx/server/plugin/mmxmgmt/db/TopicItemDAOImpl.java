@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.SqlUtil;
 
 public class TopicItemDAOImpl implements TopicItemDAO {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopicItemDAOImpl.class);
-  private ConnectionProvider provider;
+  private final ConnectionProvider provider;
 
   public TopicItemDAOImpl(ConnectionProvider provider) {
     this.provider = provider;
@@ -94,7 +95,7 @@ public class TopicItemDAOImpl implements TopicItemDAO {
         return rs.getInt(1);
       }
     } catch (SQLException e) {
-      LOGGER.error("getCount : caught exception serviceId={}, nodeId={}, since={}, until={}", 
+      LOGGER.error("getCount : caught exception serviceId={}, nodeId={}, since={}, until={}",
           new Object[]{serviceId, nodeId, since, until});
     } finally {
       CloseUtil.close(LOGGER, rs, pstmt, conn);
@@ -223,6 +224,7 @@ public class TopicItemDAOImpl implements TopicItemDAO {
     return topicItemEntityList;
   }
 
+  @Deprecated
   @Override
   public int deleteTopicItem(String id) {
 
@@ -250,6 +252,35 @@ public class TopicItemDAOImpl implements TopicItemDAO {
     }
   }
 
+  // This method is restricted to items from Pubsub module.  It is not
+  // generalized for PEP module.
+  @Override
+  public int deleteTopicItem(String nodeId, String id) {
+    final String unboundStatementStr = "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
+
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+
+    try {
+      conn = provider.getConnection();
+      pstmt = conn.prepareStatement(unboundStatementStr);
+      pstmt.setString(1, XMPPServer.getInstance().getPubSubModule().getServiceDomain());
+      pstmt.setString(2, nodeId);
+      pstmt.setString(3, id);
+      LOGGER.trace("deleteTopicItem : executing statement={}", pstmt);
+      pstmt.execute();
+      return pstmt.getUpdateCount();
+    } catch (SQLException e) {
+      LOGGER.error("deleteTopicItem : caught exception nodeId={}, id={}",
+              new Object[]{nodeId, id});
+      return -1;
+    } finally {
+      CloseUtil.close(LOGGER, rs, pstmt, conn);
+    }
+  }
+
+  @Deprecated
   @Override
   public TopicItemEntity findById(String id) {
     Connection conn = null;
@@ -263,6 +294,35 @@ public class TopicItemDAOImpl implements TopicItemDAO {
       conn = provider.getConnection();
       pstmt = conn.prepareStatement(unboundStatementStr);
       pstmt.setString(1, id);
+      LOGGER.trace("findById : executing statement={}", pstmt);
+      rs = pstmt.executeQuery();
+      while(rs.next()) {
+        e = new TopicItemEntity.TopicItemEntityBuilder().build(rs);
+      }
+    } catch (SQLException ex) {
+      LOGGER.error("findById : caught exception id={}",
+              new Object[]{id});
+    } finally {
+      CloseUtil.close(LOGGER, rs, pstmt, conn);
+    }
+    return e;
+  }
+
+  @Override
+  public TopicItemEntity findById(String nodeId, String id) {
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    TopicItemEntity e = null;
+    List<TopicItemEntity> topicItemEntityList = new ArrayList<TopicItemEntity>();
+
+    try {
+      final String unboundStatementStr = "SELECT * FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
+      conn = provider.getConnection();
+      pstmt = conn.prepareStatement(unboundStatementStr);
+      pstmt.setString(1, XMPPServer.getInstance().getPubSubModule().getServiceDomain());
+      pstmt.setString(2, nodeId);
+      pstmt.setString(3, id);
       LOGGER.trace("findById : executing statement={}", pstmt);
       rs = pstmt.executeQuery();
       while(rs.next()) {

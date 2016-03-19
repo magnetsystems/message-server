@@ -5,10 +5,39 @@ import java.util.List;
 
 public class DeleteMessageRequest {
 
+    private String ownerId;
+    private String channelId;
     private String userId;
     private String messageId;
     private String appId;
     private List<String> roles;
+
+    /**
+     * Get the owner ID of the private channel.
+     * @return Owner ID of a private channel, or null for public channel.
+     */
+    public String getOwnerId() {
+      return ownerId;
+    }
+
+    /**
+     * Specify the owner ID of the private channel.
+     * @param ownerId Owner ID of a private channel, or null for public channel.
+     * @return
+     */
+    public DeleteMessageRequest setOwnerId(String ownerId) {
+      this.ownerId = ownerId;
+      return this;
+    }
+
+    public String getChannelId() {
+      return channelId;
+    }
+
+    public DeleteMessageRequest setChannelId(String channelId) {
+      this.channelId = channelId;
+      return this;
+    }
 
     public String getUserId() {
         return userId;

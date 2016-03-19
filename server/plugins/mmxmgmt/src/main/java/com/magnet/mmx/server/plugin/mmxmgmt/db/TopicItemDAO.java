@@ -20,7 +20,7 @@ import java.util.List;
  */
 public interface TopicItemDAO {
   public void persist(TopicItemEntity entity);
-  
+
   public int getCount(String serviceId, String nodeId, String since, String until);
 
   public List<TopicItemEntity> getItems(String serviceId, String nodeId, int maxItems, String order);
@@ -32,9 +32,39 @@ public interface TopicItemDAO {
   public List<TopicItemEntity> getItems(String serviceId, String nodeId, int maxItems,
                                         String since, String until, String order);
 
+  /**
+   * This method has major performance issue.
+   * @param id
+   * @return
+   * @deprecated Use {@link #deleteTopicItem(String, String)}
+   */
+  @Deprecated
   public int deleteTopicItem(String id);
 
+  /**
+   * Delete an item from a topic persisted in Pubsub Module.
+   * @param nodeId A topic node ID.
+   * @param id An item ID.
+   * @return
+   */
+  public int deleteTopicItem(String nodeId, String id);
+
+  /**
+   * This method has major performance issue.
+   * @param id
+   * @return
+   * @deprecated Use {@link #findById(String, String)}
+   */
+  @Deprecated
   public TopicItemEntity findById(String id);
+
+  /**
+   * Find an item by its ID from a topic persisted in Pubsub Module.
+   * @param nodeId A topic node ID.
+   * @param id An item ID.
+   * @return
+   */
+  public TopicItemEntity findById(String nodeId, String id);
 
 
 }
