@@ -1280,20 +1280,15 @@ public class IntegrationChannelResource {
           TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
 
           if(entity == null) {
-            LOGGER.debug("@@@ Message id {} not found on delete", request.getMessageId());
-
               response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
               response.setMessage("Message id is not found");
               return RestUtils.getOKJAXRSResp(response);
           }
 
           if(!allowDelete(request,entity)) {
-            LOGGER.debug("@@@ Insufficient privilege to delete the message");
-
               response.setCode(ErrorCode.INSUFFICIENT_PRIVILEGES.getCode());
               response.setMessage("Insufficient privilege to delete the message");
               return RestUtils.getOKJAXRSResp(response);
-
           }
 
   //        if(!JIDUtil.getAppId(entity.getNodeId()).equals(request.getAppId())){
@@ -1304,7 +1299,6 @@ public class IntegrationChannelResource {
 
           int result = DBUtil.getTopicItemDAO().deleteTopicItem(request.getMessageId());
           if(result != 1) {
-            LOGGER.debug("@@@ Message id {} not found on delete", request.getMessageId());
               response.setCode(ErrorCode.ILLEGAL_ARGUMENT.getCode());
               response.setMessage("Message id is not found");
               return RestUtils.getOKJAXRSResp(response);
@@ -1330,21 +1324,11 @@ public class IntegrationChannelResource {
             LOGGER.error("Node is null for the id " + entity.getNodeId());
             return false;
         }
-        String messageOwner = JIDUtil.getUserId(node.getCreator());
-        if (messageOwner.equals(request.getUserId())) {
+        JID from = JIDUtil.makeJID(request.getUserId(), request.getAppId(), null);
+        if (from.equals(node.getCreator())) {
           return true;
         }
-        for (JID owner : node.getOwners()) {
-          String channelOwner = JIDUtil.getUserId(owner);
-          if (channelOwner.equals(request.getUserId())) {
-            return true;
-          }
-        }
-        LOGGER.error("@@@ request userID={}, msgOwner={}, channelOwners={}",
-            request.getUserId(), messageOwner, node.getOwners());
-        return false;
+        return (node.getOwners().contains(from));
     }
-
-
 }
 
