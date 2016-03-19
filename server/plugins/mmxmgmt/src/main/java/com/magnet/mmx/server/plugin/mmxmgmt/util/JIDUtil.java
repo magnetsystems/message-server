@@ -15,6 +15,7 @@
 
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.JID;
 
 import com.magnet.mmx.protocol.Constants;
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
 
 /**
  * A utility to parse multi-tenant JID.  A normal full JID has a format of
- * "node@domain/resource", and a multi-tenant JID has a raw format of 
+ * "node@domain/resource", and a multi-tenant JID has a raw format of
  * "userID%appId@domain/resource".  Using the JID escaping, the node consists
  * of "userID%appId" and the userID allows email address format as well.
  */
@@ -44,7 +45,7 @@ public class JIDUtil {
   public static String getReadableNode(JID jid) {
     return JID.unescapeNode(jid.getNode());
   }
-  
+
   /**
    * Get the userId (without appId) from the node part.  The userId from the
    * node part will be returned without unescaping.
@@ -52,15 +53,16 @@ public class JIDUtil {
    * @return The user ID without the appId, or null.
    */
   public static String getUserId(String node) {
-    if (node == null)
+    if (node == null) {
       return null;
+    }
     int delpos = node.lastIndexOf(APP_ID_DELIMITER);
     if (delpos < 0) {
       return node;
     }
     return node.substring(0, delpos);
   }
-  
+
   /**
    * Get the escaped user ID from the node part.
    * @param jid
@@ -73,7 +75,7 @@ public class JIDUtil {
     String node = jid.getNode();
     return getUserId(node);
   }
-  
+
   /**
    * Get the human readable (unescaped) user ID from the node part.
    * @param jid
@@ -86,7 +88,7 @@ public class JIDUtil {
     String node = JID.unescapeNode(jid.getNode());
     return getUserId(node);
   }
-  
+
   /**
    * Get the human readable (unescaped) user ID from the node part.
    * @param jid A string format of a JID.
@@ -99,7 +101,7 @@ public class JIDUtil {
     String node = JID.unescapeNode(jid);
     return getUserId(node);
   }
-  
+
   /**
    * Get the appId from the node part of the JID.
    * @param jid
@@ -147,7 +149,7 @@ public class JIDUtil {
     }
     return jid.substring(index+1);
   }
-  
+
   /**
    * Make the multi-tenant node ("userID%appID) of the JID.
    * @param userId A user ID.
@@ -158,6 +160,17 @@ public class JIDUtil {
     return userId + APP_ID_DELIMITER + appId;
   }
 
+  /**
+   * Make a bare or full JID from a multi-tenant node.
+   * @param userId A user ID.
+   * @param appId An app ID.
+   * @param resource A resource string for full JID, or null for bare JID.
+   * @return A bare or full JID.
+   */
+  public static JID makeJID(String userId, String appId, String resource) {
+    String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+    return new JID(makeNode(userId, appId), domain, resource, false);
+  }
 
   /**
    * Check if the supplied username has characters that are not allowed.
