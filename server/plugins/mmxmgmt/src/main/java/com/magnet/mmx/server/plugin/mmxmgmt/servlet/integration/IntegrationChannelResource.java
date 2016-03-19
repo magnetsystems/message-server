@@ -1231,12 +1231,20 @@ public class IntegrationChannelResource {
         DeleteMessageResponse response = new DeleteMessageResponse();
 
         if (request.getChannelId() != null) {
-          // The new version requires channel ID and uses OF Pubsub Module for
-          // deletion.  But it does not support "roles".
+          // New version uses OF Pubsub Module for deletion.
           int code;
           try {
             String appId = request.getAppId();
-            JID from = JIDUtil.makeJID(request.getUserId(), appId, null);
+            String userId = request.getUserId();
+
+            // Pubsub Module does not support roles, pretend to be an owner.
+            if ((request.getRoles() != null && request.getRoles().contains("DEVELOPER"))) {
+              Node node = MMXChannelManager.getInstance().getChannelNode(appId,
+                  new MMXChannelId(request.getOwnerId(), request.getChannelId()));
+              userId = JIDUtil.getUserId(node.getOwners().iterator().next());
+            }
+
+            JID from = JIDUtil.makeJID(userId, appId, null);
             ChannelAction.RetractRequest rqt = new ChannelAction.RetractRequest(
                 request.getOwnerId(), request.getChannelId(),
                 Arrays.asList(request.getMessageId()));
@@ -1268,7 +1276,7 @@ public class IntegrationChannelResource {
           return RestUtils.getOKJAXRSResp(response);
         } else {
           // The following codes are for backward compatible; developer should
-          // not use it anymore.  The request should include the channel ID.
+          // not use it anymore.
           TopicItemEntity entity = DBUtil.getTopicItemDAO().findById(request.getMessageId());
 
           if(entity == null) {
