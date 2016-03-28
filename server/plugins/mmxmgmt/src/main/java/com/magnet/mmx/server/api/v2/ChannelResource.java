@@ -41,6 +41,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
 import com.magnet.mmx.util.TimeUtil;
 
+import com.magnet.mmx.util.TopicHelper;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
@@ -760,8 +761,20 @@ public class ChannelResource {
         request.setMessageType(MSG_TYPE_INVITATION);
         request.setContent(buildInviteContent(channelInfo, inviteInfo));
 
+          //add to whitelist TODO validate invitee
+          if (channelId.isUserChannel() && inviteInfo.inviteeUserIds != null) {
+              String topic = TopicHelper.normalizePath(channelName);
+              String nodeId = TopicHelper.makeTopic(appId, tokenInfo.getUserId(), topic);
+              Node node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
+              for (String inviteeId : inviteInfo.inviteeUserIds) {
+                  JID jid = XMPPServer.getInstance().createJID(JIDUtil.makeNode(inviteeId, appId), null, true);
+                  node.addMemberAffiliation(jid);
+              }
+          }
+
         MessageSender sender = new MessageSenderImpl();
         SendMessageResult result = sender.send(tokenInfo.getUserId(), appId, request);
+
         if (result.isError()) {
           ErrorResponse response = new ErrorResponse(result.getErrorCode(),
                                                      result.getErrorMessage());

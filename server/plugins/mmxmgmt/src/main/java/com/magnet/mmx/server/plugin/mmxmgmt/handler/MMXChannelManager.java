@@ -342,7 +342,7 @@ public class MMXChannelManager {
    * @throws NotAcceptableException -- if an exception is thrown by openfire during channel creation.
    */
   private LeafNode createLeafNode(String createUsername, String channelId,
-                    CollectionNode parentNode, ChannelCreateInfo channelInfo)
+                    CollectionNode parentNode, ChannelCreateInfo channelInfo) //, MMXTopicOptions options, String appId)
                         throws ChannelExistsException, NotAcceptableException {
 
     String channelName = channelInfo.getChannelName();
@@ -357,8 +357,8 @@ public class MMXChannelManager {
     if (result == null) {
       // This config form should use the same values from setOptions().
       ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
-      form.setAccessModel(ChannelHelper.isUserChannel(channelId) ?
-          ConfigureForm.AccessModel.authorize : ConfigureForm.AccessModel.open);
+      boolean isUserChannel = ChannelHelper.isUserChannel(channelId);
+      form.setAccessModel(isUserChannel ? ConfigureForm.AccessModel.whitelist : ConfigureForm.AccessModel.open);
       form.setPersistentItems(maxItems != 0);
       form.setMaxItems(maxItems);
       form.setSendItemSubscribe(true);
@@ -386,6 +386,9 @@ public class MMXChannelManager {
       node.addOwner(jid);
       try {
         node.configure(form);
+//        if (isUserChannel) {
+//          setWhiteList(node, options.getWhiteList(), appId);
+//        }
       } catch (NotAcceptableException e) {
         LOGGER.warn("NotAcceptableException", e);
         throw e;
@@ -469,7 +472,8 @@ public class MMXChannelManager {
     }
   }
 
-  private void setOptions(String channelName, Node node, MMXTopicOptions options) {
+  private void setOptions(String channelName, Node node, MMXTopicOptions options, String appId) {
+
     ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
     form.setSendItemSubscribe(true);
     form.setMaxPayloadSize(Constants.MAX_PAYLOAD_SIZE);
@@ -477,10 +481,9 @@ public class MMXChannelManager {
     form.setNotifyRetract(false);
     form.setNotifyDelete(false);
     form.setNotifyConfig(false);
-    form.setAccessModel(ChannelHelper.isUserChannel(node.getNodeID()) ?
-        ConfigureForm.AccessModel.authorize : ConfigureForm.AccessModel.open);
-    form.setNodeType(node.isCollectionNode() ?
-            ConfigureForm.NodeType.collection : ConfigureForm.NodeType.leaf);
+    boolean isUserChannel = ChannelHelper.isUserChannel(node.getNodeID());
+    form.setAccessModel(isUserChannel ? ConfigureForm.AccessModel.whitelist : ConfigureForm.AccessModel.open);
+    form.setNodeType(node.isCollectionNode() ? ConfigureForm.NodeType.collection : ConfigureForm.NodeType.leaf);
     if (options == null) {
       form.setPublishModel(ConfigureForm.PublishModel.open);
       form.setPersistentItems(true);
@@ -500,8 +503,20 @@ public class MMXChannelManager {
     }
     try {
       node.configure(form);
+      if (isUserChannel) {
+        setWhiteList(node, options.getWhiteList(), appId);
+      }
     } catch (NotAcceptableException e) {
       e.printStackTrace();
+    }
+  }
+  private void setWhiteList(Node node, List<String> whiteList, String appId) {
+
+    if (whiteList != null) {
+      for (String subId : whiteList) {
+        JID subJID = XMPPServer.getInstance().createJID(JIDUtil.makeNode(subId, appId), null, true);
+        node.addMemberAffiliation(subJID);
+      }
     }
   }
 
@@ -531,7 +546,7 @@ public class MMXChannelManager {
 
   // Create the collection node and its ancestors recursively.
   private CollectionNode createCollectionNode(int prefix, String nodeId,
-                              JID creator, JID[] owners) throws IllegalArgumentException {
+                              JID creator, JID[] owners, String appId) throws IllegalArgumentException {
 //    LOGGER.trace("createCollectionNode: prefix="+prefix+", nodeId="+nodeId);
     if (nodeId == null) {
       return null;
@@ -551,7 +566,7 @@ public class MMXChannelManager {
     if (parentNodeId == null) {
       parentNode = getRootAppChannel(ChannelHelper.getRootNodeId(nodeId));
     } else {
-      parentNode = createCollectionNode(prefix, parentNodeId, creator, owners);
+      parentNode = createCollectionNode(prefix, parentNodeId, creator, owners, appId);
     }
 
     synchronized(nodeId.intern()) {
@@ -559,7 +574,7 @@ public class MMXChannelManager {
         LOGGER.trace("create collection node=" + nodeId + ", parent=" +
                 ((parentNode == null) ? "" : parentNode.getNodeID()));
         node = new CollectionNode(mPubSubModule, parentNode, nodeId, creator);
-        setOptions(null, node, null);
+        setOptions(null, node, null, appId);
         addOwnersToNode(node, owners);
         node.saveToDB();
 
@@ -624,7 +639,7 @@ public class MMXChannelManager {
     } else {
       try {
         // Recursively create the parent nodes if they don't exist.
-        parent = createCollectionNode(prefix, parentId, from, owners);
+        parent = createCollectionNode(prefix, parentId, from, owners, appId);
       } catch (Throwable e) {
         throw new MMXException(e.getMessage(), StatusCode.BAD_REQUEST.getCode());
       }
@@ -655,7 +670,7 @@ public class MMXChannelManager {
       }
       // Add the creator as the owner.
       addOwnersToNode(node, owners);
-      setOptions(channel, node, rqt.getOptions());
+      setOptions(channel, node, rqt.getOptions(), appId);
 
       // Do the auto-subscription for creator.
       if (rqt.getOptions() != null && rqt.getOptions().isSubscribeOnCreate()) {
