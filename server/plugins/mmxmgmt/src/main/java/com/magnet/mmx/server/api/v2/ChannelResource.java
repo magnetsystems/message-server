@@ -763,8 +763,9 @@ public class ChannelResource {
 
           //add to whitelist TODO validate invitee
           if (channelId.isUserChannel() && inviteInfo.inviteeUserIds != null) {
-              String topic = TopicHelper.normalizePath(channelName);
-              String nodeId = TopicHelper.makeTopic(appId, tokenInfo.getUserId(), topic);
+              String topic = TopicHelper.normalizePath(channelId.getName());
+
+              String nodeId = TopicHelper.makeTopic(appId, channelId.getUserId(), topic);
               Node node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
               for (String inviteeId : inviteInfo.inviteeUserIds) {
                   JID jid = XMPPServer.getInstance().createJID(JIDUtil.makeNode(inviteeId, appId), null, true);
