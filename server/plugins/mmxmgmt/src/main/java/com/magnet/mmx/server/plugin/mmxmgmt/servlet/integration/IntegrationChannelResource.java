@@ -293,7 +293,9 @@ public class IntegrationChannelResource {
                     JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
                             from.getDomain(), null);
                     //SET
-                    MMXChannelUtil.addUserToChannelWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
+                    if (channelInfo.isPrivateChannel()) {
+                        MMXChannelUtil.addUserToChannelWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
+                    }
 //                    setWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
                     resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
                             Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
