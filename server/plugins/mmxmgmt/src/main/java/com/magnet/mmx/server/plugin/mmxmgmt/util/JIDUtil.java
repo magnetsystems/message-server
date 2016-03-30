@@ -169,7 +169,7 @@ public class JIDUtil {
    */
   public static JID makeJID(String userId, String appId, String resource) {
     String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-    return new JID(makeNode(userId, appId), domain, resource, false);
+    return new JID(makeNode(userId, appId), domain, resource, true);
   }
 
   /**

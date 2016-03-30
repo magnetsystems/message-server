@@ -31,6 +31,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.handler.ConfigureForm;
 import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.util.TopicHelper;
+
+import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -49,6 +51,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -67,7 +70,7 @@ public class PubSubPersistenceManagerExt {
           "mmx.topic.query.max", 5000);
   private static final int MAX_ROWS_FETCH = JiveGlobals.getIntProperty(
       "xmpp.pubsub.fetch.max", 2000);
-  private static final String LOAD_ITEMS_PREDICATE = 
+  private static final String LOAD_ITEMS_PREDICATE =
       "WHERE serviceID=? AND nodeID=? AND creationDate >= ? ";
 
   private static final String LOAD_ITEMS_BTWN_PREDICATE =
@@ -86,15 +89,15 @@ public class PubSubPersistenceManagerExt {
   private static final String OFFSET = " LIMIT ? OFFSET ? ";
 
   private static final String GET_ITEM_COUNT = "SELECT count(*) from ofPubsubItem WHERE nodeID=? AND serviceID=?";
-  private static final String SEARCH_PROJECTION = 
+  private static final String SEARCH_PROJECTION =
       "nodeID,leaf,name,description,persistItems,maxItems,maxPayloadSize,publisherModel,creationDate,modificationDate,creator,subscriptionEnabled";
-  private static final String SEARCH_BY_NAME = 
+  private static final String SEARCH_BY_NAME =
       "SELECT "+SEARCH_PROJECTION+" FROM ofPubsubNode "+
       "WHERE name LIKE ? AND serviceID=? AND (nodeID LIKE ? OR nodeID LIKE ?) ORDER BY serviceID,nodeID";
   private static final String SEARCH_BY_DESC =
       "SELECT "+SEARCH_PROJECTION+" FROM ofPubsubNode "+
       "WHERE description LIKE ? AND serviceID=? AND (nodeID LIKE ? OR nodeID LIKE ?) ORDER BY serviceID,nodeID";
-  
+
   private static final int INDEX_SRCH_NODEID = 1;
   private static final int INDEX_SRCH_ISLEAF = 2;
   private static final int INDEX_SRCH_NAME = 3;
@@ -175,10 +178,11 @@ public class PubSubPersistenceManagerExt {
           item.setPayloadXML(rs.getString(4));
         }
         // Add the published item to the node
-        if (descending)
+        if (descending) {
           results.add(item);
-        else
+        } else {
           results.addFirst(item);
+        }
         counter++;
       }
     } catch (Exception sqle) {
@@ -187,8 +191,9 @@ public class PubSubPersistenceManagerExt {
       DbConnectionManager.closeConnection(rs, pstmt, con);
     }
 
-    if (results.size() == 0)
+    if (results.size() == 0) {
       return Collections.emptyList();
+    }
 
     LOGGER.trace("getPublishedItems : returning list : {}", results);
     return results;
@@ -306,10 +311,11 @@ public class PubSubPersistenceManagerExt {
           item.setPayloadXML(rs.getString(4));
         }
         // Add the published item to the node
-        if (descending)
+        if (descending) {
           results.add(item);
-        else
+        } else {
           results.addFirst(item);
+        }
         counter++;
       }
     } catch (Exception sqle) {
@@ -318,8 +324,9 @@ public class PubSubPersistenceManagerExt {
       DbConnectionManager.closeConnection(rs, pstmt, con);
     }
 
-    if (results.size() == 0)
+    if (results.size() == 0) {
       return Collections.emptyList();
+    }
 
     LOGGER.trace("getPublishedItems : returning list : {}", results);
     return results;
@@ -391,14 +398,25 @@ public class PubSubPersistenceManagerExt {
   }
 
   private static List<JID> getBlockedUsersList(JID from) {
-    PrivacyList privacyList = PrivacyListManager.getInstance().getPrivacyList(from.getNode(),PRIVACY_LIST_NAME);
+    PrivacyList privacyList = PrivacyListManager.getInstance().getPrivacyList(
+        from.getNode(), PRIVACY_LIST_NAME);
 
-    if( privacyList == null || !privacyList.isDefault()) {
-      return new ArrayList<JID>();
-    }else{
-      return privacyList.getBlockedUsers();
+    if (privacyList == null || !privacyList.isDefault()) {
+      return Collections.emptyList();
+    } else {
+      List<JID> blockedUsers = new ArrayList<JID>();
+      Element listElt = privacyList.asElement();
+      LOGGER.trace("getBlockedUsersList(from={}): # of items="+listElt.elements("item").size());
+      for (Object item : listElt.elements("item")) {
+        Element itemElt = (Element) item;
+        if ("deny".equals(itemElt.attributeValue("action")) &&
+            "jid".equals(itemElt.attributeValue("type"))) {
+          LOGGER.trace("getBlockedUsersList(): jid="+itemElt.attributeValue("value"));
+          blockedUsers.add(new JID(itemElt.attributeValue("value")));
+        }
+      }
+      return blockedUsers;
     }
-
   }
 
   public static PublishedItemsResult getPublishedItemsResult(JID from,LeafNode node,
@@ -449,8 +467,9 @@ public class PubSubPersistenceManagerExt {
 
       LOGGER.trace("getPublishedItemCount : executing statement={}", pstmt);
       rs = pstmt.executeQuery();
-      if(rs.next())
+      if(rs.next()) {
         count = rs.getInt(1);
+      }
     } catch (SQLException e) {
       LOGGER.error("getPublishedItemCount : caught Exception", e);
     } finally {
@@ -467,7 +486,7 @@ public class PubSubPersistenceManagerExt {
     }
     return nodeID;
   }
-  
+
   // Generalized search for topics by various attributes.
 //  public static TopicQueryResponse searchTopic(String userId, String appId,
 //                                    TopicSearchRequest search) {
@@ -490,10 +509,10 @@ public class PubSubPersistenceManagerExt {
 //    // TODO:
 //    return new TopicQueryResponse(total, results);
 //  }
-  
+
   // Search topic by name or description.
-  public static TopicQueryResponse searchTopic(String userId, String appId, 
-                                    int offset, int maxRows, 
+  public static TopicQueryResponse searchTopic(String userId, String appId,
+                                    int offset, int maxRows,
                                     List<MMXAttribute<TopicAttr>> criteria) {
     Connection con = null;
     PreparedStatement pstmt = null;
@@ -503,7 +522,7 @@ public class PubSubPersistenceManagerExt {
     String value = "%" + criteria.get(0).getValue() + "%";
     String globalPrefix = TopicHelper.makeTopic(appId, null, "/") + "%";
     String personalPrefix = TopicHelper.makeTopic(appId, userId, "/") + "%";
-    
+
     // Limit the max rows until a solution is in place with Result Set Management
     if (maxRows == -1) {
       maxRows = MAX_ROWS_FETCH;

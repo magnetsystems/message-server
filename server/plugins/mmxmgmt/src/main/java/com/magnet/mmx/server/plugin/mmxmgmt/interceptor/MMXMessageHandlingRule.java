@@ -22,10 +22,17 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.privacy.PrivacyList;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.pubsub.LeafNode;
+import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -46,9 +53,12 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceNotFoundException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.PushStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.event.MMXXmppRateExceededEvent;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.ServerAckMessageBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterDescriptor;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterService;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.WakeupProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertEventsManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
@@ -56,6 +66,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
@@ -151,10 +162,9 @@ public class MMXMessageHandlingRule {
      */
 
     if (!input.isIncoming()) {
-      LOGGER.trace("handle: no processing for outgoing message; input={}", input);
-//      LOGGER.trace("handle : message is an outgoing message storing input={}",
-//          input);
-//      MMXOfflineStorageUtil.storeMessage(input.getMessage());
+      LOGGER.trace("handle : message is an outgoing message storing input={}",
+          input);
+      MMXOfflineStorageUtil.storeMessage(input.getMessage());
       return;
     }
 
@@ -571,5 +581,106 @@ public class MMXMessageHandlingRule {
         router.route(signalMessage);
       }
     });
+  }
+
+  public void handlePubSub(MMXMsgRuleInput input) throws PacketRejectedException {
+    if (!input.isIncoming() || input.isProcessed()) {
+      LOGGER.trace("handlePubSub: input={} will be handled by default rule", input);
+      return;
+    }
+    Message message = input.getMessage();
+    Node node = null;
+    boolean notifySubscriber = false;
+    MMXPacketExtension firstMmxExt = null;
+    final String namespace = "http://jabber.org/protocol/pubsub#event";
+
+    Message blockMsg = new Message();
+    blockMsg.setTo(message.getTo());
+    String toUser = message.getTo().getNode();
+    String appId = JIDUtil.getAppId(message.getTo());
+    String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+
+    PacketExtension extension = message.getExtension("event", namespace);
+    if (extension == null) {
+      LOGGER.trace("handlePubSub: non-event pubsub will be handled by default rule");
+      return;
+    }
+    PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+    Element eventElement = extension.getElement();
+    if (eventElement == null) {
+      LOGGER.trace("handlePubSub: malformed event pubsub will be handled by default rule");
+      return;
+    }
+    // TODO: if "items" are not included, how to get the publisher and block it?
+    Element itemsElement = eventElement.element("items");
+    if (itemsElement != null) {
+      Attribute nodeAttr = itemsElement.attribute("node");
+      String nodeId = nodeAttr.getStringValue();
+      node = pubsub.getNode(nodeId);
+      if (node == null) {
+        // TODO: how to deal with node being null?
+        LOGGER.trace("handlePubSub: delete event pubsub will be handled by default rule");
+        return;
+      }
+
+      PrivacyList defPriList = PrivacyListManager.getInstance()
+          .getDefaultPrivacyList(toUser);
+      PrivacyList nodePriList = PrivacyListManager.getInstance()
+          .getPrivacyList(toUser, node.getNodeID());
+
+      List<Element> itemList = itemsElement.elements("item");
+      int count = itemList.size();
+      for (Element item : itemList) {
+        // Check if the publisher of each item is blocked by the recipient.
+        Attribute idAttr = item.attribute("id");
+        String itemId = idAttr.getStringValue();
+
+        // Get publisher from mmx payload instead of published item from DB
+        Element mmxElement = item.element(Constants.MMX_ELEMENT);
+        MMXPacketExtension mmxExt = new MMXPacketExtension(mmxElement);
+        LOGGER.trace("handlePubSub: mmx meta={}, hdrs={}, payload={}, itemId={}",
+            mmxExt.getMmxMeta(), mmxExt.getHeaders(), mmxExt.getPayload(), itemId);
+
+        MMXid from = MMXid.fromMap((Map<String, String>)
+                                    mmxExt.getMmxMeta().get(MmxHeaders.FROM));
+        blockMsg.setFrom(new JID(JIDUtil.makeNode(from.getUserId(), appId),
+                                domain, null, false));
+
+        if ((defPriList != null && defPriList.shouldBlockPacket(blockMsg)) ||
+            (nodePriList != null && nodePriList.shouldBlockPacket(blockMsg))) {
+          LOGGER.trace("handlePubSub: item from={}, to={} is blocked",
+              blockMsg.getFrom().toString(), blockMsg.getTo().toString());
+          itemsElement.remove(item);
+          --count;
+          continue;
+        }
+
+        if (firstMmxExt == null) {
+          firstMmxExt = mmxExt;
+        }
+
+        // Check if at least one item has notification to the subscriber enabled
+        // MAX-339 is to disable self notification.
+        Boolean selfNotify;
+        if (!notifySubscriber &&
+            (!blockMsg.getFrom().getNode().equals(blockMsg.getTo().getNode()) ||
+            (((selfNotify = (Boolean) mmxExt.getMmxMeta().get(
+                MmxHeaders.SELF_NOTIFICATION)) != null) && selfNotify))) {
+          notifySubscriber = true;
+        }
+      }
+      if (count == 0) {
+        LOGGER.trace("handlePubSub: pubsub message is blocked");
+        throw new PacketRejectedException("PubSub message is blocked");
+      } else {
+        LOGGER.trace("handlePubSub: incoming msg with items={} will be handled by default", count);
+      }
+    }
+
+    // Check if the recipient is offline and should be waken up.
+    if (node != null && firstMmxExt != null && notifySubscriber) {
+      new PubSubWakeupProvider().wakeup(WakeupProvider.Scope.all_devices,
+          message.getTo(), node, message, firstMmxExt);
+    }
   }
 }

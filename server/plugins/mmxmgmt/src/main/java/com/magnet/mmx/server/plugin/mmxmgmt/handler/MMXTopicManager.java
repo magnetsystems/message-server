@@ -33,10 +33,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
@@ -512,8 +514,8 @@ public class MMXTopicManager {
     }
   }
 
-  private void setOptions(String topicName, Node node, MMXTopicOptions options, String appId) {
-
+  private void setOptions(String topicName, Node node, MMXTopicOptions options,
+                          String appId) {
     ConfigureForm form = new ConfigureForm(DataForm.Type.submit);
     form.setSendItemSubscribe(true);
     form.setMaxPayloadSize(Constants.MAX_PAYLOAD_SIZE);
@@ -522,7 +524,8 @@ public class MMXTopicManager {
     form.setNotifyDelete(false);
     form.setNotifyConfig(false);
     boolean isUserTopic = TopicHelper.isUserTopic(node.getNodeID());
-    form.setAccessModel(isUserTopic ? ConfigureForm.AccessModel.whitelist : ConfigureForm.AccessModel.open);
+    form.setAccessModel(isUserTopic ? ConfigureForm.AccessModel.whitelist :
+        ConfigureForm.AccessModel.open);
     form.setNodeType(node.isCollectionNode() ?
         ConfigureForm.NodeType.collection : ConfigureForm.NodeType.leaf);
     if (options == null) {
@@ -551,12 +554,11 @@ public class MMXTopicManager {
       e.printStackTrace();
     }
   }
-  private void setWhiteList(Node node, List<String> whiteList, String appId) {
 
+  private void setWhiteList(Node node, List<String> whiteList, String appId) {
     if (whiteList != null) {
       for (String subId : whiteList) {
-        JID subJID = XMPPServer.getInstance().createJID(JIDUtil.makeNode(subId, appId), null, true);
-        node.addMember(subJID);
+        node.addMember(JIDUtil.makeJID(subId, appId, null));
       }
     }
   }
@@ -577,8 +579,7 @@ public class MMXTopicManager {
       AppDAO appDAO = DBUtil.getAppDAO();
       String userId = appDAO.getServerUserForApp(appId);
       if (userId != null) {
-        jid = new JID(JIDUtil.makeNode(userId, appId),
-                  mServer.getServerInfo().getXMPPDomain(), null);
+        jid = JIDUtil.makeJID(userId, appId, null);
         mCachedServerUsers.put(appId, jid);
       }
     }
@@ -741,6 +742,8 @@ public class MMXTopicManager {
     return status;
   }
 
+  // Owner is the requester and subscriber is where the item will be delivered
+  // to.  They are the same user, but subscriber can be a full JID.
   private NodeSubscription subscribeToNode(Node node, JID owner, JID subscriber) {
     SubscribeForm optionsForm = new SubscribeForm(DataForm.Type.submit);
     // Receive notification of new items only.
@@ -749,9 +752,8 @@ public class MMXTopicManager {
     // Don't set other options; it will change the subscription state to
     // pending because it will wait for the owner's approval.
 
-    // Need a modified Node.java from mmx-openfire repo.
-    NodeSubscription subscription = node.createSubscription(null, owner,
-        subscriber, false, optionsForm);
+    node.createSubscription(null, owner, subscriber, false, optionsForm);
+    NodeSubscription subscription = node.getSubscription(subscriber);
     return subscription;
   }
 
@@ -783,15 +785,35 @@ public class MMXTopicManager {
           }
 
 //          LOGGER.trace("delete leaf node=" + node.getNodeID());
+          // MAX-243: remove all privacy lists from the topic.
+          deleteAllPrivacyListsForTopic(node);
+
           child.delete();
+          // TODO: remove the tags
+
           ++count;
         }
       }
     }
+    // MAX-243: remove all privacy lists from the topic.
+    deleteAllPrivacyListsForTopic(node);
+
 //    LOGGER.trace("delete node="+node.getNodeID());
     node.delete();
+    // TODO: remove the tags
+
     ++count;
     return count;
+  }
+
+  // Get all subscribers and remove their privacy lists.
+  private void deleteAllPrivacyListsForTopic(Node node) {
+    // It may be expensive if there are many subscribers.  On the other
+    // hand, if the topic is popular, it is unlikely to be deleted.
+    PrivacyListManager plMgr = PrivacyListManager.getInstance();
+    for (NodeSubscription sub : node.getAllSubscriptions()) {
+      plMgr.deletePrivacyList(sub.getOwner().getNode(), node.getNodeID());
+    }
   }
 
   public MMXStatus deleteTopic(JID from, String appId,
@@ -906,15 +928,17 @@ public class MMXTopicManager {
       }
       PublishedItem item = leafNode.getPublishedItem(itemId);
       if (item == null) {
-        results.put(itemId, StatusCode.ITEM_NOT_FOUND.getCode());
-      }
-      if (!item.canDelete(from)) {
+        results.put(itemId, StatusCode.GONE.getCode());
+      } else if (!item.canDelete(from)) {
         results.put(itemId, StatusCode.FORBIDDEN.getCode());
+      } else {
+        pubItems.add(item);
+        results.put(itemId, StatusCode.SUCCESS.getCode());
       }
-      pubItems.add(item);
-      results.put(itemId, StatusCode.SUCCESS.getCode());
     }
-    leafNode.deleteItems(pubItems);
+    if (!pubItems.isEmpty()) {
+      leafNode.deleteItems(pubItems);
+    }
     return results;
   }
 
@@ -1004,6 +1028,12 @@ public class MMXTopicManager {
       throw new MMXException(StatusCode.GONE.getMessage(),
           StatusCode.GONE.getCode());
     }
+    // MAX-243: remove the personal privacy list from the topic for all
+    // subscriptions.  We should offer an option in the request instead of
+    // relying on subscription ID.
+    if (subId == null) {
+      PrivacyListManager.getInstance().deletePrivacyList(from.getNode(), realTopic);
+    }
 
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
@@ -1011,26 +1041,35 @@ public class MMXTopicManager {
     return status;
   }
 
+  /**
+   * Cancel all subscriptions to all topics for a device registered to a user.
+   * This method is useful to cancel all subscriptions for a device before the
+   * user unregisters the device.
+   * @param from
+   * @param appId
+   * @param rqt
+   * @return
+   * @throws MMXException
+   */
   public MMXStatus unsubscribeForDev(JID from, String appId,
                   TopicAction.UnsubscribeForDevRequest rqt) throws MMXException {
-    String prefix = TopicHelper.TOPIC_DELIM + appId + TopicHelper.TOPIC_DELIM;
-    int count = 0;
-    JID owner = from.asBareJID();
-    String devId = rqt.getDevId();
-    for (Node node : mPubSubModule.getNodes()) {
-      if (!node.getNodeID().startsWith(prefix)) {
-        continue;
-      }
-      for (NodeSubscription subscription : node.getSubscriptions(owner)) {
-        if (devId.equals(subscription.getJID().getResource())) {
-          ++count;
-          node.cancelSubscription(subscription);
+    final AtomicInteger count = new AtomicInteger(0);
+    final JID owner = from.asBareJID();
+    final String devId = rqt.getDevId();
+    traverseNode(getRootAppTopic(appId), new NodeProcessor() {
+      @Override
+      public void process(Node node) {
+        for (NodeSubscription subscription : node.getSubscriptions(owner)) {
+          if (devId.equals(subscription.getJID().getResource())) {
+            count.incrementAndGet();
+            node.cancelSubscription(subscription);
+          }
         }
       }
-    }
+    });
     MMXStatus status = (new MMXStatus())
         .setCode(StatusCode.SUCCESS.getCode())
-        .setMessage(count+" subscription"+((count==1)?" is":"s are")+" cancelled");
+        .setMessage(count+" subscription"+((count.get()==1)?" is":"s are")+" cancelled");
     return status;
   }
 
@@ -1590,9 +1629,22 @@ public class MMXTopicManager {
     return status;
   }
 
-  private MMXStatus sendLastPublishedItemsFromNodes(JID from, String appId,
-                                                Date since, int maxItems) {
-    JID subscriber = from.asBareJID();
+  private interface NodeProcessor {
+    public void process(Node node);
+  }
+
+  private void traverseNode(CollectionNode collectNode, NodeProcessor processor) {
+    for (Node node : collectNode.getNodes()) {
+      processor.process(node);
+      if (node.isCollectionNode()) {
+        traverseNode((CollectionNode) node, processor);
+      }
+    }
+  }
+
+  private MMXStatus sendLastPublishedItemsFromNodes(final JID from, String appId,
+                                        final Date since, final int maxItems) {
+    final JID subscriber = from.asBareJID();
     String prefix = TopicHelper.makePrefix(appId);
 
     // Don't query the DB directly because some items are cached in memory.
@@ -1602,104 +1654,108 @@ public class MMXTopicManager {
     // TODO: optimize it to traverse from the appID root node.
 
     // Find all collection nodes subscribed by the user.
-    TreeMap<String, Node> colNodes = new TreeMap<String, Node>();
-    for (Node node : mPubSubModule.getNodes()) {
-      if (!node.getNodeID().startsWith(prefix)) {
-        // Skip topics that do not belong to this app.
-        continue;
-      }
-      if (node.isCollectionNode()) {
-        Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
-        if (subs != null && subs.size() > 0) {
-          colNodes.put(node.getNodeID(), node);
-          LOGGER.trace("Collection node=" + node.getNodeID() + " is subscribed");
-        }
-      }
-    }
-
-    int numSent = 0, numSubs = 0;
-    for (Node node : mPubSubModule.getNodes()) {
-      if (!node.getNodeID().startsWith(prefix)) {
-        // Skip topics that do not belong to this app.
-        continue;
-      }
-      if (maxItems == 1) {
-        // Check the leaf node if its last published item should be sent.
-        PublishedItem item = node.getLastPublishedItem();
-//        if (item == null) {
-//          LOGGER.trace("No published items in subscribed node="+node.getNodeID());
-//        } else {
-//          LOGGER.trace("since="+since.getTime()+", creatDate="+item.getCreationDate().getTime()+
-//              ", node="+node.getNodeID()+", last pub item="+item.getID());
-//        }
-        if (item == null || item.getCreationDate().getTime() < since.getTime()) {
-          // Skip all last published items older than the last delivery time.
-          continue;
-        }
-        Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
-        if (subs == null || subs.size() == 0) {
-          // The leaf node has no subscriptions, check its ancestor for subscriptions.
-          Node ancestor = findAncestor(colNodes, node);
-          if (ancestor == null) {
-            continue;
-          }
-          subs = ancestor.getSubscriptions(subscriber);
-        }
-        // Either the leaf node or ancestor node has subscriptions with the
-        // latest published item.
-        numSubs += subs.size();
-        for (NodeSubscription sub : subs) {
-          if (sendLastPublishedItem(item, sub, from)) {
-            ++numSent;
-//            LOGGER.trace("Sent last published item="+item.getID()+
-//                        ", sub ID="+sub.getID());
-          } else {
-//            LOGGER.trace("cannot send last published item="+item.getID()+
-//                        ", sub ID="+sub.getID());
-          }
-        }
-      } else {
+    final TreeMap<String, Node> colNodes = new TreeMap<String, Node>();
+    traverseNode(getRootAppTopic(appId), new NodeProcessor() {
+      @Override
+      public void process(Node node) {
         if (node.isCollectionNode()) {
-          continue;
-        }
-        Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
-        if (subs == null || subs.size() == 0) {
-          // The leaf node is not subscribed, check its ancestor for subscriptions.
-          Node ancestor = findAncestor(colNodes, node);
-          if (ancestor == null) {
-//            LOGGER.trace("No ancestor node is subscribed, skip "+node.getNodeID());
-            continue;
-          }
-          // Get the subscriptions from the ancestor.
-          subs = ancestor.getSubscriptions(subscriber);
-          if (subs.size() == 0) {
-//            LOGGER.trace("No subscriptions in ancestor node "+ancestor.getNodeID());
-            continue;
-          }
-        }
-
-//        LOGGER.trace("Fetch published items from "+node.getNodeID()+", since="+since);
-        List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
-            (LeafNode) node, maxItems, since);
-        if (items == null || items.size() == 0) {
-//          LOGGER.trace("No published items in "+node.getNodeID()+", since="+since);
-          continue;
-        }
-
-        // Either the leaf node or ancestor node has subscriptions with the
-        // latest published item.
-        numSubs += subs.size();
-        for (NodeSubscription sub : subs) {
-          if (sendLastPublishedItems(items, sub, from)) {
-            numSent += items.size();
-//            LOGGER.trace("Sent last published #items="+items.size()+
-//                        ", sub ID="+sub.getID());
-          } else {
-//            LOGGER.warn("cannot send last published items="+items.size()+
-//                        ", sub ID="+sub.getID());
+          Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
+          if (subs != null && subs.size() > 0) {
+            colNodes.put(node.getNodeID(), node);
+            LOGGER.trace("Collection node=" + node.getNodeID() + " is subscribed");
           }
         }
       }
+    });
+
+    final AtomicInteger numSent = new AtomicInteger(0), numSubs = new AtomicInteger(0);
+    if (maxItems == 1) {
+      traverseNode(getRootAppTopic(appId), new NodeProcessor() {
+        @Override
+        public void process(Node node) {
+          // Check the leaf node if its last published item should be sent.
+          PublishedItem item = node.getLastPublishedItem();
+//          if (item == null) {
+//            LOGGER.trace("No published items in subscribed node="+node.getNodeID());
+//          } else {
+//            LOGGER.trace("since="+since.getTime()+", creatDate="+item.getCreationDate().getTime()+
+//                ", node="+node.getNodeID()+", last pub item="+item.getID());
+//          }
+          if (item == null || item.getCreationDate().getTime() < since.getTime()) {
+            // Skip all last published items older than the last delivery time.
+            return;
+          }
+          Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
+          if (subs == null || subs.size() == 0) {
+            // The leaf node has no subscriptions, check its ancestor for subscriptions.
+            Node ancestor = findAncestor(colNodes, node);
+            if (ancestor == null) {
+              return;
+            }
+            subs = ancestor.getSubscriptions(subscriber);
+          }
+          // Either the leaf node or ancestor node has subscriptions with the
+          // latest published item.
+          numSubs.addAndGet(subs.size());
+          for (NodeSubscription sub : subs) {
+            if (sendLastPublishedItem(item, sub, from)) {
+              numSent.incrementAndGet();
+//              LOGGER.trace("Sent last published item="+item.getID()+
+//                          ", sub ID="+sub.getID());
+            } else {
+//              LOGGER.trace("cannot send last published item="+item.getID()+
+//                          ", sub ID="+sub.getID());
+            }
+          }
+        }
+      });
+    }
+    else {
+      traverseNode(getRootAppTopic(appId), new NodeProcessor() {
+        @Override
+        public void process(Node node) {
+          if (node.isCollectionNode()) {
+            return;
+          }
+          Collection<NodeSubscription> subs = node.getSubscriptions(subscriber);
+          if (subs == null || subs.size() == 0) {
+            // The leaf node is not subscribed, check its ancestor for subscriptions.
+            Node ancestor = findAncestor(colNodes, node);
+            if (ancestor == null) {
+//              LOGGER.trace("No ancestor node is subscribed, skip "+node.getNodeID());
+              return;
+            }
+            // Get the subscriptions from the ancestor.
+            subs = ancestor.getSubscriptions(subscriber);
+            if (subs.size() == 0) {
+//              LOGGER.trace("No subscriptions in ancestor node "+ancestor.getNodeID());
+              return;
+            }
+          }
+
+//          LOGGER.trace("Fetch published items from "+node.getNodeID()+", since="+since);
+          List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
+              (LeafNode) node, maxItems, since);
+          if (items == null || items.size() == 0) {
+//            LOGGER.trace("No published items in "+node.getNodeID()+", since="+since);
+            return;
+          }
+
+          // Either the leaf node or ancestor node has subscriptions with the
+          // latest published item.
+          numSubs.addAndGet(subs.size());
+          for (NodeSubscription sub : subs) {
+            if (sendLastPublishedItems(items, sub, from)) {
+              numSent.addAndGet(items.size());
+//              LOGGER.trace("Sent last published #items="+items.size()+
+//                          ", sub ID="+sub.getID());
+            } else {
+//              LOGGER.warn("cannot send last published items="+items.size()+
+//                          ", sub ID="+sub.getID());
+            }
+          }
+        }
+      });
     }
 
     MMXStatus status = (new MMXStatus())

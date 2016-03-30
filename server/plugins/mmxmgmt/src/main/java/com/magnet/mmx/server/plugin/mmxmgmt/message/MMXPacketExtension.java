@@ -18,6 +18,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.message;
 import java.util.Date;
 import java.util.Map;
 
+import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +35,22 @@ import com.magnet.mmx.util.TimeUtil;
 import com.magnet.mmx.util.Utils;
 
 /**
- * MMX stanza encoder for MMX server.
+ * MMX stanza encoder and decoder in MMX server.  To encode to the MMX stanza,
  * <pre>
  * Message msg = new Message();
+ * MmxHeaders mmxMeta = new MmxHeaders();
+ * mmxMeta.put(...);
  * Headers headers = new Headers();
  * headers.put("name", "value");
  * Payload payload = new Payload("MyMsgType", content);
- * msg.addExtension(new MMXPacketExtension(headers, payload));
+ * msg.addExtension(new MMXPacketExtension(mmxMeta, headers, payload));
+ * </pre>
+ * To decode MMX stanza, the starting element is &lt;mmx xmlns=...&gt;...&lt;/mmx&gt;
+ * <pre>
+ * MMXPacketExtension ext = new MMXPacketExtension(mmxElement);
+ * MmxHeaders mmxMeta = ext.getMmxMeta();
+ * Headers headers = ext.getHeaders();
+ * Payload payload = ext.getPayload();
  * </pre>
  */
 public class MMXPacketExtension extends PacketExtension {
@@ -48,11 +58,32 @@ public class MMXPacketExtension extends PacketExtension {
   private MmxHeaders mMmxMeta;
   private Headers mHeaders;
   private Payload mPayload;
-  
+
+  /**
+   * Constructor to decode the MMX stanza.
+   * @param mmxElement
+   */
+  public MMXPacketExtension(Element mmxElement) {
+    super(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
+    parseElement(mmxElement);
+  }
+
+  /**
+   * Constructor to create an MMX stanza without mmx meta headers.  Currently
+   * it is used to construct custom error message.
+   * @param headers
+   * @param payload
+   */
   public MMXPacketExtension(Map<String, String> headers, Payload payload) {
     this(null, headers, payload);
   }
-  
+
+  /**
+   * Constructor to create an MMX stanza.
+   * @param mmxMeta
+   * @param headers
+   * @param payload
+   */
   public MMXPacketExtension(MmxHeaders mmxMeta, Map<String, String> headers, Payload payload) {
     super(Constants.MMX, Constants.MMX_NS_MSG_PAYLOAD);
     if (mmxMeta != null ) {
@@ -66,32 +97,34 @@ public class MMXPacketExtension extends PacketExtension {
     mPayload = payload;
     DisposableFile file = mPayload.getFile();
     if (file != null && file.isBinary()) {
-      if (mHeaders == null)
+      if (mHeaders == null) {
         mHeaders = new Headers();
-      if (mHeaders.getContentEncoding(null) == null)
+      }
+      if (mHeaders.getContentEncoding(null) == null) {
         mHeaders.setContentEncoding(Constants.BASE64);
+      }
     }
     fillElement();
   }
-  
+
   public Map<String, Object> getMmxMeta() {
     return mMmxMeta;
   }
-  
+
   public Map<String, String> getHeaders() {
     return mHeaders;
   }
-  
+
   public Payload getPayload() {
     return mPayload;
   }
-  
+
   private void fillElement() {
     // It seems that DOM4J does XML escape too, so don't escape again!
     final boolean xmlEsc = false;
     Date sentTime = new Date();
     mPayload.setSentTime(sentTime);
-    
+
     if (mMmxMeta != null) {
       // No need to do XML escape for the MMX meta because GSON is XML safe.
       Element mmxMetaElement = this.element.addElement(Constants.MMX_MMXMETA);
@@ -130,7 +163,42 @@ public class MMXPacketExtension extends PacketExtension {
       if (csq != null) {
         payloadElement.setText(csq.toString());
       }
-      LOGGER.warn("fillElement : payload={}", csq.toString());
+    }
+  }
+
+  private void parseElement(Element mmxElement) {
+    String text;
+    Element mmxMetaElement = mmxElement.element(Constants.MMX_MMXMETA);
+    mMmxMeta = (mmxMetaElement == null ||
+        (text = mmxMetaElement.getText()) == null || text.isEmpty()) ?
+        new MmxHeaders() : GsonData.getGson().fromJson(text, MmxHeaders.class);
+
+    Element metaElement = mmxElement.element(Constants.MMX_META);
+    mHeaders = (metaElement == null ||
+        (text = metaElement.getText()) == null || text.isEmpty()) ?
+        new Headers() : GsonData.getGson().fromJson(text, Headers.class);
+
+    Element payloadElement = mmxElement.element(Constants.MMX_PAYLOAD);
+    if (payloadElement == null) {
+      mPayload = new Payload(null, (CharSequence) null);
+    } else {
+      String msgType, chunk, timestamp;
+      msgType = getAttrValue(payloadElement, Constants.MMX_ATTR_MTYPE, null);
+      chunk = getAttrValue(payloadElement, Constants.MMX_ATTR_CHUNK, null);
+      timestamp = getAttrValue(payloadElement, Constants.MMX_ATTR_STAMP, null);
+      text = payloadElement.getText();
+      mPayload = new Payload(msgType, text);
+      mPayload.parseChunk(chunk);
+      mPayload.setSentTime(TimeUtil.toDate(timestamp));
+    }
+  }
+
+  private String getAttrValue(Element element, String attrName, String def) {
+    Attribute attr;
+    if ((attr = element.attribute(attrName)) != null) {
+      return attr.getStringValue();
+    } else {
+      return def;
     }
   }
 }

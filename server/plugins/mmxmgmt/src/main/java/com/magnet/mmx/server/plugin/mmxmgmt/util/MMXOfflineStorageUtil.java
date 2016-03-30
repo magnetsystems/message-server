@@ -41,7 +41,8 @@ public class MMXOfflineStorageUtil {
     service.execute(new Runnable() {
       @Override
       public void run() {
-        LOGGER.trace("storeMessage.run : addMessage from={}, to={}, messageId={}", new Object[]{message.getFrom(), message.getTo(), message.getID()});
+        LOGGER.trace("storeMessage.run: addMessage from={}, to={}, messageId={}",
+            new Object[]{message.getFrom(), message.getTo(), message.getID()});
         XMPPServer.getInstance().getOfflineMessageStore().addMessage(message);
       }
     });
@@ -51,8 +52,10 @@ public class MMXOfflineStorageUtil {
     service.execute(new Runnable() {
       @Override
       public void run() {
-        LOGGER.trace("removeMessage.run : deleteMessage : username={}, messageId={}", username, messageId);
-        XMPPServer.getInstance().getOfflineMessageStore().deleteMessage(username, messageId);
+        int count = XMPPServer.getInstance().getOfflineMessageStore().deleteMessage(
+            username, messageId);
+        LOGGER.trace("removeMessage.run: deleteMessage username={}, messageId={}, count={}",
+            username, messageId, count);
       }
     });
   }
@@ -68,8 +71,8 @@ public class MMXOfflineStorageUtil {
   private static Cache getCache() {
     if(mmxStorageCache != null) {
       return mmxStorageCache;
-    }
-    else
+    } else {
       return getOrCreateCache();
+    }
   }
 }

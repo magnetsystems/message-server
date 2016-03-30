@@ -57,10 +57,9 @@ public class MsgAckIQHandler extends IQHandler {
       String to = acknowledgement.getTo();
       String messageId = acknowledgement.getMsgId();
 
-      // Remove the offline message for end-point.
+      // Remove the offline message to end-point or to user which was added
+      // when there were no active sessions.
       MMXOfflineStorageUtil.removeMessage(to, messageId);
-      // Remove the offline message for user added when there were no active sessions.
-      MMXOfflineStorageUtil.removeMessage(packet.getFrom().toBareJID(), messageId);
 
       String appId = JIDUtil.getAppId(to);
       String deviceId = JIDUtil.getResource(to);
