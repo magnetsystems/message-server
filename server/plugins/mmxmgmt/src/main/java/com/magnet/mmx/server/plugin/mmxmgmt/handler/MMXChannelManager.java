@@ -28,6 +28,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.search.PaginationInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicNode;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
@@ -514,8 +515,7 @@ public class MMXChannelManager {
 
     if (whiteList != null) {
       for (String subId : whiteList) {
-        JID subJID = XMPPServer.getInstance().createJID(JIDUtil.makeNode(subId, appId), null, true);
-        node.addMember(subJID);
+        MMXChannelUtil.addUserToChannelWhiteList(node, subId, appId);
       }
     }
   }
@@ -598,7 +598,7 @@ public class MMXChannelManager {
                           throws MMXException {
     String channel = rqt.getChannelName();
     try {
-      // Note, ChannelHelper.checkPathAllowed(channel) should not be called here;
+      // Note, MMXChannelUtil.checkPathAllowed(channel) should not be called here;
       // it is a restriction in the client SDK.
       channel = ChannelHelper.normalizePath(channel);
     } catch (IllegalArgumentException e) {

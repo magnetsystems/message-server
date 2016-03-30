@@ -37,6 +37,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.ChannelHelper;
 import com.magnet.mmx.util.TimeUtil;
@@ -768,8 +769,7 @@ public class ChannelResource {
               String nodeId = TopicHelper.makeTopic(appId, channelId.getUserId(), topic);
               Node node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
               for (String inviteeId : inviteInfo.inviteeUserIds) {
-                  JID jid = XMPPServer.getInstance().createJID(JIDUtil.makeNode(inviteeId, appId), null, true);
-                  node.addMember(jid);
+                  MMXChannelUtil.addUserToChannelWhiteList(node, inviteeId, appId);
               }
           }
 
