@@ -295,6 +295,8 @@ public class IntegrationChannelResource {
                     }
                     JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
                             from.getDomain(), null);
+                    //SET
+                    setWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
                     resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
                             Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
@@ -324,6 +326,14 @@ public class IntegrationChannelResource {
         return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
 
 
+    }
+
+    private void setWhiteList(String channelName, String ownerId, String appId, JID subJID) {
+
+        String channel = ChannelHelper.normalizePath(channelName);
+        String realChannel = ChannelHelper.makeChannel(appId, ownerId, channel);
+        Node node = XMPPServer.getInstance().getPubSubModule().getNode(realChannel);
+        node.addMember(subJID);
     }
 
     private boolean isValidUser(String appId, String subscriber) {
