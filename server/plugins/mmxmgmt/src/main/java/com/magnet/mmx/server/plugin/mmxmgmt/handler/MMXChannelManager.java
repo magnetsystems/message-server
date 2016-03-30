@@ -515,7 +515,7 @@ public class MMXChannelManager {
     if (whiteList != null) {
       for (String subId : whiteList) {
         JID subJID = XMPPServer.getInstance().createJID(JIDUtil.makeNode(subId, appId), null, true);
-        node.addMemberAffiliation(subJID);
+        node.addMember(subJID);
       }
     }
   }

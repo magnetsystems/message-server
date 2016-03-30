@@ -769,7 +769,7 @@ public class ChannelResource {
               Node node = XMPPServer.getInstance().getPubSubModule().getNode(nodeId);
               for (String inviteeId : inviteInfo.inviteeUserIds) {
                   JID jid = XMPPServer.getInstance().createJID(JIDUtil.makeNode(inviteeId, appId), null, true);
-                  node.addMemberAffiliation(jid);
+                  node.addMember(jid);
               }
           }
 

@@ -556,7 +556,7 @@ public class MMXTopicManager {
     if (whiteList != null) {
       for (String subId : whiteList) {
         JID subJID = XMPPServer.getInstance().createJID(JIDUtil.makeNode(subId, appId), null, true);
-        node.addNoneAffiliation(subJID);
+        node.addMember(subJID);
       }
     }
   }
