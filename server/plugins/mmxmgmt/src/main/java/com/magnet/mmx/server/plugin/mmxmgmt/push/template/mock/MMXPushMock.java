@@ -5,8 +5,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfigMapping;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by mmicevic on 3/31/16.
@@ -20,6 +19,23 @@ public class MMXPushMock {
     private static Map<Integer, MMXPushConfig> CONFIG_BY_ID = new HashMap<>();
     private static Map<String, MMXPushConfig> CONFIG_BY_APP_AND_NAME = new HashMap<>();
     private static Map<Integer, MMXPushConfigMapping> CONFIG_MAPPING_BY_ID = new HashMap<>();
+    private static Map<String, MMXPushConfigMapping> CONFIG_MAPPING_BY_APP_AND_CHANNEL = new HashMap<>();
+
+    private static final String SYSTEM_APP = "system";
+    private static final String DEFAULT_TEMPLATE = "default-template";
+    private static final String DEFAULT_CONFIG = "default-config";
+    static {
+        MMXTemplate t = createTemplate(SYSTEM_APP, DEFAULT_TEMPLATE, "DEFAULT TEMPLATE");
+        MMXPushConfig c = new MMXPushConfig();
+        c.setAppId(SYSTEM_APP);
+        c.setConfigName(DEFAULT_CONFIG);
+        c.setTemplate(t);
+        c = createConfig(c);
+        MMXPushConfigMapping m = new MMXPushConfigMapping();
+        m.setAppId(SYSTEM_APP);
+        m.setConfigId(c.getConfigId());
+        createConfigMapping(m);
+    }
 
     //TEMPLATE
     public static MMXTemplate createTemplate(String appId, String templateName, String template) {
@@ -125,6 +141,17 @@ public class MMXPushMock {
             CONFIG_BY_ID.remove(config.getConfigId());
         }
     }
+    public static MMXPushConfig getPushConfig(String appId, String channelName, String configName) {
+        MMXPushConfig config = getConfig(appId, configName);
+        if (config != null) {
+            return config;
+        }
+        MMXPushConfigMapping mapping = getConfigMapping(appId, channelName);
+        if (mapping == null) {
+            mapping = getConfigMapping("system", null);
+        }
+        return getConfig(mapping.getConfigId());
+    }
 
     //CONFIG MAPPING
     public static MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelName) {
@@ -138,10 +165,14 @@ public class MMXPushMock {
         int id = SEQUENCE++;
         mapping.setMappingId(id);
         CONFIG_MAPPING_BY_ID.put(id, mapping);
+        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
         return mapping;
     }
     public static MMXPushConfigMapping getConfigMapping(int mappingId) {
         return CONFIG_MAPPING_BY_ID.get(mappingId);
+    }
+    public static MMXPushConfigMapping getConfigMapping(String appId, String channelName) {
+        return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelName));
     }
     public static MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) {
         MMXPushConfigMapping mapping = getConfigMapping(mappingId);
@@ -155,13 +186,20 @@ public class MMXPushMock {
     public static MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) {
         if (mapping != null) {
             CONFIG_MAPPING_BY_ID.put(mapping.getMappingId(), mapping);
+            CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
         }
         return mapping;
     }
     public static void deleteConfigMapping(int mappingId) {
-        CONFIG_MAPPING_BY_ID.remove(mappingId);
+        deleteConfigMapping(getConfigMapping(mappingId));
+    }
+    public static void deleteConfigMapping(String appId, String channelName) {
+        deleteConfigMapping(getConfigMapping(appId, channelName));
     }
     public static void deleteConfigMapping(MMXPushConfigMapping mapping) {
-        CONFIG_MAPPING_BY_ID.remove(mapping.getMappingId());
+        if (mapping != null) {
+            CONFIG_MAPPING_BY_ID.remove(mapping.getMappingId());
+            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(mapping.getAppId(), mapping.getChannelName()));
+        }
     }
 }

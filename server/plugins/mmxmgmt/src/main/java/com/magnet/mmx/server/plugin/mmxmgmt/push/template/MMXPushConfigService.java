@@ -5,25 +5,28 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfigMapping;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
-public class MMXTemplateService {
+public class MMXPushConfigService {
 
-    private static MMXTemplate instance = new MMXTemplate();
+    public static final String SYSTEM_APP = "system";
+    public static final String DEFAULT_TEMPLATE = "default-template";
+    public static final String DEFAULT_CONFIG = "default-config";
 
-    public static MMXTemplate getInstance() {
+    private static MMXPushConfigService instance = new MMXPushConfigService();
+
+    public static MMXPushConfigService getInstance() {
         return instance;
     }
 
-    private MMXTemplateService() {
+    private MMXPushConfigService() {
     }
 
-    public MMXPushConfig getPushConfig(String appId, String channelName, String templateName) {
+    public MMXPushConfig getPushConfig(String appId, String channelName, String configName) {
         return null;
     }
 
