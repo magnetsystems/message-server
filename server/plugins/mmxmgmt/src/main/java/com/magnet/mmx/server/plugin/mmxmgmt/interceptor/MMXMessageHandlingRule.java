@@ -29,10 +29,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
-import org.jivesoftware.openfire.pubsub.LeafNode;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -66,7 +64,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXExecutors;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXMessageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
@@ -659,7 +656,7 @@ public class MMXMessageHandlingRule {
           firstMmxExt = mmxExt;
         }
 
-        // Check if at least one item has notification to the subscriber enabled
+        // Check if at least one item having notification to the subscriber enabled
         // MAX-339 is to disable self notification.
         Boolean selfNotify;
         if (!notifySubscriber &&
