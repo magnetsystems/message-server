@@ -27,7 +27,7 @@ public class MMXPushConfigService {
     }
 
     public MMXPushConfig getPushConfig(String appId, String channelName, String configName) {
-        return null;
+        return MMXPushMock.getPushConfig(appId, channelName, configName);
     }
 
     //TEMPLATE CRUD
