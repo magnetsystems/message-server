@@ -36,4 +36,13 @@ public class MMXTemplateService {
     public MMXTemplate updateTemplate(String appId, String templateName, String template) {
         return MMXPushMock.updateTemplate(appId, templateName, template);
     }
+    public void deleteTemplate(String appId, String templateName) {
+        MMXPushMock.deleteTemplate(appId, templateName);
+    }
+    public void deleteTemplate(int templateId) {
+        MMXPushMock.deleteTemplate(templateId);
+    }
+
+    //CONFIG CURD
+
 }

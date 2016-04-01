@@ -1,7 +1,6 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.template.mock;
 
 
-import com.google.gson.Gson;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXTemplate;
 
@@ -15,18 +14,9 @@ import java.util.Map;
 public class MMXPushMock {
 
     private static int SEQUENCE = 0;
-    private static Map<Integer, MMXTemplate> TEMPLATE_MAP = new HashMap<>();
-    private static Map<String, MMXTemplate> TEMPLATE_UNIQUE = new HashMap<>();
+    private static Map<Integer, MMXTemplate> TEMPLATE_BY_ID = new HashMap<>();
+    private static Map<String, MMXTemplate> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
     private static Map<Integer, MMXPushConfig> CONFIG_MAP = new HashMap<>();
-
-    static {
-        createTemplate("app1", "t1");
-        createTemplate("app1", "t2");
-        createTemplate("app1", "t3");
-        ///////////////////////////////
-        createTemplate("app2", "t1");
-        createTemplate("app2", "t2");
-    }
 
     public static MMXTemplate createTemplate(String appId, String templateName) {
 
@@ -37,20 +27,36 @@ public class MMXPushMock {
         template.setTemplate("T-" + id);
         template.setTemplateType("PUSH");
         template.setTemplateName(templateName);
-        TEMPLATE_MAP.put(id, template);
-        TEMPLATE_UNIQUE.put(getTemplateKey(appId, templateName), template);
+        TEMPLATE_BY_ID.put(id, template);
+        TEMPLATE_BY_APP_AND_NAME.put(getTemplateKey(appId, templateName), template);
         return template;
     }
     public static MMXTemplate getTemplate(String appId, String templateName) {
-        return TEMPLATE_UNIQUE.get(getTemplateKey(appId, templateName));
+        return TEMPLATE_BY_APP_AND_NAME.get(getTemplateKey(appId, templateName));
     }
     public static MMXTemplate getTemplate(int templateId) {
-        return TEMPLATE_UNIQUE.get(templateId);
+        return TEMPLATE_BY_ID.get(templateId);
     }
     public static MMXTemplate updateTemplate(String appId, String templateName, String template) {
         MMXTemplate t = getTemplate(appId, templateName);
         t.setTemplate(template);
         return t;
+    }
+    public static void deleteTemplate(String appId, String templateName) {
+
+        MMXTemplate t = getTemplate(appId, templateName);
+        if (t != null) {
+            TEMPLATE_BY_APP_AND_NAME.remove(getTemplateKey(appId, templateName));
+            TEMPLATE_BY_ID.remove(t.getTemplateId());
+        }
+    }
+    public static void deleteTemplate(int id) {
+
+        MMXTemplate t = getTemplate(id);
+        if (t != null) {
+            TEMPLATE_BY_APP_AND_NAME.remove(getTemplateKey(t.getAppId(), t.getTemplateName()));
+            TEMPLATE_BY_ID.remove(id);
+        }
     }
 
     private static String getTemplateKey(String appId, String templateName) {
@@ -63,28 +69,9 @@ public class MMXPushMock {
         config.setConfigId(id);
         config.setConfigName(configName);
         config.setAppId(appId);
-        config.setTemplate(TEMPLATE_MAP.get(templateId));
+        config.setTemplate(TEMPLATE_BY_ID.get(templateId));
 //        config.setTemplateType("PUSH");
         CONFIG_MAP.put(id, config);
         return config;
     }
-
-
-
-    //    private static String serialize(Object obj) {
-//
-//        Gson gson = new Gson();
-//        return gson.toJson(obj);
-//    }
-//    private static <T> T deserialize(String jsonStr, Class<T> clazz) {
-//
-//        Gson gson = new Gson();
-//        return gson.fromJson(jsonStr, clazz);
-//    }
-//
-//    public static void main(String[] args) {
-//
-//        MMXPushMock x = new MMXPushMock();
-//
-//    }
 }
