@@ -32,10 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
-import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
 import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
 import org.apache.commons.lang3.StringUtils;
@@ -295,6 +292,11 @@ public class IntegrationChannelResource {
                     }
                     JID sub = new JID(JIDUtil.makeNode(subscriber, channelInfo.getMmxAppId()),
                             from.getDomain(), null);
+                    //SET
+                    if (channelInfo.isPrivateChannel()) {
+                        MMXChannelUtil.addUserToChannelWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
+                    }
+//                    setWhiteList(channelInfo.getChannelName(), channelInfo.getUserId(), channelInfo.getMmxAppId(), sub);
                     resp = channelManager.subscribeChannel(sub, channelInfo.getMmxAppId(), rqt,
                             Arrays.asList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
@@ -325,6 +327,14 @@ public class IntegrationChannelResource {
 
 
     }
+
+//    private void setWhiteList(String channelName, String ownerId, String appId, JID subJID) {
+//
+//        String channel = ChannelHelper.normalizePath(channelName);
+//        String realChannel = ChannelHelper.makeChannel(appId, ownerId, channel);
+//        Node node = XMPPServer.getInstance().getPubSubModule().getNode(realChannel);
+//        node.addMember(subJID);
+//    }
 
     private boolean isValidUser(String appId, String subscriber) {
         String mmxUsername = Helper.getMMXUsername(subscriber, appId);
@@ -550,7 +560,7 @@ public class IntegrationChannelResource {
                     MMXChannelId channelId = getChannelName(appChannel);
                     Node node = MMXChannelManager.getInstance().getChannelNode(queryChannelRequest.getMmxAppId(), channelId);
                     ChannelInfo channelInfo = null;
-                    //MMXChannelId tid = ChannelHelper.parseNode(node.getNodeID());
+                    //MMXChannelId tid = MMXChannelUtil.parseNode(node.getNodeID());
                     if (appChannel.isUserChannel()) {
                         channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(appChannel.getUserId(), node);
                     } else {
@@ -660,7 +670,7 @@ public class IntegrationChannelResource {
             return RestUtils.getBadReqJAXRSResp(errorResponse);
         }
 
-//        if (!ChannelHelper.validateApplicationChannelName(channelInfo.getChannelName())) {
+//        if (!MMXChannelUtil.validateApplicationChannelName(channelInfo.getChannelName())) {
 //            errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
 //                    MMXChannelManager.StatusCode.INVALID_CHANNEL_NAME.getMessage());
 //            return RestUtils.getBadReqJAXRSResp(errorResponse);

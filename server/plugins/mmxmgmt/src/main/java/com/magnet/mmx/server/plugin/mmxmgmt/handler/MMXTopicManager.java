@@ -35,6 +35,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -558,7 +559,7 @@ public class MMXTopicManager {
   private void setWhiteList(Node node, List<String> whiteList, String appId) {
     if (whiteList != null) {
       for (String subId : whiteList) {
-        node.addMember(JIDUtil.makeJID(subId, appId, null));
+        MMXChannelUtil.addUserToChannelWhiteList(node, subId, appId);
       }
     }
   }
