@@ -128,13 +128,15 @@ public class MMXPushMock {
 
     //CONFIG MAPPING
     public static MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelName) {
-
-        int id = SEQUENCE++;
         MMXPushConfigMapping mapping = new MMXPushConfigMapping();
-        mapping.setMappingId(id);
         mapping.setConfigId(configId);
         mapping.setAppId(appId);
         mapping.setChannelName(channelName);
+        return createConfigMapping(mapping);
+    }
+    public static MMXPushConfigMapping createConfigMapping(MMXPushConfigMapping mapping) {
+        int id = SEQUENCE++;
+        mapping.setMappingId(id);
         CONFIG_MAPPING_BY_ID.put(id, mapping);
         return mapping;
     }
@@ -142,7 +144,6 @@ public class MMXPushMock {
         return CONFIG_MAPPING_BY_ID.get(mappingId);
     }
     public static MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) {
-
         MMXPushConfigMapping mapping = getConfigMapping(mappingId);
         if (mapping != null) {
             mapping.setConfigId(configId);
@@ -151,7 +152,16 @@ public class MMXPushMock {
         }
         return mapping;
     }
+    public static MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) {
+        if (mapping != null) {
+            CONFIG_MAPPING_BY_ID.put(mapping.getMappingId(), mapping);
+        }
+        return mapping;
+    }
     public static void deleteConfigMapping(int mappingId) {
         CONFIG_MAPPING_BY_ID.remove(mappingId);
+    }
+    public static void deleteConfigMapping(MMXPushConfigMapping mapping) {
+        CONFIG_MAPPING_BY_ID.remove(mapping.getMappingId());
     }
 }

@@ -89,13 +89,22 @@ public class MMXTemplateService {
     public MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelName) {
         return MMXPushMock.createConfigMapping(configId, appId, channelName);
     }
-    public MMXPushConfigMapping getConfigMapping(int mppingId) {
-        return MMXPushMock.getConfigMapping(mppingId);
+    public MMXPushConfigMapping createConfigMapping(MMXPushConfigMapping mapping) {
+        return MMXPushMock.createConfigMapping(mapping);
+    }
+    public MMXPushConfigMapping getConfigMapping(int mappingId) {
+        return MMXPushMock.getConfigMapping(mappingId);
     }
     public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) {
         return MMXPushMock.updateConfigMapping(mappingId, configId, appId, channelName);
     }
+    public MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) {
+        return MMXPushMock.updateConfigMapping(mapping);
+    }
     public void deleteConfigMapping(int mappingId) {
         MMXPushMock.deleteConfigMapping(mappingId);
+    }
+    public void deleteConfigMapping(MMXPushConfigMapping mapping) {
+        MMXPushMock.deleteConfigMapping(mapping);
     }
 }
