@@ -161,15 +161,15 @@ public class JIDUtil {
   }
 
   /**
-   * Make a bare or full JID from a multi-tenant node.
+   * Make a bare or full JID from a user ID and app ID.
    * @param userId A user ID.
    * @param appId An app ID.
    * @param resource A resource string for full JID, or null for bare JID.
    * @return A bare or full JID.
    */
   public static JID makeJID(String userId, String appId, String resource) {
-    String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-    return new JID(makeNode(userId, appId), domain, resource, false);
+    return XMPPServer.getInstance().createJID(makeNode(userId, appId), resource,
+                                              true);
   }
 
   /**
