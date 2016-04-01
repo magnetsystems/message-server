@@ -31,11 +31,17 @@ public class MMXTemplateService {
     public MMXTemplate createTemplate(String appId, String templateName, String template) {
         return MMXPushMock.createTemplate(appId, templateName, template);
     }
+    public MMXTemplate createTemplate(MMXTemplate template) {
+        return MMXPushMock.createTemplate(template);
+    }
     public MMXTemplate getTemplate(String appId, String templateName) {
         return MMXPushMock.getTemplate(appId, templateName);
     }
     public MMXTemplate getTemplate(int templateId) {
         return MMXPushMock.getTemplate(templateId);
+    }
+    public MMXTemplate updateTemplate(MMXTemplate template) {
+        return MMXPushMock.updateTemplate(template);
     }
     public MMXTemplate updateTemplate(String appId, String templateName, String template) {
         return MMXPushMock.updateTemplate(appId, templateName, template);
@@ -46,10 +52,16 @@ public class MMXTemplateService {
     public void deleteTemplate(int templateId) {
         MMXPushMock.deleteTemplate(templateId);
     }
+    public void deleteTemplate(MMXTemplate template) {
+        MMXPushMock.deleteTemplate(template);
+    }
 
     //CONFIG CRUD
     public MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) {
         return MMXPushMock.createConfig(appId, configName, templateName, isSilentPush, meta);
+    }
+    public MMXPushConfig createConfig(MMXPushConfig config) {
+        return MMXPushMock.createConfig(config);
     }
     public MMXPushConfig getConfig(String appId, String configName) {
         return MMXPushMock.getConfig(appId, configName);
@@ -60,11 +72,17 @@ public class MMXTemplateService {
     public MMXPushConfig updateConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) {
         return MMXPushMock.updateConfig(appId, configName, templateName, isSilentPush, meta);
     }
+    public MMXPushConfig updateConfig(MMXPushConfig config) {
+        return MMXPushMock.updateConfig(config);
+    }
     public void deleteConfig(String appId, String configName) {
         MMXPushMock.deleteConfig(appId, configName);
     }
     public void deleteConfig(int configId) {
         MMXPushMock.deleteConfig(configId);
+    }
+    public void deleteConfig(MMXPushConfig config) {
+        MMXPushMock.deleteConfig(config);
     }
 
     //CONFIG MAPPING CRUD

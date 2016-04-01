@@ -23,17 +23,19 @@ public class MMXPushMock {
 
     //TEMPLATE
     public static MMXTemplate createTemplate(String appId, String templateName, String template) {
-
-        int id = SEQUENCE++;
         MMXTemplate t = new MMXTemplate();
-        t.setTemplateId(id);
         t.setAppId(appId);
+        t.setTemplateName(templateName);
         t.setTemplate(template);
         t.setTemplateType("PUSH");
-        t.setTemplateName(templateName);
-        TEMPLATE_BY_ID.put(id, t);
-        TEMPLATE_BY_APP_AND_NAME.put(getKey(appId, templateName), t);
-        return t;
+        return createTemplate(t);
+    }
+    public static MMXTemplate createTemplate(MMXTemplate template) {
+        int id = SEQUENCE++;
+        template.setTemplateId(id);
+        TEMPLATE_BY_ID.put(id, template);
+        TEMPLATE_BY_APP_AND_NAME.put(getKey(template.getAppId(), template.getTemplateName()), template);
+        return template;
     }
 
     public static MMXTemplate getTemplate(String appId, String templateName) {
@@ -49,23 +51,19 @@ public class MMXPushMock {
         t.setTemplate(template);
         return t;
     }
-
-    public static void deleteTemplate(String appId, String templateName) {
-
-        MMXTemplate t = getTemplate(appId, templateName);
-        if (t != null) {
-            TEMPLATE_BY_APP_AND_NAME.remove(getKey(appId, templateName));
-            TEMPLATE_BY_ID.remove(t.getTemplateId());
-        }
+    public static MMXTemplate updateTemplate(MMXTemplate template) {
+        TEMPLATE_BY_ID.put(template.getTemplateId(), template);
+        TEMPLATE_BY_APP_AND_NAME.put(getKey(template.getAppId(), template.getTemplateName()), template);
+        return template;
     }
-
+    public static void deleteTemplate(String appId, String templateName) {
+        deleteTemplate(getTemplate(appId, templateName));
+    }
     public static void deleteTemplate(int id) {
-
-        MMXTemplate t = getTemplate(id);
-        if (t != null) {
-            TEMPLATE_BY_APP_AND_NAME.remove(getKey(t.getAppId(), t.getTemplateName()));
-            TEMPLATE_BY_ID.remove(id);
-        }
+        deleteTemplate(getTemplate(id));
+    }
+    public static void deleteTemplate(MMXTemplate template) {
+        deleteTemplate(template.getTemplateId());
     }
 
     //KEY
@@ -75,10 +73,7 @@ public class MMXPushMock {
 
     // CONFIG
     public static MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) {
-
-        int id = SEQUENCE++;
         MMXPushConfig config = new MMXPushConfig();
-        config.setConfigId(id);
         config.setAppId(appId);
         config.setConfigName(configName);
         MMXTemplate template = getTemplate(appId, templateName);
@@ -87,21 +82,22 @@ public class MMXPushMock {
         }
         config.setIsSilentPush(isSilentPush);
         config.setMeta(meta);
+        return createConfig(config);
+    }
+    public static MMXPushConfig createConfig(MMXPushConfig config) {
+        int id = SEQUENCE++;
+        config.setConfigId(id);
         CONFIG_BY_ID.put(id, config);
-        CONFIG_BY_APP_AND_NAME.put(getKey(appId, configName), config);
+        CONFIG_BY_APP_AND_NAME.put(getKey(config.getAppId(), config.getConfigName()), config);
         return config;
     }
-
     public static MMXPushConfig getConfig(String appId, String configName) {
         return CONFIG_BY_APP_AND_NAME.get(getKey(appId, configName));
     }
-
     public static MMXPushConfig getConfig(Integer configId) {
         return CONFIG_BY_ID.get(configId);
     }
-
     public static MMXPushConfig updateConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) {
-
         MMXPushConfig config = getConfig(appId, configName);
         if (config != null) {
             config.setTemplate(getTemplate(appId, templateName));
@@ -110,21 +106,22 @@ public class MMXPushMock {
         }
         return config;
     }
-
+    public static MMXPushConfig updateConfig(MMXPushConfig config) {
+        if (config != null) {
+            CONFIG_BY_ID.put(config.getConfigId(), config);
+            CONFIG_BY_APP_AND_NAME.put(getKey(config.getAppId(), config.getConfigName()), config);
+        }
+        return config;
+    }
     public static void deleteConfig(int id) {
-
-        MMXPushConfig config = getConfig(id);
+        deleteConfig(getConfig(id));
+    }
+    public static void deleteConfig(String appId, String configName) {
+        deleteConfig(getConfig(appId, configName));
+    }
+    public static void deleteConfig(MMXPushConfig config) {
         if (config != null) {
             CONFIG_BY_APP_AND_NAME.remove(getKey(config.getAppId(), config.getConfigName()));
-            CONFIG_BY_ID.remove(id);
-        }
-    }
-
-    public static void deleteConfig(String appId, String configName) {
-
-        MMXPushConfig config = getConfig(appId, configName);
-        if (config != null) {
-            CONFIG_BY_APP_AND_NAME.remove(getKey(appId, configName));
             CONFIG_BY_ID.remove(config.getConfigId());
         }
     }
