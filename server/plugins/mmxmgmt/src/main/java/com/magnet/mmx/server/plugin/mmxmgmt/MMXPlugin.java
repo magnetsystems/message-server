@@ -31,7 +31,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.handler.MessageStateHandler;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MsgAckIQHandler;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXMessageHandlingRule;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXPacketInterceptor;
-import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXManagedConfiguration;
@@ -76,7 +75,7 @@ import java.util.concurrent.locks.Lock;
  *    }
  *    </reg>
  *  </iq>
- *  
+ *
  *  <iq type="result" ...>
  *    <reg xlms="com.magnet:mmx:dev" type="application/json" ...>
  *    {
@@ -108,6 +107,7 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
   private static final Logger Log = LoggerFactory.getLogger(MMXPlugin.class);
   private IContextDispatcher contextDispatcher;
 
+  @Override
   public void initializePlugin(PluginManager manager, File pluginDirectory) {
     /*
       Initialize properties so that all the properties added by the plugin schema upgrade are loaded
@@ -203,9 +203,6 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     adminAPIServer = new MMXAdminAPIServer();
     adminAPIServer.start();
 
-    // Add pub/sub wakeup capability
-    server.getPubSubModule().setWakeupProvider(new PubSubWakeupProvider());
-    
     if(!ClusterManager.isClusteringEnabled()) {
       Log.info("clustering is disabled and hence initializing bots.");
       initializeBots();
@@ -214,6 +211,7 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     }
   }
 
+  @Override
   public void destroyPlugin() {
     XMPPServer server = XMPPServer.getInstance();
     IQRouter iqRouter = server.getIQRouter();
@@ -237,9 +235,6 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     APNSConnectionPoolImpl.teardown();
     adminAPIServer.stop();
     publicAPIServer.stop();
-
-    // disable the pub/sub wakeup
-    server.getPubSubModule().setWakeupProvider(null);
 
     try {
       ObjectName mbeanName = new ObjectName(MMXServerConstants.MMX_MBEAN_NAME);

@@ -47,10 +47,8 @@ public class MMXPacketInterceptor implements PacketInterceptor {
   }
 
   @Override
-  public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws
-      PacketRejectedException {
-    LOGGER.trace("interceptPacket : interceptor id={}", ID);
-
+  public void interceptPacket(Packet packet, Session session, boolean incoming,
+                        boolean processed) throws PacketRejectedException {
     IQ geo = IQUtils.isValidGeoIQ(packet);
     if (geo != null) {
       // send it to the geoservice component
@@ -68,13 +66,22 @@ public class MMXPacketInterceptor implements PacketInterceptor {
       return;
     }
 
-    LOGGER.trace("interceptPacket : message={}", packet.toString());
+    if (incoming && !processed) {
+      LOGGER.trace("interceptPacket : intcpId={}, incoming={}, processed={}, pktId={}, message={}",
+          ID, incoming, processed, packet.getID(), packet.toString());
+    } else {
+      LOGGER.trace("interceptPacket : intcpId={}, incoming={}, processed={}, pktId={}",
+          ID, incoming, processed, packet.getID());
+    }
 
     Message mmxMessage = (Message) packet;
 
     if (MMXMessageUtil.isMMXMulticastMessage(mmxMessage)) {
       messageHandlingRule.handleMMXMulticast(new MMXMsgRuleInput(mmxMessage,
           session, incoming, processed, false, false));
+    } else if (MMXMessageUtil.isPubSubMessage(mmxMessage)) {
+      messageHandlingRule.handlePubSub(new MMXMsgRuleInput(mmxMessage, session,
+          incoming, processed, false, false));
     } else {
       messageHandlingRule.handle(new MMXMsgRuleInput(mmxMessage, session,
           incoming, processed, MMXMessageUtil.isConfirmationMessage(mmxMessage),

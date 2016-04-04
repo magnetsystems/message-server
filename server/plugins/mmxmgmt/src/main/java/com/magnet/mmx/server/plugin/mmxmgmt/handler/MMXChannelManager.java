@@ -708,9 +708,8 @@ public class MMXChannelManager {
     // Don't set other options; it will change the subscription state to
     // pending because it will wait for the owner's approval.
 
-    // Need a modified Node.java from mmx-openfire repo.
-    NodeSubscription subscription = node.createSubscription(null, owner,
-        subscriber, false, optionsForm);
+    node.createSubscription(null, owner, subscriber, false, optionsForm);
+    NodeSubscription subscription = node.getSubscription(subscriber);
     return subscription;
   }
 
@@ -874,13 +873,13 @@ public class MMXChannelManager {
       }
       PublishedItem item = leafNode.getPublishedItem(itemId);
       if (item == null) {
-        results.put(itemId, StatusCode.ITEM_NOT_FOUND.getCode());
-      }
-      if (!item.canDelete(from)) {
+        results.put(itemId, StatusCode.GONE.getCode());
+      } else if (!item.canDelete(from)) {
         results.put(itemId, StatusCode.FORBIDDEN.getCode());
+      } else {
+        pubItems.add(item);
+        results.put(itemId, StatusCode.SUCCESS.getCode());
       }
-      pubItems.add(item);
-      results.put(itemId, StatusCode.SUCCESS.getCode());
     }
     leafNode.deleteItems(pubItems);
     return results;
