@@ -43,15 +43,11 @@ public interface WakeupProvider {
   }
 
   /**
-   * Wake up the devices using native push messaging.  The scape indicates if
-   * all disconnected devices, subscribed device, or no devices should be waken
-   * up.
-   * @param scope
+   * Wake up the devices using native push messaging.
    * @param userOrDev A bare JID as user or full JID as the disconnected device.
-   * @param node
-   * @param notification A notification message which may contain a payload
-   * @param mmxExtension The MMX stanza of the oldest published item in the item list
+   * @param node The pub-sub node which the new items are published to.
+   * @param nItems Number of items in this event
+   * @param mmx The MMX stanza of the oldest published item in the item list
    */
-  public void wakeup(Scope scope, JID userOrDev, Node node, Message notification,
-                    MMXPacketExtension mmxExtension);
+  public void wakeup(JID userOrDev, Node node, int nItems, MMXPacketExtension mmx);
 }

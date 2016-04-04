@@ -585,10 +585,11 @@ public class MMXMessageHandlingRule {
       LOGGER.trace("handlePubSub: input={} will be handled by default rule", input);
       return;
     }
+    int count = 0;
     Message message = input.getMessage();
     Node node = null;
     boolean notifySubscriber = false;
-    MMXPacketExtension firstMmxExt = null;
+    MMXPacketExtension oldestMmxExt = null;
     final String namespace = "http://jabber.org/protocol/pubsub#event";
 
     Message blockMsg = new Message();
@@ -626,7 +627,7 @@ public class MMXMessageHandlingRule {
           .getPrivacyList(toUser, node.getNodeID());
 
       List<Element> itemList = itemsElement.elements("item");
-      int count = itemList.size();
+      count = itemList.size();
       for (Element item : itemList) {
         // Check if the publisher of each item is blocked by the recipient.
         Attribute idAttr = item.attribute("id");
@@ -652,8 +653,8 @@ public class MMXMessageHandlingRule {
           continue;
         }
 
-        if (firstMmxExt == null) {
-          firstMmxExt = mmxExt;
+        if (oldestMmxExt == null) {
+          oldestMmxExt = mmxExt;
         }
 
         // Check if at least one item having notification to the subscriber enabled
@@ -675,9 +676,8 @@ public class MMXMessageHandlingRule {
     }
 
     // Check if the recipient is offline and should be waken up.
-    if (node != null && firstMmxExt != null && notifySubscriber) {
-      new PubSubWakeupProvider().wakeup(WakeupProvider.Scope.all_devices,
-          message.getTo(), node, message, firstMmxExt);
+    if (node != null && oldestMmxExt != null && notifySubscriber) {
+      new PubSubWakeupProvider().wakeup(message.getTo(), node, count, oldestMmxExt);
     }
   }
 }
