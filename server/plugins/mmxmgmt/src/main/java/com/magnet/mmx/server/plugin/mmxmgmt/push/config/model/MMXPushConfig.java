@@ -1,4 +1,4 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.model;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
 
 import java.util.HashMap;
 import java.util.Map;

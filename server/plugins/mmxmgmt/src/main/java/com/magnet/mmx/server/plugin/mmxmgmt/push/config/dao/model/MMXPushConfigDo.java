@@ -1,21 +1,16 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
-
-import java.util.HashMap;
-import java.util.Map;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
-public class MMXPushConfigDao {
+public class MMXPushConfigDo {
 
     private int configId;
     private String appId;
     private String configName;
     private int templateId;
     private boolean isSilentPush;
-
-    private Map<String, String> meta = new HashMap<>();
 
     public int getConfigId() {
         return configId;
@@ -52,10 +47,4 @@ public class MMXPushConfigDao {
         this.isSilentPush = isSilentPush;
     }
 
-    public Map<String, String> getMeta() {
-        return meta;
-    }
-    public void setMeta(Map<String, String> meta) {
-        this.meta = meta;
-    }
 }

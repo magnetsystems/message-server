@@ -1,7 +1,7 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfig;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXTemplate;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -1,10 +1,10 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
 
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
-public class MMXTemplateDao {
+public class MMXTemplate {
 
     private int templateId;
     private String appId;
