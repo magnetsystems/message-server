@@ -1,7 +1,6 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMappingDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfigMapping;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
 
 /**
  * Created by mmicevic on 3/31/16.

@@ -1,7 +1,6 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigDo;
-import java.util.Map;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
 
 /**
  * Created by mmicevic on 3/31/16.

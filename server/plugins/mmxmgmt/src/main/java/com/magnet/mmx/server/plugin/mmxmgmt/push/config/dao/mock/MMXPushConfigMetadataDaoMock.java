@@ -1,10 +1,9 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.mock;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.MMXPushConfigMetadataDao;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMetadataDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigMetadataDao;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Created by mmicevic on 4/4/16.

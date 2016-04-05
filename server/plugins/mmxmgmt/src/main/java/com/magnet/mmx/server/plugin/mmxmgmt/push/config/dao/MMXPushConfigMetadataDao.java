@@ -1,6 +1,6 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMetadataDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
 
 import java.util.Collection;
 

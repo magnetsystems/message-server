@@ -1,4 +1,4 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.model;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
 
 /**
  * Created by mmicevic on 3/31/16.

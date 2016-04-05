@@ -1,6 +1,6 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.mock;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.*;
 
 /**
  * Created by mmicevic on 4/4/16.

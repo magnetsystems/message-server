@@ -1,14 +1,14 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.MMXPushConfigDaoFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.mock.MMXPushMockDaoFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMappingDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMetadataDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXTemplateDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfig;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfigMapping;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXTemplate;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDaoFactory;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock.MMXPushMockDaoFactory;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 
 import java.util.*;
 

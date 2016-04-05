@@ -1,10 +1,10 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.model;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
-public class MMXPushConfigMapping {
+public class MMXPushConfigMappingDo {
 
     private int mappingId;
     private int configId;

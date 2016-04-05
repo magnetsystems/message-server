@@ -1,7 +1,4 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model;
-
-import java.util.HashMap;
-import java.util.Map;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
 /**
  * Created by mmicevic on 3/31/16.
