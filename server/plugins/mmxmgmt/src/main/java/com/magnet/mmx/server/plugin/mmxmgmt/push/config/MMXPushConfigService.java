@@ -1,3 +1,17 @@
+/*   Copyright (c) 2016 Magnet Systems, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDaoFactory;
@@ -9,6 +23,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 
 import java.util.*;
 
@@ -22,17 +37,25 @@ public class MMXPushConfigService {
     public static final String DEFAULT_TEMPLATE = "default-template";
     public static final String DEFAULT_CONFIG = "default-config";
 
+    public static final String TITLE = "${channel.name}";
+    public static final String BODY = "New message from ${msg.from}";
+    public static final String PUSH_CONFIG_TEMPLATE =
+        MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE+"=push\n"+
+        MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE+'='+TITLE+'\n'+
+        MMXConfigKeys.PUBSUB_NOTIFICATION_BODY+'='+BODY+'\n'+
+        MMXConfigKeys.PUBSUB_NOTIFICATION_SOUND+"=true\n";
+
     private static MMXPushConfigService instance = new MMXPushConfigService();
 
     public static MMXPushConfigService getInstance() {
         return instance;
     }
 
-    private MMXPushConfigDaoFactory daoFactory = new MMXPushMockDaoFactory();
+    private final MMXPushConfigDaoFactory daoFactory = new MMXPushMockDaoFactory();
 
     private MMXPushConfigService() {
 
-        MMXTemplate t = createTemplate(SYSTEM_APP, DEFAULT_TEMPLATE, "DEFAULT TEMPLATE");
+        MMXTemplate t = createTemplate(SYSTEM_APP, DEFAULT_TEMPLATE, PUSH_CONFIG_TEMPLATE);
 
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(SYSTEM_APP);
