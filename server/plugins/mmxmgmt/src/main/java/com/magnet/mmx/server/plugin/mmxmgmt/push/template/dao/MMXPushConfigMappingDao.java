@@ -1,41 +1,20 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.push.template.dao.model.MMXPushConfigMappingDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.template.model.MMXPushConfigMapping;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
-public class MMXPushConfigMappingDao {
+public interface MMXPushConfigMappingDao {
 
-    private int mappingId;
-    private int configId;
-    private String appId;
-    private String channelName;
+    public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping);
 
-    public int getMappingId() {
-        return mappingId;
-    }
-    public void setMappingId(int mappingId) {
-        this.mappingId = mappingId;
-    }
+    public MMXPushConfigMappingDo getConfigMapping(int mappingId);
+    public MMXPushConfigMappingDo getConfigMapping(String appId, String channelName);
 
-    public int getConfigId() {
-        return configId;
-    }
-    public void setConfigId(int configId) {
-        this.configId = configId;
-    }
+    public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping);
 
-    public String getAppId() {
-        return appId;
-    }
-    public void setAppId(String appId) {
-        this.appId = appId;
-    }
-
-    public String getChannelName() {
-        return channelName;
-    }
-    public void setChannelName(String channelName) {
-        this.channelName = channelName;
-    }
+    public void deleteConfigMapping(MMXPushConfigMappingDo mapping);
 }
