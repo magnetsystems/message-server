@@ -43,7 +43,7 @@ public class MMXPushConfigService {
         MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE+"=push\n"+
         MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE+'='+TITLE+'\n'+
         MMXConfigKeys.PUBSUB_NOTIFICATION_BODY+'='+BODY+'\n'+
-        MMXConfigKeys.PUBSUB_NOTIFICATION_SOUND+"=true\n";
+        MMXConfigKeys.PUBSUB_NOTIFICATION_SOUND+"=default\n";
 
     private static MMXPushConfigService instance = new MMXPushConfigService();
 
