@@ -42,8 +42,16 @@ public class MMXPushConfigMockStorage {
         return TEMPLATE_BY_APP_AND_NAME.get(getKey(appId, templateName));
     }
     public static MMXTemplateDo updateTemplate(MMXTemplateDo template) {
+
+        //remove ald template from index
+        MMXTemplateDo oldTemplate = getTemplate(template.getTemplateId());
+        if (oldTemplate != null) {
+            TEMPLATE_BY_APP_AND_NAME.remove(getKey(oldTemplate.getAppId(), oldTemplate.getTemplateName()));
+        }
+        //store new template
         TEMPLATE_BY_ID.put(template.getTemplateId(), template);
         TEMPLATE_BY_APP_AND_NAME.put(getKey(template.getAppId(), template.getTemplateName()), template);
+
         return template;
     }
     public static void deleteTemplate(MMXTemplateDo template) {
@@ -67,6 +75,13 @@ public class MMXPushConfigMockStorage {
         return CONFIG_BY_APP_AND_NAME.get(getKey(appId, configName));
     }
     public static MMXPushConfigDo updateConfig(MMXPushConfigDo config) {
+
+        //remove old config from index
+        MMXPushConfigDo oldConfig = getConfig(config.getConfigId());
+        if (oldConfig != null) {
+            CONFIG_BY_APP_AND_NAME.remove(getKey(oldConfig.getAppId(), oldConfig.getConfigName()));
+        }
+
         CONFIG_BY_ID.put(config.getConfigId(), config);
         CONFIG_BY_APP_AND_NAME.put(getKey(config.getAppId(), config.getConfigName()), config);
         return config;
@@ -103,9 +118,11 @@ public class MMXPushConfigMockStorage {
     public static void updateConfigAllMetadata(int configId, Collection<MMXPushConfigMetadataDo> list) {
 
         deleteConfigAllMetadata(configId);
-        for(MMXPushConfigMetadataDo meta : list) {
-            if (configId == meta.getConfigId()) {
-                createConfigMetadata(meta);
+        if (list != null) {
+            for (MMXPushConfigMetadataDo meta : list) {
+                if (configId == meta.getConfigId()) {
+                    createConfigMetadata(meta);
+                }
             }
         }
     }
