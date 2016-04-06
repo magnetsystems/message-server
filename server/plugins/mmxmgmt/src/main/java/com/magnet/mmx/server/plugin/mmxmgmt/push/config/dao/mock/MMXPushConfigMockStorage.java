@@ -160,10 +160,15 @@ public class MMXPushConfigMockStorage {
         return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelName));
     }
     public static MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping) {
-        if (mapping != null) {
-            CONFIG_MAPPING_BY_ID.put(mapping.getMappingId(), mapping);
-            CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
+
+        //remove old config from index
+        MMXPushConfigMappingDo oldMapping = getConfigMapping(mapping.getMappingId());
+        if (oldMapping != null) {
+            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(oldMapping.getAppId(), oldMapping.getChannelName()));
         }
+
+        CONFIG_MAPPING_BY_ID.put(mapping.getMappingId(), mapping);
+        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
         return mapping;
     }
     public static void deleteConfigMapping(MMXPushConfigMappingDo mapping) {

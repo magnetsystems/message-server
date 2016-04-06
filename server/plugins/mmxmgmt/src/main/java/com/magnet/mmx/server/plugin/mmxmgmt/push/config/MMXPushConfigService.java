@@ -345,13 +345,13 @@ public class MMXPushConfigService {
         validateMandatoryArgument("appId", appId);
         return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName));
     }
-    public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) throws MMXException {
-        MMXPushConfigMapping mapping = getConfigMapping(mappingId);
-        mapping.setConfigId(configId);
-        mapping.setAppId(appId);
-        mapping.setChannelName(channelName);
-        return updateConfigMapping(mapping);
-    }
+//    public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) throws MMXException {
+//        MMXPushConfigMapping mapping = getConfigMapping(mappingId);
+//        mapping.setConfigId(configId);
+//        mapping.setAppId(appId);
+//        mapping.setChannelName(channelName);
+//        return updateConfigMapping(mapping);
+//    }
     public MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMapping(mapping);
         return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().updateConfigMapping(mappingBo2Do(mapping)));
@@ -361,7 +361,7 @@ public class MMXPushConfigService {
     }
     public void deleteConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMapping(mapping);
-        daoFactory.getMMXPushConfigMappingDao().updateConfigMapping(mappingBo2Do(mapping));
+        daoFactory.getMMXPushConfigMappingDao().deleteConfigMapping(mappingBo2Do(mapping));
     }
     private void validateMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMandatoryObject("configMapping", mapping);
