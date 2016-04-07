@@ -8,12 +8,14 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplateType;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by mmicevic on 4/6/16.
  *
  */
-
 @Path("/integration/templates")
 public class TemplateResource {
 
@@ -59,6 +61,26 @@ public class TemplateResource {
         };
         return method.doMethod(templateId);
     }
+    @GET
+    @Path("/all/{appId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response retrieveAllTemplatesForApp(@PathParam("appId") String appId) {
+
+        RestMethod<String, Collection<TemplateResponse>> method = new RestMethod<String,Collection<TemplateResponse>>() {
+            @Override
+            public Collection<TemplateResponse> execute(String appId) throws MMXException {
+
+                //convert request
+                //do job
+                Collection<MMXTemplate> t = MMXPushConfigService.getInstance().getAllTemplates(appId);
+
+                //convert and return response
+                return convertResponse(t);
+            }
+        };
+        return method.doMethod(appId);
+    }
     @PUT
     @Path("/template/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -85,24 +107,22 @@ public class TemplateResource {
     @Path("/template/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteTemplate(@PathParam("templateId") final int templateId) {
+    public Response deleteTemplate(@PathParam("templateId") int templateId) {
 
-        RestMethod<Integer, Object> method = new RestMethod<Integer, Object>() {
+        RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer,RestMethod.SimpleMessage>() {
             @Override
-            public Object execute(Integer templateId) throws MMXException {
+            public SimpleMessage execute(Integer templateId) throws MMXException {
                 //convert request
 
                 //do job
                 MMXPushConfigService.getInstance().deleteTemplate(templateId);
 
                 //convert and return response
-                return new Object();
+                return new RestMethod.SimpleMessage("deleted");
             }
         };
         return method.doMethod(templateId);
     }
-
-
 
     private static MMXTemplate convertRequest(TemplateRequest request) {
 
@@ -123,12 +143,48 @@ public class TemplateResource {
         t.templateType = response.getTemplateType().name();
         return t;
     }
+    private static Collection<TemplateResponse> convertResponse(Collection<MMXTemplate> response) {
 
+        if (response == null) {
+            return null;
+        }
+        List<TemplateResponse> list = new ArrayList<>();
+        for (MMXTemplate t : response) {
+            list.add(convertResponse(t));
+        }
+        return list;
+    }
+
+    // REQUEST / RESPONSE
     public static class TemplateRequest {
 
         String appId;
         String templateName;
         String template;
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getTemplateName() {
+            return templateName;
+        }
+
+        public void setTemplateName(String templateName) {
+            this.templateName = templateName;
+        }
+
+        public String getTemplate() {
+            return template;
+        }
+
+        public void setTemplate(String template) {
+            this.template = template;
+        }
     }
 
     public static class TemplateResponse {
@@ -138,5 +194,45 @@ public class TemplateResource {
         String templateType;
         String templateName;
         String template;
+
+        public int getTemplateId() {
+            return templateId;
+        }
+
+        public void setTemplateId(int templateId) {
+            this.templateId = templateId;
+        }
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getTemplateType() {
+            return templateType;
+        }
+
+        public void setTemplateType(String templateType) {
+            this.templateType = templateType;
+        }
+
+        public String getTemplateName() {
+            return templateName;
+        }
+
+        public void setTemplateName(String templateName) {
+            this.templateName = templateName;
+        }
+
+        public String getTemplate() {
+            return template;
+        }
+
+        public void setTemplate(String template) {
+            this.template = template;
+        }
     }
 }

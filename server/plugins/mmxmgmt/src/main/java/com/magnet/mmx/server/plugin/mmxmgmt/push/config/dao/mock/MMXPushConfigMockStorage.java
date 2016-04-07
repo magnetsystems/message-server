@@ -41,6 +41,16 @@ public class MMXPushConfigMockStorage {
     public static MMXTemplateDo getTemplate(String appId, String templateName) {
         return TEMPLATE_BY_APP_AND_NAME.get(getKey(appId, templateName));
     }
+    public static Collection<MMXTemplateDo> getAllTemplates(String appId) {
+
+        List<MMXTemplateDo> list = new ArrayList<>();
+        for (MMXTemplateDo t : TEMPLATE_BY_ID.values()) {
+            if (appId.equals(t.getAppId())) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
     public static MMXTemplateDo updateTemplate(MMXTemplateDo template) {
 
         //remove ald template from index
@@ -73,6 +83,15 @@ public class MMXPushConfigMockStorage {
     }
     public static MMXPushConfigDo getConfig(String appId, String configName) {
         return CONFIG_BY_APP_AND_NAME.get(getKey(appId, configName));
+    }
+    public static Collection<MMXPushConfigDo> getAllConfigs(String appId) {
+        List<MMXPushConfigDo> list = new ArrayList<>();
+        for (MMXPushConfigDo c : CONFIG_BY_ID.values()) {
+            if (appId.equals(c.getAppId())) {
+                list.add(c);
+            }
+        }
+        return list;
     }
     public static MMXPushConfigDo updateConfig(MMXPushConfigDo config) {
 
@@ -132,7 +151,10 @@ public class MMXPushConfigMockStorage {
         return meta;
     }
     public static void deleteConfigAllMetadata(int configId) {
-        for(Integer key: CONFIG_META_BY_ID.keySet()) {
+
+        Set<Integer> keys = new HashSet<>();
+        keys.addAll(CONFIG_META_BY_ID.keySet());
+        for(Integer key: keys) {
             MMXPushConfigMetadataDo meta =  CONFIG_META_BY_ID.get(key);
             if (configId == meta.getConfigId()) {
                 deleteConfigMetadata(meta);
@@ -158,6 +180,15 @@ public class MMXPushConfigMockStorage {
     }
     public static MMXPushConfigMappingDo getConfigMapping(String appId, String channelName) {
         return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelName));
+    }
+    public static Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId) {
+        List<MMXPushConfigMappingDo> list = new ArrayList<>();
+        for (MMXPushConfigMappingDo c : CONFIG_MAPPING_BY_ID.values()) {
+            if (appId.equals(c.getAppId())) {
+                list.add(c);
+            }
+        }
+        return list;
     }
     public static MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping) {
 

@@ -8,8 +8,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by mmicevic on 4/6/16.
@@ -38,6 +37,26 @@ public class PushConfigResource {
             }
         };
         return method.doMethod(request);
+    }
+    @GET
+    @Path("/all/{appId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response retrieveAllPushConfigsForApp(@PathParam("appId") String appId) {
+
+        RestMethod<String, Collection<PushConfigResponse>> method = new RestMethod<String,Collection<PushConfigResponse>>() {
+            @Override
+            public Collection<PushConfigResponse> execute(String appId) throws MMXException {
+                //convert request
+
+                //do job
+                Collection<MMXPushConfig> c = MMXPushConfigService.getInstance().getAllConfigs(appId);
+
+                //convert and return response
+                return convertResponse(c);
+            }
+        };
+        return method.doMethod(appId);
     }
     @GET
     @Path("/config/{configId}")
@@ -87,16 +106,16 @@ public class PushConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deletePushConfig(@PathParam("configId") int configId) {
 
-        RestMethod<Integer, Object> method = new RestMethod<Integer, Object>() {
+        RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer, RestMethod.SimpleMessage>() {
             @Override
-            public Object execute(Integer configId) throws MMXException {
+            public RestMethod.SimpleMessage execute(Integer configId) throws MMXException {
                 //convert request
 
                 //do job
                 MMXPushConfigService.getInstance().deleteConfig(configId);
 
                 //convert and return response
-                return new Object();
+                return new RestMethod.SimpleMessage("deleted");
             }
         };
         return method.doMethod(configId);
@@ -125,6 +144,17 @@ public class PushConfigResource {
         response.meta = c.getMeta();
         return response;
     }
+    private static Collection<PushConfigResponse> convertResponse(Collection<MMXPushConfig> c) {
+
+        if (c == null) {
+            return null;
+        }
+        List<PushConfigResponse> list = new ArrayList<>();
+        for (MMXPushConfig config : c) {
+            list.add(convertResponse(config));
+        }
+        return list;
+    }
 
     public static class PushConfigRequest {
 
@@ -133,6 +163,46 @@ public class PushConfigResource {
         String templateName;
         boolean isSilentPush;
         Map<String, String> meta = new HashMap<>();
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getConfigName() {
+            return configName;
+        }
+
+        public void setConfigName(String configName) {
+            this.configName = configName;
+        }
+
+        public String getTemplateName() {
+            return templateName;
+        }
+
+        public void setTemplateName(String templateName) {
+            this.templateName = templateName;
+        }
+
+        public boolean isSilentPush() {
+            return isSilentPush;
+        }
+
+        public void setIsSilentPush(boolean isSilentPush) {
+            this.isSilentPush = isSilentPush;
+        }
+
+        public Map<String, String> getMeta() {
+            return meta;
+        }
+
+        public void setMeta(Map<String, String> meta) {
+            this.meta = meta;
+        }
     }
 
     public static class PushConfigResponse {
@@ -143,5 +213,53 @@ public class PushConfigResource {
         String templateName;
         boolean isSilentPush;
         Map<String, String> meta = new HashMap<>();
+
+        public int getConfigId() {
+            return configId;
+        }
+
+        public void setConfigId(int configId) {
+            this.configId = configId;
+        }
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getConfigName() {
+            return configName;
+        }
+
+        public void setConfigName(String configName) {
+            this.configName = configName;
+        }
+
+        public String getTemplateName() {
+            return templateName;
+        }
+
+        public void setTemplateName(String templateName) {
+            this.templateName = templateName;
+        }
+
+        public boolean isSilentPush() {
+            return isSilentPush;
+        }
+
+        public void setIsSilentPush(boolean isSilentPush) {
+            this.isSilentPush = isSilentPush;
+        }
+
+        public Map<String, String> getMeta() {
+            return meta;
+        }
+
+        public void setMeta(Map<String, String> meta) {
+            this.meta = meta;
+        }
     }
 }
