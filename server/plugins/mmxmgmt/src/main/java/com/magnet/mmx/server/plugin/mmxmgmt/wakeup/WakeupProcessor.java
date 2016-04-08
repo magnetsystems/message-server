@@ -89,48 +89,54 @@ public class WakeupProcessor extends MMXClusterableTask implements Runnable {
           badWakeupEntity.add(wkEntity);
           continue;
         }
+        List<NotificationResult> results;
         if (wkEntity.getType() == PushType.GCM) {
           if (wkEntity.getGoogleApiKey() == null) {
-            LOGGER.info("Skipping (no apikey) wakeup record:" + wkEntity.toString());
+            LOGGER.warn("Skipping (no apikey) wakeup record:" + wkEntity.toString());
             badWakeupEntity.add(wkEntity);
             continue;
           }
-          List<NotificationResult> results = gcmNotifier.sendNotification(
-              Collections.singletonList(wkEntity.getToken()), wkEntity.getPayload(),
-              new GCMWakeupNotifierImpl.GCMNotificationSystemContext(wkEntity.getGoogleApiKey()));
-          if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
-            completed.add(wkEntity);
-            count++;
-          } else if (results.get(0) == NotificationResult.DELIVERY_FAILED_INVALID_TOKEN) {
-            //change PushStatus for the device to INVALID
-            DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
-            invalidator.invalidateToken(appId, PushType.GCM, token);
-          } else if (results.get(0) == NotificationResult.DELIVERY_FAILED_INVALID_API_KEY) {
-            LOGGER.info("Igoring wakeup record with invalid apikey: "+wkEntity.toString());
-            badWakeupEntity.add(wkEntity);
-          }
+          WakeupNotifier.NotificationSystemContext context =
+              new GCMWakeupNotifierImpl.GCMNotificationSystemContext(wkEntity.getGoogleApiKey());
+          results = gcmNotifier.sendNotification(
+              Collections.singletonList(token), wkEntity.getPayload(), context);
         } else if (wkEntity.getType() == PushType.APNS) {
           //handle APNS wake up notification
           AppEntity appEntity = getAppEntity(appId);
           if (appEntity == null) {
-            LOGGER.info("Skipping a wakeup record with invalid appId: "+appId);
+            LOGGER.warn("Skipping a wakeup record with invalid appId: "+appId);
             badWakeupEntity.add(wkEntity);
             continue;
           }
           WakeupNotifier.NotificationSystemContext context =
               new APNSWakeupNotifierImpl.APNSNotificationSystemContext(
                   appId, appEntity.isApnsCertProduction());
-          List<NotificationResult> results = apnsNotifier.sendNotification(
-              Collections.singletonList(token),
-              wkEntity.getPayload(), context);
-          if (results.get(0) == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER) {
-            completed.add(wkEntity);
-            count++;
-          } else {
-            LOGGER.info("Skipping wakeup record with APNS because of "+results.get(0));
-          }
+          results = apnsNotifier.sendNotification(
+              Collections.singletonList(token), wkEntity.getPayload(), context);
+        } else {
+          // Unsupported type
+          LOGGER.warn("Skipping wakeup record; unsupported type: " + wkEntity.getType());
+          continue;
+        }
+
+        NotificationResult result0 = results.get(0);
+        if (result0 == NotificationResult.DELIVERY_IN_PROGRESS_ASSUME_WILL_EVENTUALLY_DELIVER ||
+            result0 == NotificationResult.DELIVERY_IN_PROGRESS_REMIND_AGAIN) {
+          completed.add(wkEntity);
+          count++;
+        } else if (result0 == NotificationResult.DELIVERY_FAILED_INVALID_TOKEN) {
+          LOGGER.warn("Skipping and removing wakeup record with invalid "+
+                      wkEntity.getType()+" token: "+token);
+          //change PushStatus for the device to INVALID and remove it from wakeup
+          DevicePushTokenInvalidator invalidator = new DevicePushTokenInvalidator();
+          invalidator.invalidateToken(appId, wkEntity.getType(), token);
+        } else {
+          LOGGER.warn("Skipping wakeup record with "+wkEntity.getType()+
+                      " because of "+result0);
+          badWakeupEntity.add(wkEntity);
         }
       }
+
       //mark the processed items with a dateSent timestamp.
       Date dateSent = new Date();
       for (WakeupEntity entity : completed) {
