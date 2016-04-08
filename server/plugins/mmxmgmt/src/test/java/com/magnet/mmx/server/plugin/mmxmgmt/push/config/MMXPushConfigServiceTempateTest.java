@@ -144,8 +144,9 @@ public class MMXPushConfigServiceTempateTest {
         MMXTemplate t3 = MMXPushConfigService.getInstance().getTemplate(t.getAppId(), t.getTemplateName());
         assertTemplate(t3, "aa", MMXTemplateType.PUSH, "nn2", "tt");
         //make sure there is no old record
-        MMXTemplate t4 = MMXPushConfigService.getInstance().getTemplate(t.getAppId(), "nn");
-        Assert.assertNull(t4);
+        assertTemplateNotFound(t.getAppId(), "nn");
+//        MMXTemplate t4 = MMXPushConfigService.getInstance().getTemplate(t.getAppId(), "nn");
+//        Assert.assertNull(t4);
     }
     @Test
     public void createAndUpdateTemplate() throws MMXException {
@@ -167,8 +168,9 @@ public class MMXPushConfigServiceTempateTest {
         assertTemplate(t2, "aa", MMXTemplateType.PUSH, "nn", "tt");
 
         MMXPushConfigService.getInstance().deleteTemplate(t.getTemplateId());
-        MMXTemplate t3 = MMXPushConfigService.getInstance().getTemplate(t.getAppId(), t.getTemplateName());
-        Assert.assertNull(t3);
+        assertTemplateNotFound(t.getAppId(), t.getTemplateName());
+//        MMXTemplate t3 = MMXPushConfigService.getInstance().getTemplate(t.getAppId(), t.getTemplateName());
+//        Assert.assertNull(t3);
     }
     private void assertTemplate(MMXTemplate t, String appId, MMXTemplateType type, String name, String template) throws MMXException {
         Assert.assertNotNull(t);
@@ -177,4 +179,31 @@ public class MMXPushConfigServiceTempateTest {
         Assert.assertEquals(name, t.getTemplateName());
         Assert.assertEquals(template, t.getTemplate());
     }
-}
+    private static void assertTemplateNotFound(int templateId) {
+
+        boolean found = false;
+        try {
+            MMXPushConfigService.getInstance().getTemplate(templateId);
+            found = true;
+        }
+        catch (MMXException e) {
+            e.printStackTrace();
+        }
+        if (found) {
+            Assert.fail("expecting 'template not found' for id = " + templateId);
+        }
+    }
+    private static void assertTemplateNotFound(String appId, String tempateName) {
+
+        boolean found = false;
+        try {
+            MMXPushConfigService.getInstance().getTemplate(appId, tempateName);
+            found = true;
+        }
+        catch (MMXException e) {
+            e.printStackTrace();
+        }
+        if (found) {
+            Assert.fail("expecting 'template not found' for id = " + appId + "/" + tempateName);
+        }
+    }}

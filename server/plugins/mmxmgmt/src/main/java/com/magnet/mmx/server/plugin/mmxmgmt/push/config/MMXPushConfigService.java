@@ -409,7 +409,13 @@ public class MMXPushConfigService {
     }
     public MMXPushConfigMapping getConfigMapping(String appId, String channelName) throws MMXException {
         validateMandatoryArgument("appId", appId);
-        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName));
+        MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName);
+        if (m == null) {
+            throw new MMXException("mapping not found", ErrorCode.NOT_FOUND.getCode());
+        }
+        return mappingDo2Bo(m);
+
+//        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName));
     }
     public Collection<MMXPushConfigMapping> getAllConfigMappings(String appId) throws MMXException {
         validateMandatoryArgument("appId", appId);
