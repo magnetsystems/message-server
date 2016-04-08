@@ -223,10 +223,10 @@ public class PubSubWakeupProvider implements WakeupProvider {
           mPushType = null;
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        LOGGER.error("Cannot find template", e);
         return null;
       } catch (TemplateException e) {
-        e.printStackTrace();
+        LOGGER.error("Template processing error", e);
         return null;
       }
 
