@@ -41,6 +41,7 @@ import com.magnet.mmx.protocol.PushMessage;
 import com.magnet.mmx.protocol.PushResult;
 import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceDAO;
@@ -94,7 +95,7 @@ import freemarker.template.TemplateExceptionHandler;
  * The default template consists of a set of key-value pairs (Properties):
  * <pre>
  * mmx.pubsub.notification.type=push             # other values: wakeup, EMPTY
- * mmx.pubsub.notification.title=${channel.name}
+ * mmx.pubsub.notification.title=
  * mmx.pubsub.notification.body=New message from ${msg.from}
  * mmx.pubsub.notification.sound=default
  * </pre>
@@ -115,8 +116,12 @@ public class PubSubWakeupProvider implements WakeupProvider {
       String appId = (tokens.length > 0) ? tokens[0] : null;
       String channelName = (tokens.length > 1) ? tokens[1] : null;
       String configName = (tokens.length > 2) ? tokens[2] : null;
-      return MMXPushConfigService.getInstance().getPushConfig(appId,
-          channelName, configName);
+      try {
+        return MMXPushConfigService.getInstance().getPushConfig(appId,
+            channelName, configName);
+      } catch (MMXException e) {
+        throw new IOException("Cannot find template", e);
+      }
     }
 
     @Override
