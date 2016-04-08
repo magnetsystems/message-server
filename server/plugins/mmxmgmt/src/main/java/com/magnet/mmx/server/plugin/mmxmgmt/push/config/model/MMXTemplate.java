@@ -22,7 +22,7 @@ public class MMXTemplate {
 
     private int templateId;
     private String appId;
-    private String templateType;
+    private MMXTemplateType templateType;
     private String templateName;
     private String template;
 
@@ -40,10 +40,10 @@ public class MMXTemplate {
         this.appId = appId;
     }
 
-    public String getTemplateType() {
+    public MMXTemplateType getTemplateType() {
         return templateType;
     }
-    public void setTemplateType(String templateType) {
+    public void setTemplateType(MMXTemplateType templateType) {
         this.templateType = templateType;
     }
 

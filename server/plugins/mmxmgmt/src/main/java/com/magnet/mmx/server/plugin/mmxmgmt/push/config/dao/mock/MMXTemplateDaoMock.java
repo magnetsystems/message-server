@@ -3,6 +3,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXTemplateDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
 
+import java.util.Collection;
+
 /**
  * Created by mmicevic on 4/4/16.
  *
@@ -13,6 +15,12 @@ public class MMXTemplateDaoMock implements MMXTemplateDao {
     public MMXTemplateDo createTemplate(MMXTemplateDo template) {
         return MMXPushConfigMockStorage.createTemplate(template);
     }
+
+    @Override
+    public Collection<MMXTemplateDo> getAllTemplates(String appId) {
+        return MMXPushConfigMockStorage.getAllTemplates(appId);
+    }
+
     @Override
     public MMXTemplateDo getTemplate(String appId, String templateName) {
         return MMXPushConfigMockStorage.getTemplate(appId, templateName);
