@@ -20,7 +20,7 @@ import java.util.List;
 public class TemplateResource {
 
     @POST
-    @Path("/template")
+//    @Path("")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createTemplate(TemplateRequest request) {
@@ -42,7 +42,7 @@ public class TemplateResource {
 
     }
     @GET
-    @Path("/template/{templateId}")
+    @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response retrieveTemplateById(@PathParam("templateId") int templateId) {
@@ -62,10 +62,10 @@ public class TemplateResource {
         return method.doMethod(templateId);
     }
     @GET
-    @Path("/all/{appId}")
+    @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveAllTemplatesForApp(@PathParam("appId") String appId) {
+    public Response retrieveAllTemplatesForApp(@QueryParam("appId") String appId) {
 
         RestMethod<String, Collection<TemplateResponse>> method = new RestMethod<String,Collection<TemplateResponse>>() {
             @Override
@@ -82,7 +82,7 @@ public class TemplateResource {
         return method.doMethod(appId);
     }
     @PUT
-    @Path("/template/{templateId}")
+    @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateTemplate(@PathParam("templateId") final int templateId, TemplateRequest request) {
@@ -104,7 +104,7 @@ public class TemplateResource {
         return method.doMethod(request);
     }
     @DELETE
-    @Path("/template/{templateId}")
+    @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteTemplate(@PathParam("templateId") int templateId) {

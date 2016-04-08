@@ -77,7 +77,7 @@ public class MMXPushConfigService {
         }
     }
 
-    public MMXPushConfig getPushConfig(String appId, String channelName, String configName) throws MMXException {
+    public MMXPushConfig getPushConfig(String appId, String channelName, String configName) {
 
         MMXPushConfig config = null;
         if (appId == null) {
@@ -85,7 +85,7 @@ public class MMXPushConfigService {
         }
         //try to find config for passed config name
         if (configName != null) {
-            config = getConfig(appId, configName);
+            config = getConfigIgnoreException(appId, configName);
             if (config != null) {
                 return config;
             }
@@ -94,16 +94,46 @@ public class MMXPushConfigService {
         MMXPushConfigMapping mapping = null;
         //try to find mapping for passed channelName
         if (channelName != null) {
-            mapping = getConfigMapping(appId, channelName);
+            mapping = getConfigMappingIgnoreException(appId, channelName);
         } else {
-            mapping = getConfigMapping(appId, null);
+            mapping = getConfigMappingIgnoreException(appId, null);
         }
         //if nothing works find mapping for system
         if (mapping == null) {
-            mapping = getConfigMapping(SYSTEM_APP, null);
+            mapping = getConfigMappingIgnoreException(SYSTEM_APP, null);
         }
 
-        return getConfig(mapping.getConfigId());
+        return getConfigIgnoreException(mapping.getConfigId());
+    }
+    private MMXPushConfig getConfigIgnoreException(int configId) {
+
+        MMXPushConfig config = null;
+        try {
+            config = getConfig(configId);
+        }
+        catch (MMXException e) {
+        }
+        return config;
+    }
+    private MMXPushConfig getConfigIgnoreException(String appId, String configName) {
+
+        MMXPushConfig config = null;
+        try {
+            config = getConfig(appId, configName);
+        }
+        catch (MMXException e) {
+        }
+        return config;
+    }
+    private MMXPushConfigMapping getConfigMappingIgnoreException(String appId, String channelName) {
+
+        MMXPushConfigMapping mapping = null;
+        try {
+            mapping = getConfigMapping(appId, channelName);
+        }
+        catch (MMXException e) {
+        }
+        return mapping;
     }
 
 

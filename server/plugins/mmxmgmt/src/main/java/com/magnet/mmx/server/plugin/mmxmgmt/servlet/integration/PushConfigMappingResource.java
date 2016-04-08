@@ -15,11 +15,11 @@ import java.util.List;
  * Created by mmicevic on 4/6/16.
  *
  */
-@Path("/integration/push/configs")
+@Path("/integration/pushconfigmappings")
 public class PushConfigMappingResource {
 
     @POST
-    @Path("/mapping")
+//    @Path("")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPushConfigMapping(PushConfigMappingRequest request) {
@@ -40,7 +40,7 @@ public class PushConfigMappingResource {
         return method.doMethod(request);
     }
     @GET
-    @Path("/mapping/{mappingId}")
+    @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response retrievePushConfigMapping(@PathParam("mappingId") int mappingId) {
@@ -60,10 +60,10 @@ public class PushConfigMappingResource {
         return method.doMethod(mappingId);
     }
     @GET
-    @Path("/all-mappings/{appId}")
+    @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveAllPushConfigMappingsForApp(@PathParam("appId") String appId) {
+    public Response retrieveAllPushConfigMappingsForApp(@QueryParam("appId") String appId) {
 
         RestMethod<String, Collection<PushConfigMappingResponse>> method = new RestMethod<String,Collection<PushConfigMappingResponse>>() {
             @Override
@@ -80,7 +80,7 @@ public class PushConfigMappingResource {
         return method.doMethod(appId);
     }
     @PUT
-    @Path("/mapping/{mappingId}")
+    @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePushConfigMapping(@PathParam("mappingId") final int mappingId, PushConfigMappingRequest request) {
@@ -102,7 +102,7 @@ public class PushConfigMappingResource {
         return method.doMethod(request);
     }
     @DELETE
-    @Path("/mapping/{mappingId}")
+    @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
 //    @Consumes(MediaType.APPLICATION_JSON)
     public Response deletePushConfigMapping(@PathParam("mappingId") int mappingId) {

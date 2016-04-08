@@ -14,11 +14,11 @@ import java.util.*;
  * Created by mmicevic on 4/6/16.
  *
  */
-@Path("/integration/push/configs")
+@Path("/integration/pushconfigs")
 public class PushConfigResource {
 
     @POST
-    @Path("/config")
+    //@Path("/config")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPushConfig(PushConfigRequest request) {
@@ -39,10 +39,10 @@ public class PushConfigResource {
         return method.doMethod(request);
     }
     @GET
-    @Path("/all/{appId}")
+    @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveAllPushConfigsForApp(@PathParam("appId") String appId) {
+    public Response retrieveAllPushConfigsForApp(@QueryParam("appId") String appId) {
 
         RestMethod<String, Collection<PushConfigResponse>> method = new RestMethod<String,Collection<PushConfigResponse>>() {
             @Override
@@ -59,7 +59,7 @@ public class PushConfigResource {
         return method.doMethod(appId);
     }
     @GET
-    @Path("/config/{configId}")
+    @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response retrievePushConfig(@PathParam("configId") int configId) {
@@ -79,7 +79,7 @@ public class PushConfigResource {
         return method.doMethod(configId);
     }
     @PUT
-    @Path("/config/{configId}")
+    @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePushConfig(@PathParam("configId") final int configId, PushConfigRequest request) {
@@ -101,7 +101,7 @@ public class PushConfigResource {
         return method.doMethod(request);
     }
     @DELETE
-    @Path("/config/{configId}")
+    @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deletePushConfig(@PathParam("configId") int configId) {
