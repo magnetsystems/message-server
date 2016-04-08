@@ -37,7 +37,7 @@ public class MMXPushConfigService {
     public static final String DEFAULT_TEMPLATE = "default-template";
     public static final String DEFAULT_CONFIG = "default-config";
 
-    public static final String TITLE = "${channel.name}";
+    public static final String TITLE = "";
     public static final String BODY = "New message from ${msg.from}";
     public static final String PUSH_CONFIG_TEMPLATE =
         MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE+"=push\n"+

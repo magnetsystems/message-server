@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class MMXPushAPNSPayloadBuilder {
   private PayloadBuilder builder = null;
-  private HashMap<String, ? super Object> mmxDictionary;
+  private final HashMap<String, ? super Object> mmxDictionary;
 
   public MMXPushAPNSPayloadBuilder(PushMessage.Action action) {
     builder = APNS.newPayload();
@@ -37,7 +37,7 @@ public class MMXPushAPNSPayloadBuilder {
       builder.instantDeliveryOrSilentNotification();
     }
   }
-  
+
   public MMXPushAPNSPayloadBuilder(PushMessage.Action action, String type) {
     builder = APNS.newPayload();
     mmxDictionary = new HashMap<String, Object>(10);
@@ -48,7 +48,7 @@ public class MMXPushAPNSPayloadBuilder {
       setCustomType(type);
     }
   }
-  
+
   public MMXPushAPNSPayloadBuilder() {
     builder = APNS.newPayload();
     mmxDictionary = new HashMap<String, Object>(10);
@@ -65,37 +65,44 @@ public class MMXPushAPNSPayloadBuilder {
         builder.alertBody((String) aps.mAlert);
       } else if (aps.mAlert instanceof MMXPushManager.ApsAlert) {
         MMXPushManager.ApsAlert alert = (MMXPushManager.ApsAlert) aps.mAlert;
-        if (alert.mTitle != null)
+        if (alert.mTitle != null) {
           builder.alertTitle(alert.mTitle);
-        if (alert.mBody != null)
+        }
+        if (alert.mBody != null) {
           builder.alertBody(alert.mBody);
+        }
       } else if (aps.mAlert instanceof Map) {
         String value;
         Map<String, Object> alert = (Map<String, Object>) aps.mAlert;
-        if ((value = (String) alert.get("title")) != null)
+        if ((value = (String) alert.get("title")) != null) {
           builder.alertTitle(value);
-        if ((value = (String) alert.get("body")) != null)
+        }
+        if ((value = (String) alert.get("body")) != null) {
           builder.alertBody(value);
+        }
       }
     }
-    if (aps.mBadge != null)
+    if (aps.mBadge != null) {
       builder.badge(aps.mBadge);
-    if (aps.mSound != null)
+    }
+    if (aps.mSound != null) {
       builder.sound(aps.mSound);
-    if (aps.mCategory != null)
+    }
+    if (aps.mCategory != null) {
       builder.category(aps.mCategory);
+    }
     return this;
   }
-  
+
   public MMXPushAPNSPayloadBuilder setTitle(String title) {
-    if (title != null) {
+    if (title != null && !title.isEmpty()) {
       builder.alertTitle(title);
     }
     return this;
   }
 
   public MMXPushAPNSPayloadBuilder setBody(String body) {
-    if (body != null) {
+    if (body != null && !body.isEmpty()) {
       builder.alertBody(body);
     }
     return this;
@@ -112,7 +119,7 @@ public class MMXPushAPNSPayloadBuilder {
   }
 
   public MMXPushAPNSPayloadBuilder setSound(String sound) {
-    if (sound != null) {
+    if (sound != null && !sound.isEmpty()) {
       builder.sound(sound);
     }
     return this;

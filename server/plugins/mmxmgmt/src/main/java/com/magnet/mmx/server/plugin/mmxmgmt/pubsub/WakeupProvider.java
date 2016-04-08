@@ -19,10 +19,10 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.pubsub;
 
+import java.util.List;
+
 import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.PublishedItem;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
 
@@ -44,10 +44,9 @@ public interface WakeupProvider {
 
   /**
    * Wake up the devices using native push messaging.
-   * @param userOrDev A bare JID as user or full JID as the disconnected device.
+   * @param jid A bare JID as user or full JID as the disconnected device.
    * @param node The pub-sub node which the new items are published to.
-   * @param nItems Number of items in this event
-   * @param mmx The MMX stanza of the oldest published item in the item list
+   * @param mmxItems A list of published items in this event.
    */
-  public void wakeup(JID userOrDev, Node node, int nItems, MMXPacketExtension mmx);
+  public void wakeup(JID jid, Node node, List<MMXPacketExtension> mmxItems);
 }

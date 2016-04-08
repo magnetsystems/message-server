@@ -56,7 +56,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.message.ServerAckMessageBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterDescriptor;
 import com.magnet.mmx.server.plugin.mmxmgmt.monitoring.RateLimiterService;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
-import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.WakeupProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertEventsManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.AlertsUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
@@ -75,6 +74,7 @@ public class MMXMessageHandlingRule {
   private static final String SERVER_USER = "serveruser";
   private static final String SERVER_ACK_SENDER_POOL = "ServerAckSenderPool";
   private final Map<String, Counter> mMulticastMsgs = new Hashtable<String, Counter>();
+  private final PubSubWakeupProvider mWakeupProvider = new PubSubWakeupProvider();
 
   private static class Counter {
     AtomicInteger count;
@@ -588,9 +588,8 @@ public class MMXMessageHandlingRule {
     int count = 0;
     Message message = input.getMessage();
     Node node = null;
-    boolean notifySubscriber = false;
-    MMXPacketExtension oldestMmxExt = null;
     final String namespace = "http://jabber.org/protocol/pubsub#event";
+    List<MMXPacketExtension> mmxItems = new ArrayList<MMXPacketExtension>();
 
     Message blockMsg = new Message();
     blockMsg.setTo(message.getTo());
@@ -653,19 +652,8 @@ public class MMXMessageHandlingRule {
           continue;
         }
 
-        if (oldestMmxExt == null) {
-          oldestMmxExt = mmxExt;
-        }
-
-        // Check if at least one item having notification to the subscriber enabled
-        // MAX-339 is to disable self notification.
-        Boolean selfNotify;
-        if (!notifySubscriber &&
-            (!blockMsg.getFrom().getNode().equals(blockMsg.getTo().getNode()) ||
-            (((selfNotify = (Boolean) mmxExt.getMmxMeta().get(
-                MmxHeaders.SELF_NOTIFICATION)) != null) && selfNotify))) {
-          notifySubscriber = true;
-        }
+        // Save the items for pub-sub wakeup
+        mmxItems.add(mmxExt);
       }
       if (count == 0) {
         LOGGER.trace("handlePubSub: pubsub message is blocked");
@@ -676,8 +664,9 @@ public class MMXMessageHandlingRule {
     }
 
     // Check if the recipient is offline and should be waken up.
-    if (node != null && oldestMmxExt != null && notifySubscriber) {
-      new PubSubWakeupProvider().wakeup(message.getTo(), node, count, oldestMmxExt);
+    // TODO: should execute this in worker thread.
+    if (!mmxItems.isEmpty()) {
+      mWakeupProvider.wakeup(message.getTo(), node, mmxItems);
     }
   }
 }
