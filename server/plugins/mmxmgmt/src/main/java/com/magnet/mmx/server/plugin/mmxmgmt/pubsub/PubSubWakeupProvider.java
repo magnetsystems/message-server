@@ -103,8 +103,8 @@ import freemarker.template.TemplateExceptionHandler;
 public class PubSubWakeupProvider implements WakeupProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(PubSubWakeupProvider.class);
 
-  // Template loader from DB.
-  public static class DBTemplateLoader implements TemplateLoader {
+  // Freemarker template loader using MMX Push Config Service.
+  public static class FmMmxTemplateLoader implements TemplateLoader {
     @Override
     public void closeTemplateSource(Object templateSource) throws IOException {
       // No-op
@@ -112,16 +112,15 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     @Override
     public Object findTemplateSource(String name) throws IOException {
-      String[] tokens = name.split(":");
-      String appId = (tokens.length > 0) ? tokens[0] : null;
-      String channelName = (tokens.length > 1) ? tokens[1] : null;
-      String configName = (tokens.length > 2) ? tokens[2] : null;
-      try {
-        return MMXPushConfigService.getInstance().getPushConfig(appId,
-            channelName, configName);
-      } catch (MMXException e) {
-        throw new IOException("Cannot find template", e);
-      }
+      LOGGER.debug("findTemplateSource() name={}", name);
+      String[] tokens = FmPushConfig.parseName(name);
+//      try {
+        return MMXPushConfigService.getInstance().getPushConfig(tokens[0],
+            tokens[1], tokens[2]);
+//      } catch (MMXException e) {
+//        throw new IOException("MMXPushConfigService.getPushConfig("+tokens[0]+
+//                              ","+tokens[1]+","+tokens[2]+") failed", e);
+//      }
     }
 
     @Override
@@ -144,7 +143,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
     }
   }
 
-  public static class PushConfig {
+  // Push Config wrapper for Freemarker.
+  public static class FmPushConfig {
+    private final static String DELIMITER = "::";
     private final String mName;
     private Properties mProps;
     private PushMessage.Action mPushType;
@@ -152,24 +153,37 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     static {
       sFmCfg = new Configuration(Configuration.VERSION_2_3_24);
-      sFmCfg.setTemplateLoader(new DBTemplateLoader());
+      sFmCfg.setLocalizedLookup(false);   // templateName_{locale} lookup disabled
+      sFmCfg.setTemplateLoader(new FmMmxTemplateLoader());
       sFmCfg.setDefaultEncoding("UTF-8");
       sFmCfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
       sFmCfg.setLogTemplateExceptions(false);
     }
 
-    public PushConfig(String appId, String topicPath, String configName) {
+    static String makeName(String appId, String topicPath, String configName) {
       StringBuilder name = new StringBuilder();
       if (appId != null) {
         name.append(appId);
         if (topicPath != null) {
-          name.append(':').append(topicPath);
+          name.append(DELIMITER).append(topicPath);
           if (configName != null) {
-            name.append(':').append(configName);
+            name.append(DELIMITER).append(configName);
           }
         }
       }
-      mName = name.toString();
+      return name.toString();
+    }
+
+    static String[] parseName(String name) {
+      String[] tokens = name.split(DELIMITER);
+      String appId = (tokens.length > 0) ? tokens[0] : null;
+      String channelName = (tokens.length > 1) ? tokens[1] : null;
+      String configName = (tokens.length > 2) ? tokens[2] : null;
+      return new String[] { appId, channelName, configName };
+    }
+
+    public FmPushConfig(String appId, String topicPath, String configName) {
+      mName = makeName(appId, topicPath, configName);
     }
 
     // Build a context with ${application}, ${channel}, and ${msg}
@@ -208,9 +222,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
         StringWriter writer = new StringWriter();
         Template template = sFmCfg.getTemplate(mName);
         template.process(context, writer);
-        String pushConfig = writer.getBuffer().toString();
-        LOGGER.trace("@@@ push config="+pushConfig);
-        Reader reader = new StringReader(pushConfig);
+        String pushConfigProps = writer.getBuffer().toString();
+        LOGGER.trace("@@@ push config="+pushConfigProps);
+        Reader reader = new StringReader(pushConfigProps);
         mProps = new Properties();
         mProps.load(reader);
 
@@ -314,7 +328,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
-        PushConfig pushConf = new PushConfig(appId, topic.toPath(), configName);
+        FmPushConfig pushConf = new FmPushConfig(appId, topic.toPath(), configName);
         String pushPayload = pushConf.buildPushPayload(ae, topic, mmxItems, node);
         if (pushPayload == null) {
           return;
@@ -352,7 +366,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
-        PushConfig pushConf = new PushConfig(appId, topic.toPath(), configName);
+        FmPushConfig pushConf = new FmPushConfig(appId, topic.toPath(), configName);
         String pushPayload = pushConf.buildPushPayload(ae, topic, mmxItems, node);
         if (pushPayload == null) {
           return;
