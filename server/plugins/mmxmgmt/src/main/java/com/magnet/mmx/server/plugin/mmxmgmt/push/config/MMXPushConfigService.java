@@ -77,7 +77,7 @@ public class MMXPushConfigService {
         }
     }
 
-    public MMXPushConfig getPushConfig(String appId, String channelName, String configName) {
+    public MMXPushConfig getPushConfig(String userId, String appId, String channelName, String configName) {
 
         MMXPushConfig config = null;
         if (appId == null) {
