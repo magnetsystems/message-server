@@ -15,7 +15,9 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by mmicevic on 3/31/16.
@@ -28,8 +30,8 @@ public class MMXPushConfig {
     private String configName;
     private MMXTemplate template;
     private boolean isSilentPush;
-
     private Map<String, String> meta = new HashMap<>();
+    private Set<String> channelNames = new HashSet<>();
 
     public int getConfigId() {
         return configId;
@@ -71,5 +73,15 @@ public class MMXPushConfig {
     }
     public void setMeta(Map<String, String> meta) {
         this.meta = meta;
+    }
+
+    public Set<String> getChannelNames() {
+        return channelNames;
+    }
+    public void setChannelNames(Set<String> channelNames) {
+        this.channelNames = channelNames;
+    }
+    public boolean isDefaultForApp() {
+        return channelNames == null || channelNames.size() == 0;
     }
 }

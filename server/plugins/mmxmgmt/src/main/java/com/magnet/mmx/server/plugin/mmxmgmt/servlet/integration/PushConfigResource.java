@@ -92,8 +92,8 @@ public class PushConfigResource {
                 c.setConfigId(configId);
 
                 //do job
+//                transaction
                 c = MMXPushConfigService.getInstance().updateConfig(c);
-
                 //convert and return response
                 return convertResponse(c);
             }
@@ -131,6 +131,9 @@ public class PushConfigResource {
         MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.appId, request.templateName);
         c.setTemplate(t);
         c.setMeta(request.meta);
+        if (request.getChannelNames() != null) {
+            c.getChannelNames().addAll(request.getChannelNames());
+        }
         return c;
     }
     private static PushConfigResponse convertResponse(MMXPushConfig c) {
@@ -142,6 +145,7 @@ public class PushConfigResource {
         response.isSilentPush = c.isSilentPush();
         response.templateName = c.getTemplate().getTemplateName();
         response.meta = c.getMeta();
+        response.channelNames = c.getChannelNames();
         return response;
     }
     private static Collection<PushConfigResponse> convertResponse(Collection<MMXPushConfig> c) {
@@ -162,7 +166,8 @@ public class PushConfigResource {
         String configName;
         String templateName;
         boolean isSilentPush;
-        Map<String, String> meta = new HashMap<>();
+        Map<String, String> meta;
+        List<String> channelNames;
 
         public String getAppId() {
             return appId;
@@ -203,6 +208,14 @@ public class PushConfigResource {
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
         }
+
+        public List<String> getChannelNames() {
+            return channelNames;
+        }
+
+        public void setChannelNames(List<String> channelNames) {
+            this.channelNames = channelNames;
+        }
     }
 
     public static class PushConfigResponse {
@@ -213,6 +226,9 @@ public class PushConfigResource {
         String templateName;
         boolean isSilentPush;
         Map<String, String> meta = new HashMap<>();
+        Set<String> channelNames;
+
+
 
         public int getConfigId() {
             return configId;
@@ -260,6 +276,14 @@ public class PushConfigResource {
 
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
+        }
+
+        public Set<String> getChannelNames() {
+            return channelNames;
+        }
+
+        public void setChannelNames(Set<String> channelNames) {
+            this.channelNames = channelNames;
         }
     }
 }

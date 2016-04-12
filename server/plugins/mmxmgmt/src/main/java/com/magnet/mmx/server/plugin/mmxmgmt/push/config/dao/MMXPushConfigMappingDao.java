@@ -19,4 +19,7 @@ public interface MMXPushConfigMappingDao {
     public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping);
 
     public void deleteConfigMapping(MMXPushConfigMappingDo mapping);
+
+    public void deleteAllMappingsForConfig(int configId);
+    public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(int configId);
 }

@@ -279,8 +279,24 @@ public class MMXPushConfigService {
         Map<String, String> meta = metaDo2Bo(daoFactory.getMXPushConfigMetadataDao().getConfigAllMetadata(configDo.getConfigId()));
         bo.setMeta(meta);
 
+        decorateConfigWithMapping(bo);
+
         return bo;
     }
+    private void decorateConfigWithMapping(MMXPushConfig config) {
+
+        Collection<MMXPushConfigMappingDo> mappings = daoFactory.getMMXPushConfigMappingDao().getAllMappingsForConfig(config.getConfigId());
+        if (mappings != null && mappings.size() > 0) {
+            Set<String> channelNames = new HashSet<>();
+            for (MMXPushConfigMappingDo mapping : mappings) {
+                if (StringUtils.isNotBlank(mapping.getChannelName())) {
+                    channelNames.add(mapping.getChannelName());
+                }
+            }
+            config.setChannelNames(channelNames);
+        }
+    }
+
     private Collection<MMXPushConfig> configDo2Bo(Collection<MMXPushConfigDo> allConfigs) throws MMXException {
         if (allConfigs == null) {
             return null;
@@ -305,6 +321,7 @@ public class MMXPushConfigService {
         return configDo;
     }
 
+
     public MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) throws MMXException {
         MMXPushConfig config = new MMXPushConfig();
         config.setAppId(appId);
@@ -317,13 +334,33 @@ public class MMXPushConfigService {
     public MMXPushConfig createConfig(MMXPushConfig config) throws MMXException {
         validateConfig(config);
         Map<String, String> meta = config.getMeta();
-        config = configDo2Bo(daoFactory.getMMXPushConfigDao().createConfig(configBo2Do(config)));
+        MMXPushConfigDo newConf = daoFactory.getMMXPushConfigDao().createConfig(configBo2Do(config));
+        config.setConfigId(newConf.getConfigId());
+        //meta
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(config.getConfigId(), metaBo2Do(config.getConfigId(), meta));
+//        // attach meta to config
+//        config.setMeta(meta);
+        //mappings
+        daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(config.getConfigId());
+        if (config.getChannelNames() != null) {
+            for (String channelName : config.getChannelNames()) {
+                MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
+                mapping.setConfigId(config.getConfigId());
+                mapping.setAppId(config.getAppId());
+                mapping.setChannelName(channelName);
+                daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
+            }
+        } else {
+            MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
+            mapping.setConfigId(config.getConfigId());
+            mapping.setAppId(config.getAppId());
+            mapping.setChannelName(null);
+            daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
+        }
         //
-        // attach meta to config
-        config.setMeta(meta);
-        //
-        return config;
+        MMXPushConfigDo y = daoFactory.getMMXPushConfigDao().getConfig(config.getConfigId());
+        MMXPushConfig x = configDo2Bo(y);
+        return x;
     }
     public Collection<MMXPushConfig> getAllConfigs(String appId) throws MMXException {
         validateMandatoryArgument("appId", appId);
@@ -339,7 +376,6 @@ public class MMXPushConfigService {
         if (c == null) {
             throw new MMXException("config not found", ErrorCode.NOT_FOUND.getCode());
         }
-
         return configDo2Bo(c);
     }
     public MMXPushConfig getConfig(int configId) throws MMXException {
@@ -476,6 +512,23 @@ public class MMXPushConfigService {
         validateMandatoryArgument("configMapping.appId", mapping.getAppId());
         getConfig(mapping.getConfigId());
     }
+
+//    //
+//    public void updateConfigAndMappings(MMXPushConfig config, Collection<String> channelNames) throws MMXException {
+//
+//        validateConfig(config);
+//
+//        //transaction
+//        updateConfig(config);
+//        deleteAllConfigMappings(config.getAppId());
+//        if (channelNames == null || channelNames.size() == 0) {
+//            createConfigMapping(config.getConfigId(), config.getAppId(), null);
+//        } else {
+//            for (String channelName : channelNames) {
+//                createConfigMapping(config.getConfigId(), config.getAppId(), channelName);
+//            }
+//        }
+//    }
 
     //VALIDATION
     private void validateMandatoryObject(String name, Object obj) throws MMXException {

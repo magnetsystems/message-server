@@ -7,6 +7,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplateType;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by mmicevic on 4/7/16.
@@ -26,7 +27,7 @@ public class PushConfigTestUtil {
         return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelName);
     }
 
-    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, Map<String, String> meta) throws MMXException {
+    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, Map<String, String> meta, Set<String> channelNames) throws MMXException {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(appId);
         c.setConfigName(configName);
@@ -34,6 +35,7 @@ public class PushConfigTestUtil {
         c.setTemplate(t);
         c.setIsSilentPush(isSilentPush);
         c.setMeta(meta);
+        c.setChannelNames(channelNames);
         return MMXPushConfigService.getInstance().createConfig(c);
     }
     public static MMXPushConfig createConfig2(String appId, String configName, boolean isSilentPush, Map<String, String> meta) throws MMXException {

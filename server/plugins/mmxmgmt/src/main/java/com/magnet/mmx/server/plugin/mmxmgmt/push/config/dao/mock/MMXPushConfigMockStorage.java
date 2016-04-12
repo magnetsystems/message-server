@@ -181,10 +181,19 @@ public class MMXPushConfigMockStorage {
     public static MMXPushConfigMappingDo getConfigMapping(String appId, String channelName) {
         return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelName));
     }
-    public static Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId) {
+    public static Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(String appId) {
         List<MMXPushConfigMappingDo> list = new ArrayList<>();
         for (MMXPushConfigMappingDo c : CONFIG_MAPPING_BY_ID.values()) {
             if (appId.equals(c.getAppId())) {
+                list.add(c);
+            }
+        }
+        return list;
+    }
+    public static Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(int configId) {
+        List<MMXPushConfigMappingDo> list = new ArrayList<>();
+        for (MMXPushConfigMappingDo c : CONFIG_MAPPING_BY_ID.values()) {
+            if (configId == c.getConfigId()) {
                 list.add(c);
             }
         }
@@ -206,6 +215,15 @@ public class MMXPushConfigMockStorage {
         if (mapping != null) {
             CONFIG_MAPPING_BY_ID.remove(mapping.getMappingId());
             CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(mapping.getAppId(), mapping.getChannelName()));
+        }
+    }
+
+    public static void deleteAllMappingsForConfig(int configId) {
+        Collection<MMXPushConfigMappingDo> mappings = getAllMappingsForConfig(configId);
+        if (mappings != null) {
+            for (MMXPushConfigMappingDo mapping : mappings) {
+                deleteConfigMapping(mapping);
+            }
         }
     }
 }
