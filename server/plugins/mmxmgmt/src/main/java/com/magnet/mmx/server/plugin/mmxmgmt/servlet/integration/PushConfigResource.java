@@ -187,7 +187,7 @@ public class PushConfigResource {
         public void setTemplateId(int templateId) {
             this.templateId = templateId;
         }
-        public boolean isSilentPush() {
+        public boolean getIsSilentPush() {
             return isSilentPush;
         }
         public void setIsSilentPush(boolean isSilentPush) {
@@ -241,7 +241,7 @@ public class PushConfigResource {
         public void setTemplateId(int templateId) {
             this.templateId = templateId;
         }
-        public boolean isSilentPush() {
+        public boolean getIsSilentPush() {
             return isSilentPush;
         }
         public void setIsSilentPush(boolean isSilentPush) {
