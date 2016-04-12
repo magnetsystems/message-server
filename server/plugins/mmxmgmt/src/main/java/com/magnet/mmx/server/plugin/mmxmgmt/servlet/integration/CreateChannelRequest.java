@@ -7,12 +7,11 @@ import java.util.List;
 
 public class CreateChannelRequest extends ChannelCreateInfo {
 
-
     private List<String> subscribers;
     private String userId;
     private String mmxAppId;
     private String deviceId;
-
+    private String pushConfigName;
 
     public List<String> getSubscribers() {
         return subscribers;
@@ -48,5 +47,15 @@ public class CreateChannelRequest extends ChannelCreateInfo {
     public CreateChannelRequest setDeviceId(String deviceId) {
         this.deviceId = deviceId;
         return this;
+    }
+
+    @Override
+    public String getPushConfigName() {
+        return pushConfigName;
+    }
+
+    @Override
+    public void setPushConfigName(String pushConfigName) {
+        this.pushConfigName = pushConfigName;
     }
 }

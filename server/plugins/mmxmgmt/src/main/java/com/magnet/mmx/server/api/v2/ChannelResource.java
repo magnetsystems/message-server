@@ -34,6 +34,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.ChannelTagInfo;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
@@ -54,7 +57,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 
 import javax.ws.rs.*;
 import javax.ws.rs.QueryParam;
@@ -125,11 +127,29 @@ public class ChannelResource {
             return RestUtils.getBadReqJAXRSResp(errorResponse);
         }
 
+        //validate push config name
+        Integer pushConfigId = null;
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(channelInfo.getPushConfigName())) {
+            try {
+                MMXPushConfig pushConfig = MMXPushConfigService.getInstance().getConfig(tokenInfo.getMmxAppId(), channelInfo.getPushConfigName());
+                pushConfigId = pushConfig.getConfigId();
+            }
+            catch (MMXException e) {
+                errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+                        "push config name '" + channelInfo.getPushConfigName() + "' does not exist ");
+                return RestUtils.getBadReqJAXRSResp(errorResponse);
+            }
+        }
+
+
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
             JID from = RestUtils.createJID(tokenInfo);
             CreateRequest rqt = toCreateRequest(channelInfo);
             channelManager.createChannel(from, tokenInfo.getMmxAppId(), rqt);
+            if (pushConfigId != null) {
+                setConfigMapping(tokenInfo.getMmxAppId(), channelInfo.getChannelName(), pushConfigId);
+            }
             errorResponse = new ErrorResponse(ErrorCode.NO_ERROR, "Channel created");
             return RestUtils.getCreatedJAXRSResp(errorResponse);
         } catch (MMXException e) {
@@ -166,6 +186,22 @@ public class ChannelResource {
                 createInfo.isPrivateChannel(), options);
         return rqt;
     }
+
+    // config mapping
+    private void setConfigMapping(String appId, String channelName, int pushConfigId) throws MMXException {
+
+        MMXPushConfigMapping mapping = null;
+        try {
+            mapping = MMXPushConfigService.getInstance().getConfigMapping(appId, channelName);
+            //if found ==> delete
+            MMXPushConfigService.getInstance().deleteConfigMapping(mapping);
+        }
+        catch (MMXException e) {
+            //does not exist
+        }
+        MMXPushConfigService.getInstance().createConfigMapping(pushConfigId, appId, channelName);
+    }
+
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
