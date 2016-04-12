@@ -181,6 +181,12 @@ public class PushConfigResource {
         public void setConfigName(String configName) {
             this.configName = configName;
         }
+        public int getTemplateId() {
+            return templateId;
+        }
+        public void setTemplateId(int templateId) {
+            this.templateId = templateId;
+        }
         public boolean isSilentPush() {
             return isSilentPush;
         }
