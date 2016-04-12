@@ -128,7 +128,7 @@ public class PushConfigResource {
         c.setAppId(request.appId);
         c.setConfigName(request.configName);
         c.setIsSilentPush(request.isSilentPush);
-        MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.appId, request.templateName);
+        MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
         c.setTemplate(t);
         c.setMeta(request.meta);
         if (request.getChannelNames() != null) {
@@ -143,7 +143,7 @@ public class PushConfigResource {
         response.appId = c.getAppId();
         response.configName = c.getConfigName();
         response.isSilentPush = c.isSilentPush();
-        response.templateName = c.getTemplate().getTemplateName();
+        response.templateId = c.getTemplate().getTemplateId();
         response.meta = c.getMeta();
         response.channelNames = c.getChannelNames();
         return response;
@@ -164,7 +164,7 @@ public class PushConfigResource {
 
         String appId;
         String configName;
-        String templateName;
+        int templateId;
         boolean isSilentPush;
         Map<String, String> meta;
         List<String> channelNames;
@@ -172,47 +172,30 @@ public class PushConfigResource {
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
         public String getConfigName() {
             return configName;
         }
-
         public void setConfigName(String configName) {
             this.configName = configName;
         }
-
-        public String getTemplateName() {
-            return templateName;
-        }
-
-        public void setTemplateName(String templateName) {
-            this.templateName = templateName;
-        }
-
         public boolean isSilentPush() {
             return isSilentPush;
         }
-
         public void setIsSilentPush(boolean isSilentPush) {
             this.isSilentPush = isSilentPush;
         }
-
         public Map<String, String> getMeta() {
             return meta;
         }
-
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
         }
-
         public List<String> getChannelNames() {
             return channelNames;
         }
-
         public void setChannelNames(List<String> channelNames) {
             this.channelNames = channelNames;
         }
@@ -223,65 +206,50 @@ public class PushConfigResource {
         int configId;
         String appId;
         String configName;
-        String templateName;
+        int templateId;
         boolean isSilentPush;
         Map<String, String> meta = new HashMap<>();
         Set<String> channelNames;
 
-
-
         public int getConfigId() {
             return configId;
         }
-
         public void setConfigId(int configId) {
             this.configId = configId;
         }
-
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
         public String getConfigName() {
             return configName;
         }
-
         public void setConfigName(String configName) {
             this.configName = configName;
         }
-
-        public String getTemplateName() {
-            return templateName;
+        public int getTemplateId() {
+            return templateId;
         }
-
-        public void setTemplateName(String templateName) {
-            this.templateName = templateName;
+        public void setTemplateId(int templateId) {
+            this.templateId = templateId;
         }
-
         public boolean isSilentPush() {
             return isSilentPush;
         }
-
         public void setIsSilentPush(boolean isSilentPush) {
             this.isSilentPush = isSilentPush;
         }
-
         public Map<String, String> getMeta() {
             return meta;
         }
-
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
         }
-
         public Set<String> getChannelNames() {
             return channelNames;
         }
-
         public void setChannelNames(Set<String> channelNames) {
             this.channelNames = channelNames;
         }
