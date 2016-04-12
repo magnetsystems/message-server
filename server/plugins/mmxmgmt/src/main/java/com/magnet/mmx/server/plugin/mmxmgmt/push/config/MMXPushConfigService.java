@@ -338,9 +338,15 @@ public class MMXPushConfigService {
         config.setConfigId(newConf.getConfigId());
         //meta
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(config.getConfigId(), metaBo2Do(config.getConfigId(), meta));
-//        // attach meta to config
-//        config.setMeta(meta);
         //mappings
+        updateMappings(config);
+        //retrieve fresh
+        MMXPushConfigDo y = daoFactory.getMMXPushConfigDao().getConfig(config.getConfigId());
+        MMXPushConfig x = configDo2Bo(y);
+        return x;
+    }
+    private void updateMappings(MMXPushConfig config) {
+
         daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(config.getConfigId());
         if (config.getChannelNames() != null) {
             for (String channelName : config.getChannelNames()) {
@@ -357,11 +363,8 @@ public class MMXPushConfigService {
             mapping.setChannelName(null);
             daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
         }
-        //
-        MMXPushConfigDo y = daoFactory.getMMXPushConfigDao().getConfig(config.getConfigId());
-        MMXPushConfig x = configDo2Bo(y);
-        return x;
     }
+
     public Collection<MMXPushConfig> getAllConfigs(String appId) throws MMXException {
         validateMandatoryArgument("appId", appId);
         Collection<MMXPushConfigDo> c = daoFactory.getMMXPushConfigDao().getAllConfigs(appId);
@@ -401,6 +404,7 @@ public class MMXPushConfigService {
         Map<String, String> meta = config.getMeta();
         int configId = config.getConfigId();
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(configId, metaBo2Do(configId, meta));
+        updateMappings(config);
         return config;
     }
     public void deleteConfig(int configId) throws MMXException {
@@ -410,6 +414,7 @@ public class MMXPushConfigService {
         validateConfig(config);
         int configId = config.getConfigId();
         daoFactory.getMXPushConfigMetadataDao().deleteConfigAllMetadata(configId);
+        daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(configId);
         daoFactory.getMMXPushConfigDao().deleteConfig(configBo2Do(config));
     }
     private void validateConfig(MMXPushConfig config) throws MMXException {
