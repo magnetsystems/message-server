@@ -27,22 +27,22 @@ public class PushConfigTestUtil {
         return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelName);
     }
 
-    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, Map<String, String> meta, Set<String> channelNames) throws MMXException {
+    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelNames) throws MMXException {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(appId);
         c.setConfigName(configName);
         MMXTemplate t = createTemplate(appId, MMXTemplateType.PUSH, "nn", "tt");
         c.setTemplate(t);
         c.setSilentPush(isSilentPush);
+        c.setEnabled(isEnabled);
         c.setMeta(meta);
         c.setChannelNames(channelNames);
         return MMXPushConfigService.getInstance().createConfig(c);
     }
-    public static MMXPushConfig createConfig2(String appId, String configName, boolean isSilentPush, Map<String, String> meta) throws MMXException {
+    public static MMXPushConfig createConfig2(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {
         MMXTemplate t = createTemplate(appId, MMXTemplateType.PUSH, "nn2", "tt2");
-        return MMXPushConfigService.getInstance().createConfig(appId, configName, "nn2", isSilentPush, meta);
+        return MMXPushConfigService.getInstance().createConfig(appId, configName, "nn2", isSilentPush, isEnabled, meta);
     }
-
 
     public static MMXTemplate createTemplate(String appId, MMXTemplateType type, String name, String template) throws MMXException {
         return MMXPushConfigService.getInstance().createTemplate(appId, name, type, template);

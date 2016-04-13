@@ -30,6 +30,7 @@ public class MMXPushConfig {
     private String configName;
     private MMXTemplate template;
     private boolean silentPush;
+    private boolean enabled;
     private Map<String, String> meta = new HashMap<>();
     private Set<String> channelNames = new HashSet<>();
 
@@ -68,6 +69,13 @@ public class MMXPushConfig {
         this.silentPush = isSilentPush;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public Map<String, String> getMeta() {
         return meta;
     }
@@ -80,8 +88,5 @@ public class MMXPushConfig {
     }
     public void setChannelNames(Set<String> channelNames) {
         this.channelNames = channelNames;
-    }
-    public boolean isDefaultForApp() {
-        return channelNames == null || channelNames.size() == 0;
     }
 }

@@ -12,6 +12,7 @@ public class MMXPushMockDaoFactory implements MMXPushConfigDaoFactory {
     private static final MMXPushConfigMappingDao CONFIG_MAPPING_DAO = new MMXPushConfigMappingDaoMock();
     private static final MMXPushConfigDao CONFIG_DAO = new MMXPushConfigDaoMock();
     private static final MMXPushConfigMetadataDao METADATA_DAO = new MMXPushConfigMetadataDaoMock();
+    private static final MMXPushSuppressDao SUPPRESS_DAO = new MMXPushSuppressDaoMock();
 
     @Override
     public MMXTemplateDao getMMXTemplateDao() {
@@ -31,5 +32,10 @@ public class MMXPushMockDaoFactory implements MMXPushConfigDaoFactory {
     @Override
     public MMXPushConfigMetadataDao getMXPushConfigMetadataDao() {
         return METADATA_DAO;
+    }
+
+    @Override
+    public MMXPushSuppressDao getMXPushSuppressDao() {
+        return SUPPRESS_DAO;
     }
 }
