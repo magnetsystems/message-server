@@ -114,10 +114,11 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     @Override
     public Object findTemplateSource(String name) throws IOException {
-      LOGGER.debug("findTemplateSource() name={}", name);
       String[] tokens = FmPushConfig.parseName(name);
-      return MMXPushConfigService.getInstance().getPushConfig(tokens[0],
-          tokens[1], tokens[2], tokens[3]);
+      MMXPushConfig config = MMXPushConfigService.getInstance().getPushConfig(
+          tokens[0], tokens[1], tokens[2], tokens[3]);
+      LOGGER.debug("findTemplateSource(name={}): config={}", name, config);
+      return config;
     }
 
     @Override
