@@ -162,7 +162,7 @@ public class PushConfigTemplateTest {
     public Reader getReader(Object templateSource, String encoding) throws IOException {
       if (templateSource instanceof MockPushConfig) {
         MockPushConfig pushConfig = (MockPushConfig) templateSource;
-        System.out.println("MockTemplateLoader: getReader() template="+pushConfig.getTemplate());
+//        System.out.println("MockTemplateLoader: getReader() template="+pushConfig.getTemplate());
         return new StringReader(pushConfig.getTemplate());
       }
       throw new IOException("templateSource is "+templateSource.getClass().getSimpleName()+"; expect MockPushConfig");
@@ -207,7 +207,7 @@ public class PushConfigTemplateTest {
     assertNotNull(FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     String pushConfig = fmPushConfig.eval(context);
-    System.out.println(pushConfig);
+//    System.out.println(pushConfig);
     assertNotNull(pushConfig);
     assertFalse(pushConfig.isEmpty());
     assertEquals(
@@ -221,7 +221,7 @@ public class PushConfigTemplateTest {
     assertNotNull(FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     pushConfig = fmPushConfig.eval(context);
-    System.out.println(pushConfig);
+//    System.out.println(pushConfig);
     assertNotNull(pushConfig);
     assertFalse(pushConfig.isEmpty());
     assertEquals(
@@ -235,7 +235,7 @@ public class PushConfigTemplateTest {
     assertNotNull(FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
     pushConfig = fmPushConfig.eval(context);
-    System.out.println(pushConfig);
+//    System.out.println(pushConfig);
     assertNotNull(pushConfig);
     assertFalse(pushConfig.isEmpty());
     assertEquals(
@@ -266,7 +266,7 @@ public class PushConfigTemplateTest {
 
     // Use config4 template
     String pushConfig = fmPushConfig.eval(context);
-    System.out.println(pushConfig);
+//    System.out.println(pushConfig);
     assertNotNull(pushConfig);
     assertFalse(pushConfig.isEmpty());
     assertEquals(
@@ -322,9 +322,7 @@ public class PushConfigTemplateTest {
       String pushConfig = fmPushConfig.eval(context);
       fail(pushConfig);
     } catch (MMXException e) {
-      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
       System.out.println(e.getCause().getMessage());
-      System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
       assertTrue(e.getCause() instanceof TemplateException);
     }
   }
