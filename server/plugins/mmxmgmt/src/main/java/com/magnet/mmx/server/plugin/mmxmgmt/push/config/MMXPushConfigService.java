@@ -111,7 +111,9 @@ public class MMXPushConfigService {
         //try to find mapping for passed channelName
         if (channelName != null) {
             mapping = getConfigMappingIgnoreException(appId, channelName);
-        } else {
+        }
+        //if cannot find mapping for channel - try to find mapping for app
+        if (mapping == null) {
             mapping = getConfigMappingIgnoreException(appId, null);
         }
         //if nothing works find mapping for system
