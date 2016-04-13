@@ -230,7 +230,7 @@ public class MMXPushConfigMockStorage {
     ///////////// SUPPRESS
     public static MMXPushSuppressDo createSuppress(MMXPushSuppressDo suppress) {
         int id = SEQUENCE++;
-        suppress.setSuppresId(id);
+        suppress.setSuppressId(id);
         SUPPRESS_BY_ID.put(id, suppress);
         List<MMXPushSuppressDo> list = SUPPRESS_BY_USER.get(suppress.getUserId());
         if (list == null) {
@@ -248,10 +248,10 @@ public class MMXPushConfigMockStorage {
     }
     public static void deleteSuppress(MMXPushSuppressDo suppress) {
         if (suppress != null) {
-            SUPPRESS_BY_ID.remove(suppress.getSuppresId());
+            SUPPRESS_BY_ID.remove(suppress.getSuppressId());
             List<MMXPushSuppressDo> list = getSuppressForUser(suppress.getUserId());
             for (MMXPushSuppressDo s : list) {
-                if (s.getSuppresId() == suppress.getSuppresId()) {
+                if (s.getSuppressId() == suppress.getSuppressId()) {
                     SUPPRESS_BY_USER.remove(s);
                 }
             }
