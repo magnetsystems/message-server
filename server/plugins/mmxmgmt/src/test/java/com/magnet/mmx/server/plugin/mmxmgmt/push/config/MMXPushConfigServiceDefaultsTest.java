@@ -39,7 +39,7 @@ public class MMXPushConfigServiceDefaultsTest {
     @Test
     public void checkDefaultMapping() throws MMXException {
 
-        MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(null, null, null);
+        MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(null, null, null, null);
         assertDefaultConfig(c);
     }
     @Test
@@ -48,7 +48,7 @@ public class MMXPushConfigServiceDefaultsTest {
         String appId = "my-fake-app";
         String configName = "my-fake-config";
         String channelName = "my-fake-channel";
-        MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(appId, channelName, configName);
+        MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(null, appId, channelName, configName);
         assertDefaultConfig(c);
     }
 }

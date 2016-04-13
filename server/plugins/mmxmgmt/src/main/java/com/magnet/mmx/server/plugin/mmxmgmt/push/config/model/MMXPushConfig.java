@@ -29,7 +29,7 @@ public class MMXPushConfig {
     private String appId;
     private String configName;
     private MMXTemplate template;
-    private boolean isSilentPush;
+    private boolean silentPush;
     private Map<String, String> meta = new HashMap<>();
     private Set<String> channelNames = new HashSet<>();
 
@@ -62,10 +62,10 @@ public class MMXPushConfig {
     }
 
     public boolean isSilentPush() {
-        return isSilentPush;
+        return silentPush;
     }
-    public void setIsSilentPush(boolean isSilentPush) {
-        this.isSilentPush = isSilentPush;
+    public void setSilentPush(boolean isSilentPush) {
+        this.silentPush = isSilentPush;
     }
 
     public Map<String, String> getMeta() {
