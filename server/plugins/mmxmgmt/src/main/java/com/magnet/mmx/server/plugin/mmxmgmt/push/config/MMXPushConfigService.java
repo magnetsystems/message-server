@@ -368,7 +368,7 @@ public class MMXPushConfigService {
     private void updateMappings(MMXPushConfig config) {
 
         daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(config.getConfigId());
-        if (config.getChannelNames() != null) {
+        if (config.getChannelNames() != null && config.getChannelNames().size() > 0) {
             for (String channelName : config.getChannelNames()) {
                 MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
                 mapping.setConfigId(config.getConfigId());
