@@ -289,6 +289,8 @@ public class MMXPushConfigService {
         bo.setAppId(configDo.getAppId());
         bo.setConfigName(configDo.getConfigName());
         bo.setSilentPush(configDo.isSilentPush());
+        bo.setEnabled(configDo.isEnabled());
+        bo.setEnabled(configDo.isEnabled());
         //template
         MMXTemplate template = getTemplate(configDo.getTemplateId());
         bo.setTemplate(template);
@@ -332,17 +334,19 @@ public class MMXPushConfigService {
         configDo.setConfigId(bo.getConfigId());
         configDo.setAppId(bo.getAppId());
         configDo.setConfigName(bo.getConfigName());
-        configDo.setIsSilentPush(bo.isSilentPush());
+        configDo.setSilentPush(bo.isSilentPush());
+        configDo.setEnabled(bo.isEnabled());
         configDo.setTemplateId(bo.getTemplate().getTemplateId());
         return configDo;
     }
 
 
-    public MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, Map<String, String> meta) throws MMXException {
+    public MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {
         MMXPushConfig config = new MMXPushConfig();
         config.setAppId(appId);
         config.setConfigName(configName);
         config.setSilentPush(isSilentPush);
+        config.setEnabled(isEnabled);
         config.setTemplate(getTemplate(appId, templateName));
         config.setMeta(meta);
         return createConfig(config);

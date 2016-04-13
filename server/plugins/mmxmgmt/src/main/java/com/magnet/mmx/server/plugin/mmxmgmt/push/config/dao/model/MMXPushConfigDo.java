@@ -10,7 +10,8 @@ public class MMXPushConfigDo {
     private String appId;
     private String configName;
     private int templateId;
-    private boolean isSilentPush;
+    private boolean silentPush;
+    private boolean enabled;
 
     public int getConfigId() {
         return configId;
@@ -32,19 +33,25 @@ public class MMXPushConfigDo {
     public void setConfigName(String configName) {
         this.configName = configName;
     }
+
     public int getTemplateId() {
         return templateId;
     }
-
     public void setTemplateId(int templateId) {
         this.templateId = templateId;
     }
 
     public boolean isSilentPush() {
-        return isSilentPush;
+        return silentPush;
     }
-    public void setIsSilentPush(boolean isSilentPush) {
-        this.isSilentPush = isSilentPush;
+    public void setSilentPush(boolean silentPush) {
+        this.silentPush = silentPush;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 }

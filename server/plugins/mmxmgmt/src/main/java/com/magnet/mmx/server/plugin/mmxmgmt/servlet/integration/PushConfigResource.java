@@ -128,6 +128,7 @@ public class PushConfigResource {
         c.setAppId(request.appId);
         c.setConfigName(request.configName);
         c.setSilentPush(request.silentPush);
+        c.setEnabled(request.enabled);
         MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
         c.setTemplate(t);
         c.setMeta(request.meta);
@@ -143,6 +144,7 @@ public class PushConfigResource {
         response.appId = c.getAppId();
         response.configName = c.getConfigName();
         response.silentPush = c.isSilentPush();
+        response.enabled = c.isEnabled();
         response.templateId = c.getTemplate().getTemplateId();
         response.meta = c.getMeta();
         response.channelNames = c.getChannelNames();
@@ -166,6 +168,7 @@ public class PushConfigResource {
         String configName;
         int templateId;
         boolean silentPush;
+        boolean enabled;
         Map<String, String> meta;
         List<String> channelNames;
 
@@ -193,6 +196,18 @@ public class PushConfigResource {
         public void setIsSilentPush(boolean silentPush) {
             this.silentPush = silentPush;
         }
+        public boolean isSilentPush() {
+            return silentPush;
+        }
+        public void setSilentPush(boolean silentPush) {
+            this.silentPush = silentPush;
+        }
+        public boolean getIsEnabled() {
+            return enabled;
+        }
+        public void setIsEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
         public Map<String, String> getMeta() {
             return meta;
         }
@@ -214,6 +229,7 @@ public class PushConfigResource {
         String configName;
         int templateId;
         boolean silentPush;
+        boolean enabled;
         Map<String, String> meta = new HashMap<>();
         Set<String> channelNames;
 
@@ -246,6 +262,12 @@ public class PushConfigResource {
         }
         public void setIsSilentPush(boolean silentPush) {
             this.silentPush = silentPush;
+        }
+        public boolean getIsEnabled() {
+            return enabled;
+        }
+        public void setIsEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
         public Map<String, String> getMeta() {
             return meta;

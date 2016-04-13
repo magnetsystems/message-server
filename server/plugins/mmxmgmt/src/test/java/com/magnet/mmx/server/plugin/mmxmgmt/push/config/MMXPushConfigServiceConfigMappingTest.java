@@ -54,7 +54,7 @@ public class MMXPushConfigServiceConfigMappingTest {
     @Test
     public void createMappingNoChannel() throws MMXException {
         Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("appId", "cc-1", true, null, channelNames);
+        MMXPushConfig c = PushConfigTestUtil.createConfig("appId", "cc-1", true, true, null, channelNames);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), null);
         assertMapping(m, "appId", c.getConfigId(), null);
 
@@ -70,7 +70,7 @@ public class MMXPushConfigServiceConfigMappingTest {
 
         //create
         Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, null, channelNames);
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
 
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), "c1");
         assertMapping(m, "appId", c.getConfigId(), "c1");
@@ -85,7 +85,7 @@ public class MMXPushConfigServiceConfigMappingTest {
     public void createAndUpdateMapping() throws MMXException {
 
         Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, null, channelNames);
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), "c1");
         assertMapping(m, "appId", c.getConfigId(), "c1");
 
@@ -96,7 +96,7 @@ public class MMXPushConfigServiceConfigMappingTest {
         assertMapping(m2, "appId", c.getConfigId(), "c1");
 
         //do update
-        MMXPushConfig c2 = PushConfigTestUtil.createConfig("aa", "cc", true, null, channelNames);
+        MMXPushConfig c2 = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
         m2.setAppId("app-2");
         m2.setConfigId(c2.getConfigId());
         m2.setChannelName("c2");
@@ -119,7 +119,7 @@ public class MMXPushConfigServiceConfigMappingTest {
      public void createAndDeleteMapping() throws MMXException {
 
         Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, null, channelNames);
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("app5",  c.getConfigId(), "c1");
         assertMapping(m, "app5", c.getConfigId(), "c1");
 
