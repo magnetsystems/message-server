@@ -134,6 +134,11 @@ public class PushConfigTemplateTest {
     public boolean isSilentPush() {
       return (mSilentPush == null) ? false : mSilentPush;
     }
+
+    @Override
+    public String toString() {
+      return "[silentPush="+mSilentPush+", meta="+mMeta+", template='"+mTemplate+"']";
+    }
   }
 
   static class MockTemplateLoader implements TemplateLoader {
@@ -150,7 +155,10 @@ public class PushConfigTemplateTest {
 
     @Override
     public Object findTemplateSource(String name) throws IOException {
-      return mMap.get(name);
+      MockPushConfig config = mMap.get(name);
+      System.out.println("[DEBUG] MockPushConfig: findTemplateSource(name="+
+                        name+"): config="+config);
+      return config;
     }
 
     @Override
