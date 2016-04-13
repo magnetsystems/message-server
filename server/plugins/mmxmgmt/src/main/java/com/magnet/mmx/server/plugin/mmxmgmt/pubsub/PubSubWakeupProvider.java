@@ -40,6 +40,7 @@ import com.magnet.mmx.protocol.PubSubNotification;
 import com.magnet.mmx.protocol.PushMessage;
 import com.magnet.mmx.protocol.PushResult;
 import com.magnet.mmx.protocol.PushResult.Unsent;
+import com.magnet.mmx.protocol.StatusCode;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
@@ -63,6 +64,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.TemplateNotFoundException;
 
 /**
  * Wakeup provider for pubsub notification.  The notification can be push
@@ -114,13 +116,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
     public Object findTemplateSource(String name) throws IOException {
       LOGGER.debug("findTemplateSource() name={}", name);
       String[] tokens = FmPushConfig.parseName(name);
-//      try {
-        return MMXPushConfigService.getInstance().getPushConfig(tokens[0],
-            tokens[1], tokens[2]);
-//      } catch (MMXException e) {
-//        throw new IOException("MMXPushConfigService.getPushConfig("+tokens[0]+
-//                              ","+tokens[1]+","+tokens[2]+") failed", e);
-//      }
+      return MMXPushConfigService.getInstance().getPushConfig(tokens[0],
+          tokens[1], tokens[2], tokens[3]);
     }
 
     @Override
@@ -160,10 +157,17 @@ public class PubSubWakeupProvider implements WakeupProvider {
       sFmCfg.setLogTemplateExceptions(false);
     }
 
-    static String makeName(String appId, String topicPath, String configName) {
+    // Get a Freemarker configuration to override the template loader for testing.
+    static Configuration getFmConfig() {
+      return sFmCfg;
+    }
+
+    static String makeName(String userId, String appId, String topicPath,
+                            String configName) {
       StringBuilder name = new StringBuilder();
+      name.append(userId);
       if (appId != null) {
-        name.append(appId);
+        name.append(DELIMITER).append(appId);
         if (topicPath != null) {
           name.append(DELIMITER).append(topicPath);
           if (configName != null) {
@@ -176,24 +180,39 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     static String[] parseName(String name) {
       String[] tokens = name.split(DELIMITER);
-      String appId = (tokens.length > 0) ? tokens[0] : null;
-      String channelName = (tokens.length > 1) ? tokens[1] : null;
-      String configName = (tokens.length > 2) ? tokens[2] : null;
-      return new String[] { appId, channelName, configName };
+      String userId = (tokens.length > 0) ? tokens[0] : null;
+      String appId = (tokens.length > 1) ? tokens[1] : null;
+      String channelName = (tokens.length > 2) ? tokens[2] : null;
+      String configName = (tokens.length > 3) ? tokens[3] : null;
+      return new String[] { userId, appId, channelName, configName };
     }
 
-    public FmPushConfig(String appId, String topicPath, String configName) {
-      mName = makeName(appId, topicPath, configName);
+    public FmPushConfig(String userId, String appId, String topicPath,
+                        String configName) {
+      mName = makeName(userId, appId, topicPath, configName);
     }
 
-    // Build a context with ${application}, ${channel}, and ${msg}
-    private Map<String, Object> buildContext(AppEntity ae, MMXTopicId topic,
-                                            MMXPacketExtension mmxExt0,
-                                            Node node, int count) {
+    /**
+     * Get the unique name used by Freemarker for this configuration.
+     * @return
+     */
+    public String getName() {
+      return mName;
+    }
+
+    // Build a context with ${application}, ${channel}, ${msg} and ${config}
+    // which can be null.
+    private Map<String, Object> buildContext(AppEntity ae, Node node, int count,
+                                            MMXPacketExtension mmxExt0) {
       HashMap<String, Object> context = new HashMap<String, Object>();
-      context.put("application", new NameDesc(ae.getName(), null, 0));
-      // just its name (no user id for user topic)
-      context.put("channel", new NameDesc(node.getName(), node.getDescription(), count));
+      try {
+        context.put("application", new NameDesc(ae.getName(), null, 0));
+        // channel name is just its name (not nodeID)
+        context.put("channel", new NameDesc(node.getName(), node.getDescription(), count));
+        context.put("config", sFmCfg.getTemplateLoader().findTemplateSource(mName));
+      } catch (IOException e) {
+        LOGGER.error("Caught IOException while building context for template "+mName, e);
+      }
       String displayName;
       try {
         MMXid from = MMXid.fromMap((Map<String, String>)
@@ -210,20 +229,19 @@ public class PubSubWakeupProvider implements WakeupProvider {
       return context;
     }
 
-    // Use the oldest item to build the push payload; it avoids to have multiple
-    // notifications.  Otherwise, template needs the ${msgs} as a collection.
-    public String buildPushPayload(AppEntity ae, MMXTopicId topic,
-                            List<MMXPacketExtension> mmxItems, Node node) {
-      MMXPacketExtension item0 = mmxItems.get(0);
-      Map<String, Object> context = buildContext(ae, topic, item0, node,
-                                                  mmxItems.size());
+    /**
+     * Evaluate the template with context for push configurations.  The push
+     * configurations are stored in java.util.Properties name-value format.
+     * @param context A non-null dictionary.
+     * @return Push configurations, or null if config is not found.
+     */
+    public String eval(Map<String, Object> context) throws MMXException {
       try {
         // Merge the context and template to form the output properties.
         StringWriter writer = new StringWriter();
         Template template = sFmCfg.getTemplate(mName);
         template.process(context, writer);
         String pushConfigProps = writer.getBuffer().toString();
-        LOGGER.trace("@@@ push config="+pushConfigProps);
         Reader reader = new StringReader(pushConfigProps);
         mProps = new Properties();
         mProps.load(reader);
@@ -236,11 +254,32 @@ public class PubSubWakeupProvider implements WakeupProvider {
         } catch (Throwable e) {
           mPushType = null;
         }
-      } catch (IOException e) {
-        LOGGER.error("Cannot find template", e);
+        return pushConfigProps;
+      } catch (TemplateNotFoundException e) {
+        // If the template is not found, no notification will be performed.
         return null;
+      } catch (IOException e) {
+        LOGGER.error("Cannot access template", e);
+        throw new MMXException("Cannot access template", StatusCode.INTERNAL_ERROR, e);
       } catch (TemplateException e) {
         LOGGER.error("Template processing error", e);
+        throw new MMXException("Template processing error", StatusCode.BAD_REQUEST, e);
+      }
+    }
+
+    // Use the oldest item to build the push payload; it avoids to have multiple
+    // notifications.  Otherwise, template needs the ${msgs} as a collection.
+    private String buildPushPayload(AppEntity ae, Node node,
+                          List<MMXPacketExtension> mmxItems, MMXTopicId topic) {
+      MMXPacketExtension item0 = mmxItems.get(0);
+      try {
+        Map<String, Object> context = buildContext(ae, node, mmxItems.size(), item0);
+        if (eval(context) == null) {
+          // If the config is not found, no notification.
+          return null;
+        }
+      } catch (MMXException e) {
+        // Ignore all errors.
         return null;
       }
 
@@ -248,7 +287,8 @@ public class PubSubWakeupProvider implements WakeupProvider {
         return null;
       }
       String pushPayload;
-      MMXid from = MMXid.fromMap((Map<String, String>) item0.getMmxMeta().get(MmxHeaders.FROM));
+      MMXid from = MMXid.fromMap((Map<String, String>) item0.getMmxMeta().get(
+          MmxHeaders.FROM));
       if (getPushType() == PushMessage.Action.PUSH) {
         // Push notification payload
         pushPayload = GsonData.getGson().toJson(new PubSubNotification(topic,
@@ -284,6 +324,17 @@ public class PubSubWakeupProvider implements WakeupProvider {
     public String getSound() {
       return mProps.getProperty(MMXConfigKeys.PUBSUB_NOTIFICATION_SOUND, null);
     }
+
+    @Override
+    public String toString() {
+      try {
+        StringWriter writer = new StringWriter();
+        mProps.store(writer, null);
+        return writer.getBuffer().toString();
+      } catch (IOException e) {
+        return null;
+      }
+    }
   }
 
   @Override
@@ -318,7 +369,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
     String configName = (String) mmx.getMmxMeta().get(MmxHeaders.PUSH_CONFIG);
     MMXTopicId topic = TopicHelper.parseNode(node.getNodeID());
 
-    LOGGER.debug("@@@ wakeup(): jid="+jid+", topic="+topic);
+    LOGGER.debug("@@@ wakeup(): jid="+jid+", nodeID="+node.getNodeID());
 
     if (jid.getResource() != null) {
       if (sessionMgr.getSession(jid) == null) {
@@ -328,8 +379,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
-        FmPushConfig pushConf = new FmPushConfig(appId, topic.toPath(), configName);
-        String pushPayload = pushConf.buildPushPayload(ae, topic, mmxItems, node);
+        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.toPath(),
+                                                  configName);
+        String pushPayload = pushConf.buildPushPayload(ae, node, mmxItems, topic);
         if (pushPayload == null) {
           return;
         }
@@ -366,8 +418,9 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
-        FmPushConfig pushConf = new FmPushConfig(appId, topic.toPath(), configName);
-        String pushPayload = pushConf.buildPushPayload(ae, topic, mmxItems, node);
+        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.toPath(),
+                                                  configName);
+        String pushPayload = pushConf.buildPushPayload(ae, node, mmxItems, topic);
         if (pushPayload == null) {
           return;
         }
@@ -382,7 +435,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       } else {
         LOGGER.trace("@@@ wakeup(): no disconnected devices for jid="+jid+
-                      ", topic="+topic+"; registered devices="+deList.size());
+                      ", nodeID="+node.getNodeID()+"; registered devices="+deList.size());
       }
     }
   }

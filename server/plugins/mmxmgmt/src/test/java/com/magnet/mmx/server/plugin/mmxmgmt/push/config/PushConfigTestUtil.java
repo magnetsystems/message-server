@@ -33,7 +33,7 @@ public class PushConfigTestUtil {
         c.setConfigName(configName);
         MMXTemplate t = createTemplate(appId, MMXTemplateType.PUSH, "nn", "tt");
         c.setTemplate(t);
-        c.setIsSilentPush(isSilentPush);
+        c.setSilentPush(isSilentPush);
         c.setMeta(meta);
         c.setChannelNames(channelNames);
         return MMXPushConfigService.getInstance().createConfig(c);

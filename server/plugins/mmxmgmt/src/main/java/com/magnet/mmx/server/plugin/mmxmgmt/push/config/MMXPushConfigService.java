@@ -272,7 +272,7 @@ public class MMXPushConfigService {
         bo.setConfigId(configDo.getConfigId());
         bo.setAppId(configDo.getAppId());
         bo.setConfigName(configDo.getConfigName());
-        bo.setIsSilentPush(configDo.isSilentPush());
+        bo.setSilentPush(configDo.isSilentPush());
         //template
         MMXTemplate template = getTemplate(configDo.getTemplateId());
         bo.setTemplate(template);
@@ -326,7 +326,7 @@ public class MMXPushConfigService {
         MMXPushConfig config = new MMXPushConfig();
         config.setAppId(appId);
         config.setConfigName(configName);
-        config.setIsSilentPush(isSilentPush);
+        config.setSilentPush(isSilentPush);
         config.setTemplate(getTemplate(appId, templateName));
         config.setMeta(meta);
         return createConfig(config);

@@ -166,7 +166,7 @@ public class MMXPushConfigServiceConfigTest {
         meta2.put("kk2", "vv2");
         c3.setConfigName("cc2");
         c3.setMeta(meta2);
-        c3.setIsSilentPush(false);
+        c3.setSilentPush(false);
         MMXPushConfig c4 = MMXPushConfigService.getInstance().updateConfig(c3);
         assertConfig(c4, "aa", "cc2", false, meta2, channelNames);
 

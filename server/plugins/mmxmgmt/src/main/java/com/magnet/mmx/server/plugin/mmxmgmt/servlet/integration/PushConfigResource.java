@@ -127,7 +127,7 @@ public class PushConfigResource {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(request.appId);
         c.setConfigName(request.configName);
-        c.setIsSilentPush(request.isSilentPush);
+        c.setSilentPush(request.silentPush);
         MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
         c.setTemplate(t);
         c.setMeta(request.meta);
@@ -142,7 +142,7 @@ public class PushConfigResource {
         response.configId = c.getConfigId();
         response.appId = c.getAppId();
         response.configName = c.getConfigName();
-        response.isSilentPush = c.isSilentPush();
+        response.silentPush = c.isSilentPush();
         response.templateId = c.getTemplate().getTemplateId();
         response.meta = c.getMeta();
         response.channelNames = c.getChannelNames();
@@ -165,7 +165,7 @@ public class PushConfigResource {
         String appId;
         String configName;
         int templateId;
-        boolean isSilentPush;
+        boolean silentPush;
         Map<String, String> meta;
         List<String> channelNames;
 
@@ -188,10 +188,10 @@ public class PushConfigResource {
             this.templateId = templateId;
         }
         public boolean getIsSilentPush() {
-            return isSilentPush;
+            return silentPush;
         }
-        public void setIsSilentPush(boolean isSilentPush) {
-            this.isSilentPush = isSilentPush;
+        public void setIsSilentPush(boolean silentPush) {
+            this.silentPush = silentPush;
         }
         public Map<String, String> getMeta() {
             return meta;
@@ -213,7 +213,7 @@ public class PushConfigResource {
         String appId;
         String configName;
         int templateId;
-        boolean isSilentPush;
+        boolean silentPush;
         Map<String, String> meta = new HashMap<>();
         Set<String> channelNames;
 
@@ -242,10 +242,10 @@ public class PushConfigResource {
             this.templateId = templateId;
         }
         public boolean getIsSilentPush() {
-            return isSilentPush;
+            return silentPush;
         }
-        public void setIsSilentPush(boolean isSilentPush) {
-            this.isSilentPush = isSilentPush;
+        public void setIsSilentPush(boolean silentPush) {
+            this.silentPush = silentPush;
         }
         public Map<String, String> getMeta() {
             return meta;
