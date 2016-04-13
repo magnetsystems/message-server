@@ -18,14 +18,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDaoFactory;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock.MMXPushMockDaoFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplateType;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import org.apache.commons.lang3.StringUtils;
 
@@ -77,8 +71,30 @@ public class MMXPushConfigService {
         }
     }
 
+    private boolean isPushSuppressedByUser(String userId, String appId, String channelName) {
+
+        Collection<MMXPushSuppress> suppressList = getPushSuppressForUser(userId);
+        if (suppressList != null) {
+            for (MMXPushSuppress s : suppressList) {
+                if (s.getAppId().equals(appId)) {
+                    if (StringUtils.isBlank(s.getChannelName())) {
+                        //blocked on app level
+                        return true;
+                    } else if (s.getChannelName().equals(channelName)) {
+                        //blocked on channel level
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public MMXPushConfig getPushConfig(String userId, String appId, String channelName, String configName) {
 
+        if (isPushSuppressedByUser(userId, appId, channelName)) {
+            return null;
+        }
         MMXPushConfig config = null;
         if (appId == null) {
             appId = SYSTEM_APP;
@@ -534,6 +550,76 @@ public class MMXPushConfigService {
 //            }
 //        }
 //    }
+
+
+
+    //SUPPRESS
+    private static MMXPushSuppressDo suppressBo2Do(MMXPushSuppress bo) {
+
+        MMXPushSuppressDo suppressDo = new MMXPushSuppressDo();
+        suppressDo.setSuppressId(bo.getSuppressId());
+        suppressDo.setUserId(bo.getUserId());
+        suppressDo.setAppId(bo.getAppId());
+        suppressDo.setChannelName(bo.getChannelName());
+        return suppressDo;
+    }
+    private static MMXPushSuppress suppressDo2Bo(MMXPushSuppressDo suppressDo) {
+
+        MMXPushSuppress bo = new MMXPushSuppress();
+        bo.setSuppressId(suppressDo.getSuppressId());
+        bo.setUserId(suppressDo.getUserId());
+        bo.setAppId(suppressDo.getAppId());
+        bo.setChannelName(suppressDo.getChannelName());
+        return bo;
+    }
+    private static Collection<MMXPushSuppress> suppressDo2Bo(Collection<MMXPushSuppressDo> listDo) {
+
+        if (listDo == null) {
+            return null;
+        }
+        Collection<MMXPushSuppress> listBo = new ArrayList<>();
+        for (MMXPushSuppressDo suppressDo : listDo) {
+            listBo.add(suppressDo2Bo(suppressDo));
+        }
+        return listBo;
+    }
+    private void validateSuppress(MMXPushSuppress suppress) throws MMXException {
+        validateMandatoryObject("suppress", suppress);
+        validateMandatoryArgument("suppress.userId", suppress.getUserId());
+        validateMandatoryArgument("suppress.appId", suppress.getAppId());
+    }
+    public MMXPushSuppress createPushSuppress(String userId, String appId, String channelName) throws MMXException {
+
+        MMXPushSuppress suppress = new MMXPushSuppress();
+        suppress.setUserId(userId);
+        suppress.setAppId(appId);
+        suppress.setChannelName(channelName);
+        return createPushSuppress(suppress);
+    }
+    public MMXPushSuppress createPushSuppress(MMXPushSuppress suppress) throws MMXException {
+        validateSuppress(suppress);
+        return suppressDo2Bo(daoFactory.getMXPushSuppressDao().createSuppress(suppressBo2Do(suppress)));
+    }
+    public MMXPushSuppress getPushSuppress(int suppressId) throws MMXException {
+        MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppressId);
+        if (s == null) {
+            throw new MMXException("suppress record not found", ErrorCode.NOT_FOUND.getCode());
+        }
+        return suppressDo2Bo(s);
+    }
+    public Collection<MMXPushSuppress> getPushSuppressForUser(String userId) {
+        Collection<MMXPushSuppressDo> listDo = daoFactory.getMXPushSuppressDao().getSuppress(userId);
+        return suppressDo2Bo(listDo);
+    }
+    public void deletePushSuppress(MMXPushSuppress suppress) throws MMXException {
+        validateSuppress(suppress);
+        daoFactory.getMXPushSuppressDao().deleteSuppress(suppressBo2Do(suppress));
+    }
+
+
+
+
+
 
     //VALIDATION
     private void validateMandatoryObject(String name, Object obj) throws MMXException {

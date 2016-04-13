@@ -10,4 +10,5 @@ public interface MMXPushConfigDaoFactory {
     public MMXPushConfigDao getMMXPushConfigDao();
     public MMXPushConfigMappingDao getMMXPushConfigMappingDao();
     public MMXPushConfigMetadataDao getMXPushConfigMetadataDao();
+    public MMXPushSuppressDao getMXPushSuppressDao();
 }

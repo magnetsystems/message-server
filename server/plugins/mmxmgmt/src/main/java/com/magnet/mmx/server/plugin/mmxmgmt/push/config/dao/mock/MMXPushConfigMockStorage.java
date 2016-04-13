@@ -1,9 +1,6 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
 
 import java.util.*;
 
@@ -14,6 +11,8 @@ import java.util.*;
 public class MMXPushConfigMockStorage {
 
     private static int SEQUENCE = 0;
+    private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = new HashMap<>();
+    private static final Map<String, List<MMXPushSuppressDo>> SUPPRESS_BY_USER = new HashMap<>();
     private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = new HashMap<>();
     private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
     private static Map<Integer, MMXPushConfigDo> CONFIG_BY_ID = new HashMap<>();
@@ -223,6 +222,38 @@ public class MMXPushConfigMockStorage {
         if (mappings != null) {
             for (MMXPushConfigMappingDo mapping : mappings) {
                 deleteConfigMapping(mapping);
+            }
+        }
+    }
+
+
+    ///////////// SUPPRESS
+    public static MMXPushSuppressDo createSuppress(MMXPushSuppressDo suppress) {
+        int id = SEQUENCE++;
+        suppress.setSuppresId(id);
+        SUPPRESS_BY_ID.put(id, suppress);
+        List<MMXPushSuppressDo> list = SUPPRESS_BY_USER.get(suppress.getUserId());
+        if (list == null) {
+            list = new ArrayList<>();
+            SUPPRESS_BY_USER.put(suppress.getUserId(), list);
+        }
+        list.add(suppress);
+        return suppress;
+    }
+    public static MMXPushSuppressDo getSuppress(int suppressId) {
+        return SUPPRESS_BY_ID.get(suppressId);
+    }
+    public static List<MMXPushSuppressDo> getSuppressForUser(String userId) {
+        return SUPPRESS_BY_USER.get(userId);
+    }
+    public static void deleteSuppress(MMXPushSuppressDo suppress) {
+        if (suppress != null) {
+            SUPPRESS_BY_ID.remove(suppress.getSuppresId());
+            List<MMXPushSuppressDo> list = getSuppressForUser(suppress.getUserId());
+            for (MMXPushSuppressDo s : list) {
+                if (s.getSuppresId() == suppress.getSuppresId()) {
+                    SUPPRESS_BY_USER.remove(s);
+                }
             }
         }
     }
