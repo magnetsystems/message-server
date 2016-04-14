@@ -604,7 +604,6 @@ public class MMXPushConfigService {
     }
     private void validateSuppress(MMXPushSuppress suppress) throws MMXException {
         validateMandatoryObject("suppress", suppress);
-        validateMandatoryArgument("suppress.userId", suppress.getUserId());
         validateMandatoryArgument("suppress.appId", suppress.getAppId());
     }
     public MMXPushSuppress createPushSuppress(String userId, String appId, String channelName) throws MMXException {
