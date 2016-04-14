@@ -4,6 +4,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplateType;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -127,9 +128,9 @@ public class TemplateResource {
     private static MMXTemplate convertRequest(TemplateRequest request) {
 
         MMXTemplate t = new MMXTemplate();
-        t.setAppId(request.appId);
-        t.setTemplateName(request.templateName);
-        t.setTemplate(request.template);
+        t.setAppId(StringUtils.isBlank(request.appId) ? null : request.appId);
+        t.setTemplateName(StringUtils.isBlank(request.templateName) ? null : request.templateName);
+        t.setTemplate(StringUtils.isBlank(request.template) ? null : request.template);
         t.setTemplateType(MMXTemplateType.PUSH);
         return t;
     }
@@ -165,23 +166,18 @@ public class TemplateResource {
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
         public String getTemplateName() {
             return templateName;
         }
-
         public void setTemplateName(String templateName) {
             this.templateName = templateName;
         }
-
         public String getTemplate() {
             return template;
         }
-
         public void setTemplate(String template) {
             this.template = template;
         }
@@ -198,39 +194,30 @@ public class TemplateResource {
         public int getTemplateId() {
             return templateId;
         }
-
         public void setTemplateId(int templateId) {
             this.templateId = templateId;
         }
-
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
         public String getTemplateType() {
             return templateType;
         }
-
         public void setTemplateType(String templateType) {
             this.templateType = templateType;
         }
-
         public String getTemplateName() {
             return templateName;
         }
-
         public void setTemplateName(String templateName) {
             this.templateName = templateName;
         }
-
         public String getTemplate() {
             return template;
         }
-
         public void setTemplate(String template) {
             this.template = template;
         }

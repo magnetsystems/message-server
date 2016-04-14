@@ -3,6 +3,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppress;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -83,9 +84,9 @@ public class PushConfigSuppressResource {
     private static MMXPushSuppress convertRequest(PushConfigSuppressRequest request) {
 
         MMXPushSuppress s = new MMXPushSuppress();
-        s.setUserId(request.getUserId());
-        s.setAppId(request.getAppId());
-        s.setChannelName(request.getChannelName());
+        s.setUserId(StringUtils.isBlank(request.getUserId()) ? null : request.getUserId());
+        s.setAppId(StringUtils.isBlank(request.getAppId()) ? null : request.getAppId());
+        s.setChannelName(StringUtils.isBlank(request.getChannelName()) ? null : request.getChannelName());
         return s;
     }
     private static Collection<PushConfigSuppressResponse> convertResponse(Collection<MMXPushSuppress> list) {

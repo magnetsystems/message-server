@@ -1,6 +1,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -22,11 +23,14 @@ public class MMXPushConfigMockStorage {
     private static Map<Integer, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_ID = new HashMap<>();
     private static Map<String, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_APP_AND_CHANNEL = new HashMap<>();
 
+    private static String normalize(String str) {
+        return StringUtils.isBlank(str) ? "" : str;
+    }
     private static String getKey(String appId, String name) {
-        return name + "@" + appId;
+        return normalize(name) + "@" + normalize(appId);
     }
     private static String getKeyWithChannel(String appId, String userId, String channelName) {
-        return userId + "@" + channelName + "@" + appId;
+        return normalize(userId) + "@" + normalize(channelName) + "@" + normalize(appId);
     }
 
     //TEMPLATE

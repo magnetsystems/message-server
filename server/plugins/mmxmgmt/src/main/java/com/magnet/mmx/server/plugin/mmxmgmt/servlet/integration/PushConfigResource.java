@@ -4,6 +4,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -161,8 +162,8 @@ public class PushConfigResource {
     private static MMXPushConfig convertRequest(PushConfigRequest request) throws MMXException {
 
         MMXPushConfig c = new MMXPushConfig();
-        c.setAppId(request.appId);
-        c.setConfigName(request.configName);
+        c.setAppId(StringUtils.isBlank(request.appId) ? null : request.appId);
+        c.setConfigName(StringUtils.isBlank(request.configName) ? null : request.configName);
         c.setSilentPush(request.silentPush);
         c.setEnabled(request.enabled);
         MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
