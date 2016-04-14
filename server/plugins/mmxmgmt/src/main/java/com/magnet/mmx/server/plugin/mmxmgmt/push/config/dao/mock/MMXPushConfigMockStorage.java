@@ -13,7 +13,6 @@ public class MMXPushConfigMockStorage {
 
     private static int SEQUENCE = 0;
     private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = new HashMap<>();
-    private static final Map<String, Map<String, MMXPushSuppressDo>> SUPPRESS_BY_APP_AND_USER = new HashMap<>();
     private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = new HashMap<>();
     private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
     private static Map<Integer, MMXPushConfigDo> CONFIG_BY_ID = new HashMap<>();
@@ -239,34 +238,27 @@ public class MMXPushConfigMockStorage {
         int id = SEQUENCE++;
         suppress.setSuppressId(id);
         SUPPRESS_BY_ID.put(id, suppress);
-        Map<String, MMXPushSuppressDo> map = SUPPRESS_BY_APP_AND_USER.get(getKey(suppress.getAppId(), suppress.getUserId()));
-        if (map == null) {
-            map = new HashMap<>();
-            SUPPRESS_BY_APP_AND_USER.put(getKey(suppress.getAppId(), suppress.getUserId()), map);
-        }
-        map.put(getKeyWithChannel(suppress.getAppId(), suppress.getUserId(), suppress.getChannelName()), suppress);
         return suppress;
     }
     public static MMXPushSuppressDo getSuppress(int suppressId) {
         return SUPPRESS_BY_ID.get(suppressId);
     }
+    private static boolean compareStrings(String str1, String str2) {
+        return StringUtils.isBlank(str1) && StringUtils.isBlank(str2) || str1 != null && str1.equals(str2);
+    }
     public static Collection<MMXPushSuppressDo> getSuppressForUser(String appId, String userId) {
-        if (SUPPRESS_BY_APP_AND_USER.get(getKey(appId, userId)) == null) {
-            return null;
+
+        List<MMXPushSuppressDo> list = new ArrayList<>();
+        for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
+            if (compareStrings(s.getUserId(), userId)) {
+                list.add(s);
+            }
         }
-        return SUPPRESS_BY_APP_AND_USER.get(getKey(appId, userId)).values();
+        return list;
     }
     public static void deleteSuppress(MMXPushSuppressDo suppress) {
         if (suppress != null) {
             SUPPRESS_BY_ID.remove(suppress.getSuppressId());
-            Map<String, MMXPushSuppressDo> map = SUPPRESS_BY_APP_AND_USER.get(getKey(suppress.getAppId(), suppress.getUserId()));
-            Set<String> keys = map.keySet();
-            for (String key : keys) {
-                MMXPushSuppressDo s = map.get(key);
-                if (s.getSuppressId() == suppress.getSuppressId()) {
-                    map.remove(key);
-                }
-            }
         }
     }
 }

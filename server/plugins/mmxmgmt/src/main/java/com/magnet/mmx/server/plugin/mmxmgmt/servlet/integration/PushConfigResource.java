@@ -176,6 +176,9 @@ public class PushConfigResource {
     }
     private static PushConfigResponse convertResponse(MMXPushConfig c) {
 
+        if (c == null) {
+            return null;
+        }
         PushConfigResponse response = new PushConfigResponse();
         response.configId = c.getConfigId();
         response.appId = c.getAppId();

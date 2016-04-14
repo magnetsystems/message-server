@@ -42,7 +42,7 @@ public class PushConfigSuppressResource {
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response geAlltSuppress(@QueryParam("appId") String appId, @QueryParam("userId") String userId) {
+    public Response geAllSuppress(@QueryParam("appId") String appId, @QueryParam("userId") String userId) {
 
         PushConfigSuppressRequest request = new PushConfigSuppressRequest();
         request.setUserId(userId);
