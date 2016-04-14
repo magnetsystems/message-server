@@ -22,8 +22,8 @@ public class MMXPushSuppressDaoMock implements MMXPushSuppressDao {
     }
 
     @Override
-    public Collection<MMXPushSuppressDo> getSuppress(String userId) {
-        return MMXPushConfigMockStorage.getSuppressForUser(userId);
+    public Collection<MMXPushSuppressDo> getSuppress(String appId, String userId) {
+        return MMXPushConfigMockStorage.getSuppressForUser(appId, userId);
     }
 
     @Override

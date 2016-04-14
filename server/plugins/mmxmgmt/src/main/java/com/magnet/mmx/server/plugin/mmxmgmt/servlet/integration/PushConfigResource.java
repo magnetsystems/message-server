@@ -23,6 +23,8 @@ public class PushConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPushConfig(PushConfigRequest request) {
 
+        request.setIsEnabled(true);
+
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
             public PushConfigResponse execute(PushConfigRequest request) throws MMXException {
@@ -78,11 +80,45 @@ public class PushConfigResource {
         };
         return method.doMethod(configId);
     }
+    @GET
+    @Path("/active")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response retrieveActivePushConfig(@QueryParam("userId") String userId, @QueryParam("appId") String appId, @QueryParam("channelName") String channelName, @QueryParam("configName") String configName) {
+
+        ActiveConfigRequest req = new ActiveConfigRequest();
+        req.userId = userId;
+        req.appId = appId;
+        req.channelName = channelName;
+        req.configName = configName;
+
+        RestMethod<ActiveConfigRequest, PushConfigResponse> method = new RestMethod<ActiveConfigRequest, PushConfigResponse>() {
+            @Override
+            public PushConfigResponse execute(ActiveConfigRequest req) throws MMXException {
+                //convert request
+
+                //do job
+                MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(req.userId, req.appId, req.channelName, req.configName);
+
+                //convert and return response
+                return convertResponse(c);
+            }
+        };
+        return method.doMethod(req);
+    }
+    public static class ActiveConfigRequest {
+        String userId;
+        String appId;
+        String channelName;
+        String configName;
+    }
     @PUT
     @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePushConfig(@PathParam("configId") final int configId, PushConfigRequest request) {
+
+        request.setIsEnabled(true);
 
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override

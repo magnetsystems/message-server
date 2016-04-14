@@ -12,6 +12,6 @@ public interface MMXPushSuppressDao {
 
     public MMXPushSuppressDo createSuppress(MMXPushSuppressDo suppress);
     public MMXPushSuppressDo getSuppress(int suppressId);
-    public Collection<MMXPushSuppressDo> getSuppress(String userId);
+    public Collection<MMXPushSuppressDo> getSuppress(String appId, String userId);
     public void deleteSuppress(MMXPushSuppressDo suppress);
 }
