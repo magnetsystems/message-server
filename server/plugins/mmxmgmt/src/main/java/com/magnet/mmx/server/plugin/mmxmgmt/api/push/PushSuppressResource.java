@@ -1,32 +1,40 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
+package com.magnet.mmx.server.plugin.mmxmgmt.api.push;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.api.PublicRestMethod;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppress;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
- * Created by mmicevic on 4/6/16.
+ * Created by mmicevic on 4/13/16.
  *
  */
-@Path("/integration/pushconfigs/suppress")
-public class PushConfigSuppressResource {
+
+@Path("/pushconfigs/suppress")
+public class PushSuppressResource {  //extends AbstractBaseResource {
 
     @POST
-//    @Path("")
+    //    @Path("")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response suppress(PushConfigSuppressRequest request) {
+    public Response suppress(@Context HttpHeaders headers, PushConfigSuppressRequest request) {
 
-        RestMethod<PushConfigSuppressRequest, PushConfigSuppressResponse> method = new RestMethod<PushConfigSuppressRequest, PushConfigSuppressResponse>() {
+        PublicRestMethod<PushConfigSuppressRequest, PushConfigSuppressResponse> method = new PublicRestMethod<PushConfigSuppressRequest, PushConfigSuppressResponse>() {
             @Override
             public PushConfigSuppressResponse execute(PushConfigSuppressRequest request) throws MMXException {
                 //convert request
                 MMXPushSuppress s = convertRequest(request);
+                s.setAppId(appId);
+                s.setUserId(userId);
 
                 //do job
                 s = MMXPushConfigService.getInstance().createPushSuppress(s);
@@ -35,15 +43,15 @@ public class PushConfigSuppressResource {
                 return convertResponse(s);
             }
         };
-        return method.doMethod(request);
+        return method.doMethod(request, headers);
     }
 //    @GET
 //    @Path("/{suppressId}")
 //    @Produces(MediaType.APPLICATION_JSON)
 //    @Consumes(MediaType.APPLICATION_JSON)
-//    public Response getSuppress(@PathParam("suppressId") int suppressId) {
+//    public Response getSuppress(@Context HttpHeaders headers, @PathParam("suppressId") int suppressId) {
 //
-//        RestMethod<Integer, PushConfigSuppressResponse> method = new RestMethod<Integer,PushConfigSuppressResponse>() {
+//        PublicRestMethod<Integer, PushConfigSuppressResponse> method = new PublicRestMethod<Integer,PushConfigSuppressResponse>() {
 //            @Override
 //            public PushConfigSuppressResponse execute(Integer suppressId) throws MMXException {
 //                //convert request
@@ -55,35 +63,35 @@ public class PushConfigSuppressResource {
 //                return convertResponse(s);
 //            }
 //        };
-//        return method.doMethod(suppressId);
+//        return method.doMethod(suppressId, headers);
 //    }
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response geAlltSuppress(@QueryParam("appId") String appId) {
+    public Response geAllSuppress(@Context HttpHeaders headers) {
 
-        RestMethod<String, Collection<PushConfigSuppressResponse>> method = new RestMethod<String, Collection<PushConfigSuppressResponse>>() {
+        PublicRestMethod<String, Collection<PushConfigSuppressResponse>> method = new PublicRestMethod<String, Collection<PushConfigSuppressResponse>>() {
             @Override
-            public Collection<PushConfigSuppressResponse> execute(String appId) throws MMXException {
+            public Collection<PushConfigSuppressResponse> execute(String dummy) throws MMXException {
                 //convert request
 
                 //do job
-                Collection<MMXPushSuppress> s = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(appId, null);
+                Collection<MMXPushSuppress> s = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(appId, userId);
 
                 //convert and return response
                 return convertResponse(s);
             }
         };
-        return method.doMethod(appId);
+        return method.doMethod(null, headers);
     }
     @DELETE
     @Path("/{suppressId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response unSuppress(@PathParam("suppressId") int suppressId) {
+    public Response unSuppress(@Context HttpHeaders headers, @PathParam("suppressId") int suppressId) {
 
-        RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer, RestMethod.SimpleMessage>() {
+        PublicRestMethod<Integer, PublicRestMethod.SimpleMessage> method = new PublicRestMethod<Integer, PublicRestMethod.SimpleMessage>() {
             @Override
             public SimpleMessage execute(Integer suppressId) throws MMXException {
                 //convert request
@@ -95,12 +103,11 @@ public class PushConfigSuppressResource {
                 return new SimpleMessage("deleted");
             }
         };
-        return method.doMethod(suppressId);
+        return method.doMethod(suppressId, headers);
     }
     private static MMXPushSuppress convertRequest(PushConfigSuppressRequest request) {
 
         MMXPushSuppress s = new MMXPushSuppress();
-        s.setAppId(request.getAppId());
         s.setChannelName(request.getChannelName());
         return s;
     }
@@ -109,7 +116,6 @@ public class PushConfigSuppressResource {
         if (list == null) {
             return null;
         }
-
         List<PushConfigSuppressResponse> respList = new ArrayList<>();
         for (MMXPushSuppress s : list) {
             respList.add(convertResponse(s));
@@ -121,20 +127,14 @@ public class PushConfigSuppressResource {
         PushConfigSuppressResponse response = new PushConfigSuppressResponse();
         response.setSuppressId(s.getSuppressId());
         response.setAppId(s.getAppId());
+        response.setUserId(s.getUserId());
         response.setChannelName(s.getChannelName());
         return response;
     }
     private static class PushConfigSuppressRequest {
 
-        String appId;
         String channelName;
 
-        public String getAppId() {
-            return appId;
-        }
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
         public String getChannelName() {
             return channelName;
         }
@@ -146,6 +146,7 @@ public class PushConfigSuppressResource {
 
         int suppressId;
         String appId;
+        String userId;
         String channelName;
 
         public int getSuppressId() {
@@ -160,11 +161,16 @@ public class PushConfigSuppressResource {
         public void setAppId(String appId) {
             this.appId = appId;
         }
+        public String getUserId() {
+            return userId;
+        }
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
         public String getChannelName() {
             return channelName;
         }
         public void setChannelName(String channelName) {
             this.channelName = channelName;
         }
-    }
-}
+    }}

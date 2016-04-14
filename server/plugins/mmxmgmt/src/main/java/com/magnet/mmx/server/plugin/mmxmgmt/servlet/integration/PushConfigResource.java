@@ -84,7 +84,7 @@ public class PushConfigResource {
     @Path("/active")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveActivePushConfig(@QueryParam("userId") String userId, @QueryParam("appId") String appId, @QueryParam("channelName") String channelName, @QueryParam("channelName") String configName) {
+    public Response retrieveActivePushConfig(@QueryParam("userId") String userId, @QueryParam("appId") String appId, @QueryParam("channelName") String channelName, @QueryParam("configName") String configName) {
 
         ActiveConfigRequest req = new ActiveConfigRequest();
         req.userId = userId;
