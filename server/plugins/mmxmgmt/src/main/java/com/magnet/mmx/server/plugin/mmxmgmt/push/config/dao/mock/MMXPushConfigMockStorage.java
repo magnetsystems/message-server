@@ -250,7 +250,7 @@ public class MMXPushConfigMockStorage {
 
         List<MMXPushSuppressDo> list = new ArrayList<>();
         for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
-            if (compareStrings(s.getUserId(), userId)) {
+            if (compareStrings(s.getAppId(), appId) &&  compareStrings(s.getUserId(), userId)) {
                 list.add(s);
             }
         }

@@ -150,9 +150,7 @@ public class MMXPushConfigSuppressTest {
         if (recordFound) {
             Assert.fail("suppress record found after delete");
         }
-
-
-        Collection<MMXPushSuppress> suppressList = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(suppress.getAppId(), suppress.getUserId());
+        Collection<MMXPushSuppress> suppressList = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(appId, userId);
         Assert.assertTrue(suppressList == null || suppressList.size() == 0);
     }
 
