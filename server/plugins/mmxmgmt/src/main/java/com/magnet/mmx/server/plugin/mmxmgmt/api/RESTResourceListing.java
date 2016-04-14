@@ -27,7 +27,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.message.MessageStatusResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PingMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushMessageFunctionResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushResource;
-import com.magnet.mmx.server.plugin.mmxmgmt.api.push.PushSuppressResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXDeviceTagsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXTopicTagsResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.tags.MMXUserTagsResource;
@@ -74,7 +73,6 @@ public final class RESTResourceListing {
     MessageResource.class.getName(),
     DeviceTagsResource.class.getName(),
     PushMessageResource.class.getName(),
-          PushSuppressResource.class.getName()
   };
 
   public static String[] getV1Resources() {
