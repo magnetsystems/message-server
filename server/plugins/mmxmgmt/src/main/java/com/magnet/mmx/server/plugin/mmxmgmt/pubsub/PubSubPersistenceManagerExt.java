@@ -554,6 +554,7 @@ public class PubSubPersistenceManagerExt {
         MMXTopicId topic = TopicHelper.parseNode(nodeId);
         TopicInfo result = new TopicInfo(topic.getUserId(), topic.getName(),
             !rs.getBoolean(INDEX_SRCH_ISLEAF))
+          .setDisplayName(rs.getString(INDEX_SRCH_NAME))
           .setDescription(rs.getString(INDEX_SRCH_DESC))
           .setCreationDate(new Date(Long.valueOf(rs.getString(INDEX_SRCH_CREATEDATE))))
           .setModifiedDate(new Date(Long.valueOf(rs.getString(INDEX_SRCH_MODDATE))))
@@ -619,8 +620,11 @@ public class PubSubPersistenceManagerExt {
             subscriptionCount = 0;
           }
           MMXTopicId topic = TopicHelper.parseNode(nodeId);
-          TopicAction.TopicInfoWithSubscriptionCount result = new TopicAction.TopicInfoWithSubscriptionCount(topic.getUserId(),
+          TopicAction.TopicInfoWithSubscriptionCount result = new
+              TopicAction.TopicInfoWithSubscriptionCount(topic.getUserId(),
               name, !isLeaf);
+          result.setId(topic.getName());
+          result.setDisplayName(name);
           result.setSubscriptionCount(subscriptionCount);
           result.setDescription(description);
           result.setCreationDate(new Date(Long.valueOf(resultSet.getString("creationDate"))));

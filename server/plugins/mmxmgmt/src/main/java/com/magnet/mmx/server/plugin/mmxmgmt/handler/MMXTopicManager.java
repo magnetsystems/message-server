@@ -1123,8 +1123,10 @@ public class MMXTopicManager {
   }
 
   private TopicInfo nodeToInfo(String userId, String topic, Node node) {
-    TopicInfo info = new TopicInfo(
-        userId, node.getName() != null ? node.getName() : topic, node.isCollectionNode())
+    TopicInfo info = new TopicInfo(userId,
+        node.getName() != null ? node.getName() : topic, node.isCollectionNode())
+      .setId(topic)
+      .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
       .setModifiedDate(node.getModificationDate())
@@ -1365,8 +1367,9 @@ public class MMXTopicManager {
         entities.size());
     for (TopicEntity entity : entities) {
       MMXTopicId topic = TopicHelper.parseNode(entity.getNodeId());
-      TopicInfo info =  new TopicInfo(topic.getUserId(),
-            topic.getName(), !entity.isLeaf())
+      TopicInfo info =  new TopicInfo(topic.getUserId(), topic.getName(), !entity.isLeaf())
+        .setId(topic.getName())
+        .setDisplayName(entity.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())
         .setMaxItems(entity.isPersistItems() ? entity.getMaxItems() : 0)
@@ -1546,6 +1549,8 @@ public class MMXTopicManager {
 
     for (TopicAction.TopicInfoWithSubscriptionCount ti : results.getResults()) {
       TopicInfo info = new TopicInfo(ti.getUserId(), ti.getName(), ti.isCollection())
+        .setId(ti.getId())
+        .setDisplayName(ti.getDisplayName())
         .setDescription(ti.getDescription())
         .setCreationDate(ti.getCreationDate())
         .setModifiedDate(ti.getModifiedDate())
