@@ -629,13 +629,13 @@ public class MMXPushConfigService {
         Collection<MMXPushSuppressDo> listDo = daoFactory.getMXPushSuppressDao().getSuppress(appId, userId);
         return suppressDo2Bo(listDo);
     }
+    public void deletePushSuppress(int suppressId) throws MMXException {
+        deletePushSuppress(getPushSuppress(suppressId));
+    }
     public void deletePushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
         daoFactory.getMXPushSuppressDao().deleteSuppress(suppressBo2Do(suppress));
     }
-
-
-
 
 
 
