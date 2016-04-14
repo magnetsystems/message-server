@@ -23,6 +23,8 @@ public class PushConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPushConfig(PushConfigRequest request) {
 
+        request.setIsEnabled(true);
+
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
             public PushConfigResponse execute(PushConfigRequest request) throws MMXException {
@@ -116,6 +118,8 @@ public class PushConfigResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePushConfig(@PathParam("configId") final int configId, PushConfigRequest request) {
 
+        request.setIsEnabled(true);
+        
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
             public PushConfigResponse execute(PushConfigRequest request) throws MMXException {

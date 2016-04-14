@@ -12,7 +12,7 @@ public class MMXPushConfigMockStorage {
 
     private static int SEQUENCE = 0;
     private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = new HashMap<>();
-    private static final Map<String, List<MMXPushSuppressDo>> SUPPRESS_BY_USER = new HashMap<>();
+    private static final Map<String, List<MMXPushSuppressDo>> SUPPRESS_BY_APP_AND_USER = new HashMap<>();
     private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = new HashMap<>();
     private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
     private static Map<Integer, MMXPushConfigDo> CONFIG_BY_ID = new HashMap<>();
@@ -232,10 +232,10 @@ public class MMXPushConfigMockStorage {
         int id = SEQUENCE++;
         suppress.setSuppressId(id);
         SUPPRESS_BY_ID.put(id, suppress);
-        List<MMXPushSuppressDo> list = SUPPRESS_BY_USER.get(suppress.getUserId());
+        List<MMXPushSuppressDo> list = SUPPRESS_BY_APP_AND_USER.get(getKey(suppress.getAppId(), suppress.getUserId()));
         if (list == null) {
             list = new ArrayList<>();
-            SUPPRESS_BY_USER.put(suppress.getUserId(), list);
+            SUPPRESS_BY_APP_AND_USER.put(suppress.getUserId(), list);
         }
         list.add(suppress);
         return suppress;
@@ -243,16 +243,16 @@ public class MMXPushConfigMockStorage {
     public static MMXPushSuppressDo getSuppress(int suppressId) {
         return SUPPRESS_BY_ID.get(suppressId);
     }
-    public static List<MMXPushSuppressDo> getSuppressForUser(String userId) {
-        return SUPPRESS_BY_USER.get(userId);
+    public static List<MMXPushSuppressDo> getSuppressForUser(String appId, String userId) {
+        return SUPPRESS_BY_APP_AND_USER.get(getKey(appId, userId));
     }
     public static void deleteSuppress(MMXPushSuppressDo suppress) {
         if (suppress != null) {
             SUPPRESS_BY_ID.remove(suppress.getSuppressId());
-            List<MMXPushSuppressDo> list = getSuppressForUser(suppress.getUserId());
+            List<MMXPushSuppressDo> list = getSuppressForUser(suppress.getAppId(), suppress.getUserId());
             for (MMXPushSuppressDo s : list) {
                 if (s.getSuppressId() == suppress.getSuppressId()) {
-                    SUPPRESS_BY_USER.remove(s);
+                    SUPPRESS_BY_APP_AND_USER.remove(s);
                 }
             }
         }
