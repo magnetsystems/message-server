@@ -1057,6 +1057,8 @@ public class MMXChannelManager {
   private ChannelInfo nodeToInfo(String userId, String channel, Node node) {
     ChannelInfo info = new ChannelInfo(
         userId, node.getName() != null ? node.getName() : channel, node.isCollectionNode())
+      .setId(channel)
+      .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
       .setModifiedDate(node.getModificationDate())
@@ -1299,6 +1301,7 @@ public class MMXChannelManager {
       MMXChannelId channel = ChannelHelper.parseNode(entity.getNodeId());
       ChannelInfo info =  new ChannelInfo(channel.getUserId(),
             channel.getName(), !entity.isLeaf())
+        .setId(channel.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())
         .setMaxItems(entity.isPersistItems() ? entity.getMaxItems() : 0)
@@ -1467,6 +1470,8 @@ public class MMXChannelManager {
 
     for (TopicAction.TopicInfoWithSubscriptionCount ti : results.getResults()) {
       ChannelInfo info = new ChannelInfo(ti.getUserId(), ti.getName(), ti.isCollection())
+        .setId(ti.getId())
+        .setDisplayName(ti.getDisplayName())
         .setDescription(ti.getDescription())
         .setCreationDate(ti.getCreationDate())
         .setModifiedDate(ti.getModifiedDate())

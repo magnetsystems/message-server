@@ -245,8 +245,8 @@ public class TopicResource {
           query, appId, paginationInfo, null,
           Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
-      SearchResult<TopicInfoWithSubscriptionCount> topicList = 
-          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), 
+      SearchResult<TopicInfoWithSubscriptionCount> topicList =
+          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(),
               builtQuery, paginationInfo);
 
       SearchResult<TopicNode> nodes = transform(appId, topicList);
@@ -417,6 +417,8 @@ public class TopicResource {
       node.setTopicName(idToName(object.getUserId(), object.getName()));
       node.setUserId(object.getUserId());
       node.setCollection(object.isCollection());
+      node.setTopicId(object.getId());
+      node.setDisplayName(object.getDisplayName());
       node.setDescription(object.getDescription());
       node.setPersistent(object.isPersistent());
       node.setMaxItems(object.getMaxItems());
@@ -448,7 +450,7 @@ public class TopicResource {
     }
     return infoList;
   }
-  
+
   // The hack to fix MOB-2516 that allows the console to display user topics as
   // userID#topicName.  This method parses the global topic or user topic properly.
   public static MMXTopicId nameToId(String topicName) {
@@ -459,7 +461,7 @@ public class TopicResource {
       return new MMXTopicId(topicName.substring(0, index), topicName.substring(index+1));
     }
   }
-  
+
   // The hack to fix MOB-2516 to convert a user topic to userId#topicName
   public static String idToName(String userId, String topicName) {
     if (userId == null) {
