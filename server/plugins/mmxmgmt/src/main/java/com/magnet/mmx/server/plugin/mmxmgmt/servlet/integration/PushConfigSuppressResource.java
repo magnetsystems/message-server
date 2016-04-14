@@ -37,45 +37,28 @@ public class PushConfigSuppressResource {
         };
         return method.doMethod(request);
     }
-//    @GET
-//    @Path("/{suppressId}")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    public Response getSuppress(@PathParam("suppressId") int suppressId) {
-//
-//        RestMethod<Integer, PushConfigSuppressResponse> method = new RestMethod<Integer,PushConfigSuppressResponse>() {
-//            @Override
-//            public PushConfigSuppressResponse execute(Integer suppressId) throws MMXException {
-//                //convert request
-//
-//                //do job
-//                MMXPushSuppress s = MMXPushConfigService.getInstance().getPushSuppress(suppressId);
-//
-//                //convert and return response
-//                return convertResponse(s);
-//            }
-//        };
-//        return method.doMethod(suppressId);
-//    }
     @GET
     @Path("/all")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response geAlltSuppress(@QueryParam("appId") String appId) {
+    public Response geAlltSuppress(@QueryParam("appId") String appId, @QueryParam("userId") String userId) {
 
-        RestMethod<String, Collection<PushConfigSuppressResponse>> method = new RestMethod<String, Collection<PushConfigSuppressResponse>>() {
+        PushConfigSuppressRequest request = new PushConfigSuppressRequest();
+        request.setUserId(userId);
+        request.setAppId(appId);
+        RestMethod<PushConfigSuppressRequest, Collection<PushConfigSuppressResponse>> method = new RestMethod<PushConfigSuppressRequest, Collection<PushConfigSuppressResponse>>() {
             @Override
-            public Collection<PushConfigSuppressResponse> execute(String appId) throws MMXException {
+            public Collection<PushConfigSuppressResponse> execute(PushConfigSuppressRequest request) throws MMXException {
                 //convert request
 
                 //do job
-                Collection<MMXPushSuppress> s = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(appId, null);
+                Collection<MMXPushSuppress> s = MMXPushConfigService.getInstance().getPushSuppressForAppAndUser(request.getAppId(), request.getUserId());
 
                 //convert and return response
                 return convertResponse(s);
             }
         };
-        return method.doMethod(appId);
+        return method.doMethod(request);
     }
     @DELETE
     @Path("/{suppressId}")
@@ -100,6 +83,7 @@ public class PushConfigSuppressResource {
     private static MMXPushSuppress convertRequest(PushConfigSuppressRequest request) {
 
         MMXPushSuppress s = new MMXPushSuppress();
+        s.setUserId(request.getUserId());
         s.setAppId(request.getAppId());
         s.setChannelName(request.getChannelName());
         return s;
@@ -120,15 +104,23 @@ public class PushConfigSuppressResource {
 
         PushConfigSuppressResponse response = new PushConfigSuppressResponse();
         response.setSuppressId(s.getSuppressId());
+        response.setUserId(s.getUserId());
         response.setAppId(s.getAppId());
         response.setChannelName(s.getChannelName());
         return response;
     }
     private static class PushConfigSuppressRequest {
 
+        String userId;
         String appId;
         String channelName;
 
+        public String getUserId() {
+            return userId;
+        }
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
         public String getAppId() {
             return appId;
         }
@@ -145,6 +137,7 @@ public class PushConfigSuppressResource {
     private static class PushConfigSuppressResponse {
 
         int suppressId;
+        String userId;
         String appId;
         String channelName;
 
@@ -153,6 +146,12 @@ public class PushConfigSuppressResource {
         }
         public void setSuppressId(int suppressId) {
             this.suppressId = suppressId;
+        }
+        public String getUserId() {
+            return userId;
+        }
+        public void setUserId(String userId) {
+            this.userId = userId;
         }
         public String getAppId() {
             return appId;
