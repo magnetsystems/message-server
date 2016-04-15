@@ -32,7 +32,7 @@ public class MMXPushConfig {
     private boolean silentPush;
     private boolean enabled;
     private Map<String, String> meta = new HashMap<>();
-    private Set<String> channelNames = new HashSet<>();
+    private Set<String> channelIds = new HashSet<>();
 
     public int getConfigId() {
         return configId;
@@ -83,10 +83,10 @@ public class MMXPushConfig {
         this.meta = meta;
     }
 
-    public Set<String> getChannelNames() {
-        return channelNames;
+    public Set<String> getChannelIds() {
+        return channelIds;
     }
-    public void setChannelNames(Set<String> channelNames) {
-        this.channelNames = channelNames;
+    public void setChannelIds(Set<String> channelIds) {
+        this.channelIds = channelIds;
     }
 }

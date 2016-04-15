@@ -72,16 +72,22 @@ public class MMXPushConfigService {
         }
     }
 
-    private boolean isPushSuppressedByUser(String userId, String appId, String channelName) {
+    private boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
 
         Collection<MMXPushSuppress> suppressList = getPushSuppressForAppAndUser(appId, userId);
         if (suppressList != null) {
             for (MMXPushSuppress s : suppressList) {
+                if (s.getUntilDate() != null) {
+                    if (s.getUntilDate() < System.currentTimeMillis()) {
+                        //expired
+                        continue;
+                    }
+                }
                 if (s.getAppId().equals(appId)) {
-                    if (StringUtils.isBlank(s.getChannelName())) {
+                    if (StringUtils.isBlank(s.getChannelId())) {
                         //blocked on app level
                         return true;
-                    } else if (s.getChannelName().equals(channelName)) {
+                    } else if (s.getChannelId().equals(channelId)) {
                         //blocked on channel level
                         return true;
                     }
@@ -91,14 +97,14 @@ public class MMXPushConfigService {
         return false;
     }
 
-    public MMXPushConfig getPushConfig(String userId, String appId, String channelName, String configName) {
+    public MMXPushConfig getPushConfig(String userId, String appId, String channelId, String configName) {
 
         //check suppress on user level
-        if (isPushSuppressedByUser(userId, appId, channelName)) {
+        if (isPushSuppressedByUser(userId, appId, channelId)) {
             return null;
         }
         //check suppress on app level
-        if (isPushSuppressedByUser(null, appId, channelName)) {
+        if (isPushSuppressedByUser(null, appId, channelId)) {
             return null;
         }
 
@@ -113,8 +119,8 @@ public class MMXPushConfigService {
             config = getEnabledConfigIgnoreException(appId, configName);
         }
         //fall down on channel level
-        if (config == null && channelName != null) {
-                config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, channelName));
+        if (config == null && channelId != null) {
+                config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, channelId));
         }
         //if cannot find mapping for channel - try to find mapping for app
         if (config == null && appId != null) {
@@ -156,11 +162,11 @@ public class MMXPushConfigService {
         }
         return config;
     }
-    private MMXPushConfigMapping getConfigMappingIgnoreException(String appId, String channelName) {
+    private MMXPushConfigMapping getConfigMappingIgnoreException(String appId, String channelId) {
 
         MMXPushConfigMapping mapping = null;
         try {
-            mapping = getConfigMapping(appId, channelName);
+            mapping = getConfigMapping(appId, channelId);
         }
         catch (MMXException e) {
         }
@@ -320,13 +326,13 @@ public class MMXPushConfigService {
 
         Collection<MMXPushConfigMappingDo> mappings = daoFactory.getMMXPushConfigMappingDao().getAllMappingsForConfig(config.getConfigId());
         if (mappings != null && mappings.size() > 0) {
-            Set<String> channelNames = new HashSet<>();
+            Set<String> channelIds = new HashSet<>();
             for (MMXPushConfigMappingDo mapping : mappings) {
-                if (StringUtils.isNotBlank(mapping.getChannelName())) {
-                    channelNames.add(mapping.getChannelName());
+                if (StringUtils.isNotBlank(mapping.getChannelId())) {
+                    channelIds.add(mapping.getChannelId());
                 }
             }
-            config.setChannelNames(channelNames);
+            config.setChannelIds(channelIds);
         }
     }
 
@@ -383,19 +389,19 @@ public class MMXPushConfigService {
     private void updateMappings(MMXPushConfig config) {
 
         daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(config.getConfigId());
-        if (config.getChannelNames() != null && config.getChannelNames().size() > 0) {
-            for (String channelName : config.getChannelNames()) {
+        if (config.getChannelIds() != null && config.getChannelIds().size() > 0) {
+            for (String channelId : config.getChannelIds()) {
                 MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
                 mapping.setConfigId(config.getConfigId());
                 mapping.setAppId(config.getAppId());
-                mapping.setChannelName(channelName);
+                mapping.setChannelId(channelId);
                 daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
             }
         } else {
             MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
             mapping.setConfigId(config.getConfigId());
             mapping.setAppId(config.getAppId());
-            mapping.setChannelName(null);
+            mapping.setChannelId(null);
             daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
         }
     }
@@ -470,7 +476,7 @@ public class MMXPushConfigService {
         bo.setMappingId(mappingDo.getMappingId());
         bo.setAppId(mappingDo.getAppId());
         bo.setConfigId(mappingDo.getConfigId());
-        bo.setChannelName(mappingDo.getChannelName());
+        bo.setChannelId(mappingDo.getChannelId());
         return bo;
     }
     private Collection<MMXPushConfigMapping> mappingDo2Bo(Collection<MMXPushConfigMappingDo> allConfigMappings) {
@@ -492,14 +498,14 @@ public class MMXPushConfigService {
         mappingDo.setMappingId(bo.getMappingId());
         mappingDo.setAppId(bo.getAppId());
         mappingDo.setConfigId(bo.getConfigId());
-        mappingDo.setChannelName(bo.getChannelName());
+        mappingDo.setChannelId(bo.getChannelId());
         return mappingDo;
     }
-    public MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelName) throws MMXException {
+    public MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelId) throws MMXException {
         MMXPushConfigMapping mapping = new MMXPushConfigMapping();
         mapping.setConfigId(configId);
         mapping.setAppId(appId);
-        mapping.setChannelName(channelName);
+        mapping.setChannelId(channelId);
         return createConfigMapping(mapping);
     }
     public MMXPushConfigMapping createConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
@@ -513,15 +519,15 @@ public class MMXPushConfigService {
         }
         return mappingDo2Bo(m);
     }
-    public MMXPushConfigMapping getConfigMapping(String appId, String channelName) throws MMXException {
+    public MMXPushConfigMapping getConfigMapping(String appId, String channelId) throws MMXException {
         validateMandatoryArgument("appId", appId);
-        MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName);
+        MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelId);
         if (m == null) {
             throw new MMXException("mapping not found", ErrorCode.NOT_FOUND.getCode());
         }
         return mappingDo2Bo(m);
 
-//        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelName));
+//        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelId));
     }
     public Collection<MMXPushConfigMapping> getAllConfigMappings(String appId) throws MMXException {
         validateMandatoryArgument("appId", appId);
@@ -529,11 +535,11 @@ public class MMXPushConfigService {
     }
 
 
-    //    public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelName) throws MMXException {
+    //    public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelId) throws MMXException {
 //        MMXPushConfigMapping mapping = getConfigMapping(mappingId);
 //        mapping.setConfigId(configId);
 //        mapping.setAppId(appId);
-//        mapping.setChannelName(channelName);
+//        mapping.setChannelId(channelId);
 //        return updateConfigMapping(mapping);
 //    }
     public MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
@@ -554,18 +560,18 @@ public class MMXPushConfigService {
     }
 
 //    //
-//    public void updateConfigAndMappings(MMXPushConfig config, Collection<String> channelNames) throws MMXException {
+//    public void updateConfigAndMappings(MMXPushConfig config, Collection<String> channelIds) throws MMXException {
 //
 //        validateConfig(config);
 //
 //        //transaction
 //        updateConfig(config);
 //        deleteAllConfigMappings(config.getAppId());
-//        if (channelNames == null || channelNames.size() == 0) {
+//        if (channelIds == null || channelIds.size() == 0) {
 //            createConfigMapping(config.getConfigId(), config.getAppId(), null);
 //        } else {
-//            for (String channelName : channelNames) {
-//                createConfigMapping(config.getConfigId(), config.getAppId(), channelName);
+//            for (String channelId : channelIds) {
+//                createConfigMapping(config.getConfigId(), config.getAppId(), channelId);
 //            }
 //        }
 //    }
@@ -579,7 +585,8 @@ public class MMXPushConfigService {
         suppressDo.setSuppressId(bo.getSuppressId());
         suppressDo.setUserId(bo.getUserId());
         suppressDo.setAppId(bo.getAppId());
-        suppressDo.setChannelName(bo.getChannelName());
+        suppressDo.setChannelId(bo.getChannelId());
+        suppressDo.setUntilDate(bo.getUntilDate());
         return suppressDo;
     }
     private static MMXPushSuppress suppressDo2Bo(MMXPushSuppressDo suppressDo) {
@@ -588,7 +595,8 @@ public class MMXPushConfigService {
         bo.setSuppressId(suppressDo.getSuppressId());
         bo.setUserId(suppressDo.getUserId());
         bo.setAppId(suppressDo.getAppId());
-        bo.setChannelName(suppressDo.getChannelName());
+        bo.setChannelId(suppressDo.getChannelId());
+        bo.setUntilDate(suppressDo.getUntilDate());
         return bo;
     }
     private static Collection<MMXPushSuppress> suppressDo2Bo(Collection<MMXPushSuppressDo> listDo) {
@@ -606,17 +614,21 @@ public class MMXPushConfigService {
         validateMandatoryObject("suppress", suppress);
         validateMandatoryArgument("suppress.appId", suppress.getAppId());
     }
-    public MMXPushSuppress createPushSuppress(String userId, String appId, String channelName) throws MMXException {
+    public MMXPushSuppress createPushSuppress(String userId, String appId, String channelId) throws MMXException {
 
         MMXPushSuppress suppress = new MMXPushSuppress();
         suppress.setUserId(userId);
         suppress.setAppId(appId);
-        suppress.setChannelName(channelName);
+        suppress.setChannelId(channelId);
         return createPushSuppress(suppress);
     }
     public MMXPushSuppress createPushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
-        return suppressDo2Bo(daoFactory.getMXPushSuppressDao().createSuppress(suppressBo2Do(suppress)));
+        return suppressDo2Bo(daoFactory.getMXPushSuppressDao().suppress(suppressBo2Do(suppress)));
+    }
+    public void createPushUnSuppress(MMXPushSuppress suppress) throws MMXException {
+        validateSuppress(suppress);
+        daoFactory.getMXPushSuppressDao().unSuppress(suppressBo2Do(suppress));
     }
     public MMXPushSuppress getPushSuppress(int suppressId) throws MMXException {
         MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppressId);

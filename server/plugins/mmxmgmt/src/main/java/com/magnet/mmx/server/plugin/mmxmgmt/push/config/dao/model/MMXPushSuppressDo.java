@@ -9,7 +9,8 @@ public class MMXPushSuppressDo {
     private int suppressId;
     private String userId;
     private String appId;
-    private String channelName;
+    private String channelId;
+    private Long untilDate;
 
 
     public int getSuppressId() {
@@ -33,10 +34,17 @@ public class MMXPushSuppressDo {
         this.appId = appId;
     }
 
-    public String getChannelName() {
-        return channelName;
+    public String getChannelId() {
+        return channelId;
     }
-    public void setChannelName(String channelName) {
-        this.channelName = channelName;
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
+    }
+
+    public Long getUntilDate() {
+        return untilDate;
+    }
+    public void setUntilDate(Long untilDate) {
+        this.untilDate = untilDate;
     }
 }

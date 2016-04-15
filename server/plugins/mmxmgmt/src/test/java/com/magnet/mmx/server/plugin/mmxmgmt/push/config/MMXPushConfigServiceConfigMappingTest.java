@@ -53,8 +53,8 @@ public class MMXPushConfigServiceConfigMappingTest {
 
     @Test
     public void createMappingNoChannel() throws MMXException {
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("appId", "cc-1", true, true, null, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("appId", "cc-1", true, true, null, channelIds);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), null);
         assertMapping(m, "appId", c.getConfigId(), null);
 
@@ -69,8 +69,8 @@ public class MMXPushConfigServiceConfigMappingTest {
     public void createMappingWithChannel() throws MMXException {
 
         //create
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelIds);
 
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), "c1");
         assertMapping(m, "appId", c.getConfigId(), "c1");
@@ -84,8 +84,8 @@ public class MMXPushConfigServiceConfigMappingTest {
     @Test
     public void createAndUpdateMapping() throws MMXException {
 
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelIds);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("appId", c.getConfigId(), "c1");
         assertMapping(m, "appId", c.getConfigId(), "c1");
 
@@ -96,10 +96,10 @@ public class MMXPushConfigServiceConfigMappingTest {
         assertMapping(m2, "appId", c.getConfigId(), "c1");
 
         //do update
-        MMXPushConfig c2 = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
+        MMXPushConfig c2 = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelIds);
         m2.setAppId("app-2");
         m2.setConfigId(c2.getConfigId());
-        m2.setChannelName("c2");
+        m2.setChannelId("c2");
         MMXPushConfigMapping m3 = MMXPushConfigService.getInstance().updateConfigMapping(m2);
         assertMapping(m3, "app-2", c2.getConfigId(), "c2");
 
@@ -118,8 +118,8 @@ public class MMXPushConfigServiceConfigMappingTest {
     @Test
      public void createAndDeleteMapping() throws MMXException {
 
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, null, channelIds);
         MMXPushConfigMapping m = PushConfigTestUtil.createMapping("app5",  c.getConfigId(), "c1");
         assertMapping(m, "app5", c.getConfigId(), "c1");
 
@@ -134,10 +134,10 @@ public class MMXPushConfigServiceConfigMappingTest {
 
         //retrieve back from db
         assertMappingNotFound(m.getMappingId());
-        assertMappingNotFound(m.getAppId(), m.getChannelName());
+        assertMappingNotFound(m.getAppId(), m.getChannelId());
 //        MMXPushConfigMapping m4 = MMXPushConfigService.getInstance().getConfigMapping(m.getMappingId());
 //        Assert.assertNull(m4);
-//        MMXPushConfigMapping m5 = MMXPushConfigService.getInstance().getConfigMapping(m.getAppId(), m.getChannelName());
+//        MMXPushConfigMapping m5 = MMXPushConfigService.getInstance().getConfigMapping(m.getAppId(), m.getChannelId());
 //        Assert.assertNull(m5);
     }
     private static void assertMappingNotFound(int mappingId) {
@@ -154,18 +154,18 @@ public class MMXPushConfigServiceConfigMappingTest {
             Assert.fail("expecting 'mapping not found' for id = " + mappingId);
         }
     }
-    private static void assertMappingNotFound(String appId, String channelName) {
+    private static void assertMappingNotFound(String appId, String channelId) {
 
         boolean found = false;
         try {
-            MMXPushConfigService.getInstance().getConfigMapping(appId, channelName);
+            MMXPushConfigService.getInstance().getConfigMapping(appId, channelId);
             found = true;
         }
         catch (MMXException e) {
             e.printStackTrace();
         }
         if (found) {
-            Assert.fail("expecting 'mapping not found' for id = " + appId + "/" + channelName);
+            Assert.fail("expecting 'mapping not found' for id = " + appId + "/" + channelId);
         }
     }
 
@@ -217,10 +217,10 @@ public class MMXPushConfigServiceConfigMappingTest {
 //        MMXMapping t3 = MMXPushConfigService.getInstance().getMapping(t.getAppId(), t.getMappingName());
 //        Assert.assertNull(t3);
 //    }
-    private static void assertMapping(MMXPushConfigMapping m, String appId, int configId, String channelName) throws MMXException {
+    private static void assertMapping(MMXPushConfigMapping m, String appId, int configId, String channelId) throws MMXException {
         Assert.assertNotNull(m);
         Assert.assertEquals(appId, m.getAppId());
         Assert.assertEquals(configId, m.getConfigId());
-        Assert.assertEquals(channelName, m.getChannelName());
+        Assert.assertEquals(channelId, m.getChannelId());
     }
 }

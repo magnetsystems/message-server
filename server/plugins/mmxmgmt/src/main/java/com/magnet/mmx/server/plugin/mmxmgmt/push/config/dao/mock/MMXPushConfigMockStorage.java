@@ -28,8 +28,8 @@ public class MMXPushConfigMockStorage {
     private static String getKey(String appId, String name) {
         return normalize(name) + "@" + normalize(appId);
     }
-    private static String getKeyWithChannel(String appId, String userId, String channelName) {
-        return normalize(userId) + "@" + normalize(channelName) + "@" + normalize(appId);
+    private static String getKeyWithChannel(String appId, String userId, String channelId) {
+        return normalize(userId) + "@" + normalize(channelId) + "@" + normalize(appId);
     }
 
     //TEMPLATE
@@ -177,14 +177,14 @@ public class MMXPushConfigMockStorage {
         int id = SEQUENCE++;
         mapping.setMappingId(id);
         CONFIG_MAPPING_BY_ID.put(id, mapping);
-        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
+        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelId()), mapping);
         return mapping;
     }
     public static MMXPushConfigMappingDo getConfigMapping(int mappingId) {
         return CONFIG_MAPPING_BY_ID.get(mappingId);
     }
-    public static MMXPushConfigMappingDo getConfigMapping(String appId, String channelName) {
-        return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelName));
+    public static MMXPushConfigMappingDo getConfigMapping(String appId, String channelId) {
+        return CONFIG_MAPPING_BY_APP_AND_CHANNEL.get(getKey(appId, channelId));
     }
     public static Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(String appId) {
         List<MMXPushConfigMappingDo> list = new ArrayList<>();
@@ -209,17 +209,17 @@ public class MMXPushConfigMockStorage {
         //remove old config from index
         MMXPushConfigMappingDo oldMapping = getConfigMapping(mapping.getMappingId());
         if (oldMapping != null) {
-            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(oldMapping.getAppId(), oldMapping.getChannelName()));
+            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(oldMapping.getAppId(), oldMapping.getChannelId()));
         }
 
         CONFIG_MAPPING_BY_ID.put(mapping.getMappingId(), mapping);
-        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelName()), mapping);
+        CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelId()), mapping);
         return mapping;
     }
     public static void deleteConfigMapping(MMXPushConfigMappingDo mapping) {
         if (mapping != null) {
             CONFIG_MAPPING_BY_ID.remove(mapping.getMappingId());
-            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(mapping.getAppId(), mapping.getChannelName()));
+            CONFIG_MAPPING_BY_APP_AND_CHANNEL.remove(getKey(mapping.getAppId(), mapping.getChannelId()));
         }
     }
 
@@ -234,20 +234,30 @@ public class MMXPushConfigMockStorage {
 
 
     ///////////// SUPPRESS
-    public static MMXPushSuppressDo createSuppress(MMXPushSuppressDo suppress) {
+    public static MMXPushSuppressDo suppress(MMXPushSuppressDo suppress) {
         int id = SEQUENCE++;
         suppress.setSuppressId(id);
         SUPPRESS_BY_ID.put(id, suppress);
         return suppress;
     }
+    public static void unSuppress(MMXPushSuppressDo suppress) {
+        deleteSuppress(findSuppress(suppress.getUserId(), suppress.getAppId(), suppress.getChannelId()));
+    }
+    public static MMXPushSuppressDo findSuppress(String userId, String appId, String channelId) {
+        for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
+            if (compareStrings(s.getAppId(), appId) && compareStrings(s.getUserId(), userId) && compareStrings(s.getChannelId(), channelId)) {
+                return s;
+            }
+        }
+        return null;
+    }
     public static MMXPushSuppressDo getSuppress(int suppressId) {
         return SUPPRESS_BY_ID.get(suppressId);
     }
     private static boolean compareStrings(String str1, String str2) {
-        return StringUtils.isBlank(str1) && StringUtils.isBlank(str2) || str1 != null && str1.equals(str2);
+        return (StringUtils.isBlank(str1) && StringUtils.isBlank(str2)) || (str1 != null && str1.equals(str2));
     }
     public static Collection<MMXPushSuppressDo> getSuppressForUser(String appId, String userId) {
-
         List<MMXPushSuppressDo> list = new ArrayList<>();
         for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
             if (compareStrings(s.getAppId(), appId) &&  compareStrings(s.getUserId(), userId)) {

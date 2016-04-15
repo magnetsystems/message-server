@@ -30,22 +30,22 @@ public class MMXPushConfigServiceConfigTest {
     public void createConfigMissingAppId_1_null() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig(null, "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig(null, "cc", true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingAppId_1_empty() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig("", "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig("", "cc", true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingAppId_1_space() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig("   ", "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig("   ", "cc", true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingAppId_2_null() throws MMXException {
@@ -69,22 +69,22 @@ public class MMXPushConfigServiceConfigTest {
     public void createConfigMissingConfigName_1_null() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig("aa", null, true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig("aa", null, true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingConfigName_1_empty() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig("aa", "", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig("aa", "", true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingConfigName_1_space() throws MMXException {
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        PushConfigTestUtil.createConfig("aa", "   ", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        PushConfigTestUtil.createConfig("aa", "   ", true, true, meta, channelIds);
     }
     @Test(expected = MMXException.class)
     public void createConfigMissingConfigName_2_null() throws MMXException {
@@ -108,8 +108,8 @@ public class MMXPushConfigServiceConfigTest {
     @Test
     public void createConfigMissingMeta() throws MMXException {
         Map<String,String> meta = null;
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelIds);
         Assert.assertNotNull(c);
         c = PushConfigTestUtil.createConfig2("aa", "cc", true, true, meta);
         Assert.assertNotNull(c);
@@ -120,8 +120,8 @@ public class MMXPushConfigServiceConfigTest {
         //create
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, false, meta, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, false, meta, channelIds);
         assertConfig(c, "aa", "cc", true, false, meta, null);
         //retrieve
         MMXPushConfig c2 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());
@@ -134,31 +134,31 @@ public class MMXPushConfigServiceConfigTest {
         //create
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = new HashSet<>();
-        channelNames.add("ch1");
-        channelNames.add("ch2");
+        Set<String> channelIds = new HashSet<>();
+        channelIds.add("ch1");
+        channelIds.add("ch2");
 
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelNames);
-        assertConfig(c, "aa", "cc", true, true, meta, channelNames);
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelIds);
+        assertConfig(c, "aa", "cc", true, true, meta, channelIds);
 
         //retrieve
         MMXPushConfig c2 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());
-        assertConfig(c2, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c2, "aa", "cc", true, true, meta, channelIds);
         MMXPushConfig c3 = MMXPushConfigService.getInstance().getConfig(c.getAppId(), c.getConfigName());
-        assertConfig(c3, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c3, "aa", "cc", true, true, meta, channelIds);
     }
     @Test
     public void createAndUpdateConfigNoChannels() throws MMXException {
         //create
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelNames);
-        assertConfig(c, "aa", "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelIds);
+        assertConfig(c, "aa", "cc", true, true, meta, channelIds);
         MMXPushConfig c2 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());
-        assertConfig(c2, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c2, "aa", "cc", true, true, meta, channelIds);
         MMXPushConfig c3 = MMXPushConfigService.getInstance().getConfig(c.getAppId(), c.getConfigName());
-        assertConfig(c3, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c3, "aa", "cc", true, true, meta, channelIds);
 
         //do update
         Map<String,String> meta2 = new HashMap<>();
@@ -169,13 +169,13 @@ public class MMXPushConfigServiceConfigTest {
         c3.setSilentPush(false);
         c3.setEnabled(false);
         MMXPushConfig c4 = MMXPushConfigService.getInstance().updateConfig(c3);
-        assertConfig(c4, "aa", "cc2", false, false, meta2, channelNames);
+        assertConfig(c4, "aa", "cc2", false, false, meta2, channelIds);
 
         //retrieve after update
         MMXPushConfig c5 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());
-        assertConfig(c5, "aa", "cc2", false, false, meta2, channelNames);
+        assertConfig(c5, "aa", "cc2", false, false, meta2, channelIds);
         MMXPushConfig c6 = MMXPushConfigService.getInstance().getConfig(c.getAppId(), c5.getConfigName());
-        assertConfig(c6, "aa", "cc2", false, false, meta2, channelNames);
+        assertConfig(c6, "aa", "cc2", false, false, meta2, channelIds);
 
         //make sure there is no old record
         assertConfigNotFound(c.getAppId(), "cc");
@@ -188,13 +188,13 @@ public class MMXPushConfigServiceConfigTest {
         //create
         Map<String,String> meta = new HashMap<>();
         meta.put("kk", "vv");
-        Set<String> channelNames = null;
-        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelNames);
-        assertConfig(c, "aa", "cc", true, true, meta, channelNames);
+        Set<String> channelIds = null;
+        MMXPushConfig c = PushConfigTestUtil.createConfig("aa", "cc", true, true, meta, channelIds);
+        assertConfig(c, "aa", "cc", true, true, meta, channelIds);
         MMXPushConfig c2 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());
-        assertConfig(c2, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c2, "aa", "cc", true, true, meta, channelIds);
         MMXPushConfig c3 = MMXPushConfigService.getInstance().getConfig(c.getAppId(), c.getConfigName());
-        assertConfig(c3, "aa", "cc", true, true, meta, channelNames);
+        assertConfig(c3, "aa", "cc", true, true, meta, channelIds);
 
         //do delete
         MMXPushConfigService.getInstance().deleteConfig(c3);
@@ -245,11 +245,11 @@ public class MMXPushConfigServiceConfigTest {
         Assert.assertEquals(isEnabled, c.isEnabled());
         assertMeta(meta, c.getMeta());
         if (channels == null || channels.size() == 0) {
-            Assert.assertTrue(c.getChannelNames() == null || c.getChannelNames().size() == 0);
+            Assert.assertTrue(c.getChannelIds() == null || c.getChannelIds().size() == 0);
         } else {
-            Assert.assertEquals(channels.size(), c.getChannelNames().size());
-            for (String ch : c.getChannelNames()) {
-                Assert.assertTrue(c.getChannelNames().contains(ch));
+            Assert.assertEquals(channels.size(), c.getChannelIds().size());
+            for (String ch : c.getChannelIds()) {
+                Assert.assertTrue(c.getChannelIds().contains(ch));
             }
         }
     }
