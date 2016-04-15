@@ -163,14 +163,14 @@ public class PubSubWakeupProvider implements WakeupProvider {
       return sFmCfg;
     }
 
-    static String makeName(String userId, String appId, String topicPath,
+    static String makeName(String userId, String appId, String channelId,
                             String configName) {
       StringBuilder name = new StringBuilder();
       name.append(userId);
       if (appId != null) {
         name.append(DELIMITER).append(appId);
-        if (topicPath != null) {
-          name.append(DELIMITER).append(topicPath);
+        if (channelId != null) {
+          name.append(DELIMITER).append(channelId);
           if (configName != null) {
             name.append(DELIMITER).append(configName);
           }
@@ -183,14 +183,14 @@ public class PubSubWakeupProvider implements WakeupProvider {
       String[] tokens = name.split(DELIMITER);
       String userId = (tokens.length > 0) ? tokens[0] : null;
       String appId = (tokens.length > 1) ? tokens[1] : null;
-      String channelName = (tokens.length > 2) ? tokens[2] : null;
+      String channelId = (tokens.length > 2) ? tokens[2] : null;
       String configName = (tokens.length > 3) ? tokens[3] : null;
-      return new String[] { userId, appId, channelName, configName };
+      return new String[] { userId, appId, channelId, configName };
     }
 
-    public FmPushConfig(String userId, String appId, String topicPath,
+    public FmPushConfig(String userId, String appId, String channelId,
                         String configName) {
-      mName = makeName(userId, appId, topicPath, configName);
+      mName = makeName(userId, appId, channelId, configName);
     }
 
     /**
@@ -368,6 +368,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
     // Use the first (oldest item) to construct the push payload.
     MMXPacketExtension mmx = mmxItems.get(0);
     String configName = (String) mmx.getMmxMeta().get(MmxHeaders.PUSH_CONFIG);
+    // Topic and channel are interchangeable.
     MMXTopicId topic = TopicHelper.parseNode(node.getNodeID());
 
     LOGGER.debug("@@@ wakeup(): jid="+jid+", nodeID="+node.getNodeID());
@@ -380,7 +381,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         if (!isPushEnabled(ae)) {
           return;
         }
-        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.toPath(),
+        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.getId(),
                                                   configName);
         String pushPayload = pushConf.buildPushPayload(ae, node, mmxItems, topic);
         if (pushPayload == null) {
@@ -419,7 +420,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
         }
       }
       if (devices.size() > 0) {
-        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.toPath(),
+        FmPushConfig pushConf = new FmPushConfig(userId, appId, topic.getId(),
                                                   configName);
         String pushPayload = pushConf.buildPushPayload(ae, node, mmxItems, topic);
         if (pushPayload == null) {

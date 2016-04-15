@@ -212,7 +212,7 @@ public class MMXTopicManager {
       info.setMaxItems(lnode.isPersistPublishedItems() ?
           lnode.getMaxPublishedItems() : 0);
     }
-    info.setTopicName(TopicHelper.parseNode(node.getNodeID()).getName());
+    info.setTopicId(TopicHelper.convertToId(node.getNodeID()));
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
@@ -1125,7 +1125,7 @@ public class MMXTopicManager {
   private TopicInfo nodeToInfo(String userId, String topic, Node node) {
     TopicInfo info = new TopicInfo(userId,
         node.getName() != null ? node.getName() : topic, node.isCollectionNode())
-      .setId(topic)
+      .setId(TopicHelper.convertToId(node.getNodeID()))
       .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
@@ -1368,7 +1368,7 @@ public class MMXTopicManager {
     for (TopicEntity entity : entities) {
       MMXTopicId topic = TopicHelper.parseNode(entity.getNodeId());
       TopicInfo info =  new TopicInfo(topic.getUserId(), topic.getName(), !entity.isLeaf())
-        .setId(topic.getName())
+        .setId(TopicHelper.convertToId(entity.getNodeId()))
         .setDisplayName(entity.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())

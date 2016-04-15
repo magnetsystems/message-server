@@ -42,8 +42,8 @@ import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXTopicSummary;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXTopicSummaryResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
+import com.magnet.mmx.util.TopicHelper;
 
 /**
  * @deprecated ChannelResource#getSummary
@@ -81,7 +81,7 @@ public class MMXTopicSummaryResource {
 
     for(String name : topicNames) {
       if(!Strings.isNullOrEmpty(name)) {
-        topicList.add(TopicResource.nameToId(name));
+        topicList.add(TopicHelper.nameToId(name));
       }
     }
 

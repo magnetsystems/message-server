@@ -170,9 +170,11 @@ public class TopicNode {
 
   public static TopicNode build(String appId, Node node) {
     TopicNode tn = new TopicNode();
+    tn.setDisplayName(node.getName());
     tn.setDescription(node.getDescription());
     tn.setCollection(node.isCollectionNode());
     MMXTopicId tid = TopicHelper.parseNode(node.getNodeID());
+    tn.setTopicId(TopicHelper.convertToId(node.getNodeID()));
     tn.setUserId(tid.getUserId());
     tn.setTopicName(tid.getName());
     tn.setSubscriptionCount(node.getAllSubscriptions().size());

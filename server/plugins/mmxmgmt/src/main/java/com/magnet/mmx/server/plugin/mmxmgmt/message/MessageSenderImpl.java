@@ -54,7 +54,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.UserDAOImpl;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.UserTargetResolver;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.Helper;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.JIDUtil;
@@ -313,7 +312,7 @@ public class MessageSenderImpl implements MessageSender {
       }
 
       // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName"
-      MMXTopicId tid = TopicResource.nameToId(topicName);
+      MMXTopicId tid = TopicHelper.nameToId(topicName);
       String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
       //ok validated.
       TopicMessageBuilder builder = new TopicMessageBuilder();
@@ -432,7 +431,7 @@ public class MessageSenderImpl implements MessageSender {
       return result;
     }
     // TODO: hack for MOB-2516 that user topic is shown as "userID#topicName".
-    MMXTopicId tid = TopicResource.nameToId(topicName);
+    MMXTopicId tid = TopicHelper.nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
     Node topic = topicManager.getTopicNode(topicId);
     if (topic == null) {

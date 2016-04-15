@@ -623,7 +623,7 @@ public class PubSubPersistenceManagerExt {
           TopicAction.TopicInfoWithSubscriptionCount result = new
               TopicAction.TopicInfoWithSubscriptionCount(topic.getUserId(),
               name, !isLeaf);
-          result.setId(topic.getName());
+          result.setId(TopicHelper.convertToId(nodeId));
           result.setDisplayName(name);
           result.setSubscriptionCount(subscriptionCount);
           result.setDescription(description);
