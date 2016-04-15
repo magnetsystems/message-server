@@ -23,7 +23,7 @@ public class MMXPushConfigMapping {
     private int mappingId;
     private int configId;
     private String appId;
-    private String channelName;
+    private String channelId;
 
     public int getMappingId() {
         return mappingId;
@@ -46,10 +46,10 @@ public class MMXPushConfigMapping {
         this.appId = appId;
     }
 
-    public String getChannelName() {
-        return channelName;
+    public String getChannelId() {
+        return channelId;
     }
-    public void setChannelName(String channelName) {
-        this.channelName = channelName;
+    public void setChannelId(String channelId) {
+        this.channelId = channelId;
     }
 }

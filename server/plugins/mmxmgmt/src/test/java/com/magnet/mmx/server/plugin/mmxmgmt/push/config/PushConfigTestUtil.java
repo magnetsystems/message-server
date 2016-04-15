@@ -15,19 +15,19 @@ import java.util.Set;
  */
 public class PushConfigTestUtil {
 
-    public static MMXPushConfigMapping createMapping(String appId, int configId, String channelName) throws MMXException {
+    public static MMXPushConfigMapping createMapping(String appId, int configId, String channelId) throws MMXException {
         MMXPushConfigMapping m = new MMXPushConfigMapping();
         m.setAppId(appId);
         m.setConfigId(configId);
-        m.setChannelName(channelName);
+        m.setChannelId(channelId);
         return MMXPushConfigService.getInstance().createConfigMapping(m);
     }
 
-    public static MMXPushConfigMapping createMapping2(String appId, int configId, String channelName) throws MMXException {
-        return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelName);
+    public static MMXPushConfigMapping createMapping2(String appId, int configId, String channelId) throws MMXException {
+        return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelId);
     }
 
-    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelNames) throws MMXException {
+    public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelIds) throws MMXException {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(appId);
         c.setConfigName(configName);
@@ -36,7 +36,7 @@ public class PushConfigTestUtil {
         c.setSilentPush(isSilentPush);
         c.setEnabled(isEnabled);
         c.setMeta(meta);
-        c.setChannelNames(channelNames);
+        c.setChannelIds(channelIds);
         return MMXPushConfigService.getInstance().createConfig(c);
     }
     public static MMXPushConfig createConfig2(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {

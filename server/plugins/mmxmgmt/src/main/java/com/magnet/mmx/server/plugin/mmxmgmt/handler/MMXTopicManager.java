@@ -35,6 +35,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
@@ -1559,7 +1560,9 @@ public class MMXTopicManager {
         .setMaxItems(ti.isPersistent() ? ti.getMaxItems() : 0)
         .setPersistent(ti.isPersistent())
         .setCreator(ti.getCreator())
-        .setSubscriptionEnabled(ti.isSubscriptionEnabled());
+        .setSubscriptionEnabled(ti.isSubscriptionEnabled())
+        .setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(JIDUtil.getUserId(from), appId, ti.getId()));
+
       topicList.add(info);
     }
     TopicAction.TopicQueryResponse resp = new TopicAction.TopicQueryResponse(results.getTotal(), topicList);

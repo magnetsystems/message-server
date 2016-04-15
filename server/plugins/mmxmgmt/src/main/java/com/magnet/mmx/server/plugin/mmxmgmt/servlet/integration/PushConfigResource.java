@@ -4,6 +4,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,8 +23,6 @@ public class PushConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createPushConfig(PushConfigRequest request) {
-
-        request.setIsEnabled(true);
 
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
@@ -84,12 +83,12 @@ public class PushConfigResource {
     @Path("/active")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveActivePushConfig(@QueryParam("userId") String userId, @QueryParam("appId") String appId, @QueryParam("channelName") String channelName, @QueryParam("configName") String configName) {
+    public Response retrieveActivePushConfig(@QueryParam("userId") String userId, @QueryParam("appId") String appId, @QueryParam("channelId") String channelId, @QueryParam("configName") String configName) {
 
         ActiveConfigRequest req = new ActiveConfigRequest();
         req.userId = userId;
         req.appId = appId;
-        req.channelName = channelName;
+        req.channelId = channelId;
         req.configName = configName;
 
         RestMethod<ActiveConfigRequest, PushConfigResponse> method = new RestMethod<ActiveConfigRequest, PushConfigResponse>() {
@@ -98,7 +97,7 @@ public class PushConfigResource {
                 //convert request
 
                 //do job
-                MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(req.userId, req.appId, req.channelName, req.configName);
+                MMXPushConfig c = MMXPushConfigService.getInstance().getPushConfig(req.userId, req.appId, req.channelId, req.configName);
 
                 //convert and return response
                 return convertResponse(c);
@@ -109,7 +108,7 @@ public class PushConfigResource {
     public static class ActiveConfigRequest {
         String userId;
         String appId;
-        String channelName;
+        String channelId;
         String configName;
     }
     @PUT
@@ -117,8 +116,6 @@ public class PushConfigResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePushConfig(@PathParam("configId") final int configId, PushConfigRequest request) {
-
-        request.setIsEnabled(true);
 
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
@@ -161,20 +158,23 @@ public class PushConfigResource {
     private static MMXPushConfig convertRequest(PushConfigRequest request) throws MMXException {
 
         MMXPushConfig c = new MMXPushConfig();
-        c.setAppId(request.appId);
-        c.setConfigName(request.configName);
+        c.setAppId(StringUtils.isBlank(request.appId) ? null : request.appId);
+        c.setConfigName(StringUtils.isBlank(request.configName) ? null : request.configName);
         c.setSilentPush(request.silentPush);
         c.setEnabled(request.enabled);
         MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
         c.setTemplate(t);
         c.setMeta(request.meta);
-        if (request.getChannelNames() != null) {
-            c.getChannelNames().addAll(request.getChannelNames());
+        if (request.getChannelIds() != null) {
+            c.getChannelIds().addAll(request.getChannelIds());
         }
         return c;
     }
     private static PushConfigResponse convertResponse(MMXPushConfig c) {
 
+        if (c == null) {
+            return null;
+        }
         PushConfigResponse response = new PushConfigResponse();
         response.configId = c.getConfigId();
         response.appId = c.getAppId();
@@ -183,7 +183,7 @@ public class PushConfigResource {
         response.enabled = c.isEnabled();
         response.templateId = c.getTemplate().getTemplateId();
         response.meta = c.getMeta();
-        response.channelNames = c.getChannelNames();
+        response.channelIds = c.getChannelIds();
         return response;
     }
     private static Collection<PushConfigResponse> convertResponse(Collection<MMXPushConfig> c) {
@@ -206,7 +206,7 @@ public class PushConfigResource {
         boolean silentPush;
         boolean enabled;
         Map<String, String> meta;
-        List<String> channelNames;
+        List<String> channelIds;
 
         public String getAppId() {
             return appId;
@@ -244,17 +244,24 @@ public class PushConfigResource {
         public void setIsEnabled(boolean enabled) {
             this.enabled = enabled;
         }
+
         public Map<String, String> getMeta() {
             return meta;
         }
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
         }
-        public List<String> getChannelNames() {
-            return channelNames;
+        public boolean isEnabled() {
+            return enabled;
         }
-        public void setChannelNames(List<String> channelNames) {
-            this.channelNames = channelNames;
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+        public List<String> getChannelIds() {
+            return channelIds;
+        }
+        public void setChannelIds(List<String> channelIds) {
+            this.channelIds = channelIds;
         }
     }
 
@@ -267,7 +274,7 @@ public class PushConfigResource {
         boolean silentPush;
         boolean enabled;
         Map<String, String> meta = new HashMap<>();
-        Set<String> channelNames;
+        Set<String> channelIds;
 
         public int getConfigId() {
             return configId;
@@ -311,11 +318,11 @@ public class PushConfigResource {
         public void setMeta(Map<String, String> meta) {
             this.meta = meta;
         }
-        public Set<String> getChannelNames() {
-            return channelNames;
+        public Set<String> getChannelIds() {
+            return channelIds;
         }
-        public void setChannelNames(Set<String> channelNames) {
-            this.channelNames = channelNames;
+        public void setChannelIds(Set<String> channelIds) {
+            this.channelIds = channelIds;
         }
     }
 }

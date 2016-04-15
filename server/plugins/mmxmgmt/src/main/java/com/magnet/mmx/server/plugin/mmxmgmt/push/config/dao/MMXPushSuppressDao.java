@@ -10,7 +10,8 @@ import java.util.Collection;
  */
 public interface MMXPushSuppressDao {
 
-    public MMXPushSuppressDo createSuppress(MMXPushSuppressDo suppress);
+    public MMXPushSuppressDo suppress(MMXPushSuppressDo suppress);
+    public void unSuppress(MMXPushSuppressDo suppress);
     public MMXPushSuppressDo getSuppress(int suppressId);
     public Collection<MMXPushSuppressDo> getSuppress(String appId, String userId);
     public void deleteSuppress(MMXPushSuppressDo suppress);

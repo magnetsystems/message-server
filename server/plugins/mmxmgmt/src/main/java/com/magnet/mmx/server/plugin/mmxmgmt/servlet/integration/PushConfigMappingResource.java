@@ -128,7 +128,7 @@ public class PushConfigMappingResource {
         MMXPushConfigMapping m = new MMXPushConfigMapping();
         m.setAppId(request.appId);
         m.setConfigId(request.configId);
-        m.setChannelName(request.channelName);
+        m.setChannelId(request.channelId);
         return m;
     }
     private static PushConfigMappingResponse convertResponse(MMXPushConfigMapping m) {
@@ -137,7 +137,7 @@ public class PushConfigMappingResource {
         response.mappingId = m.getMappingId();
         response.configId = m.getConfigId();
         response.appId = m.getAppId();
-        response.channelName = m.getChannelName();
+        response.channelId = m.getChannelId();
         return response;
     }
     private static Collection<PushConfigMappingResponse> convertResponse(Collection<MMXPushConfigMapping> c) {
@@ -156,30 +156,25 @@ public class PushConfigMappingResource {
 
         int configId;
         String appId;
-        String channelName;
+        String channelId;
 
         public int getConfigId() {
             return configId;
         }
-
         public void setConfigId(int configId) {
             this.configId = configId;
         }
-
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
-        public String getChannelName() {
-            return channelName;
+        public String getChannelId() {
+            return channelId;
         }
-
-        public void setChannelName(String channelName) {
-            this.channelName = channelName;
+        public void setChannelId(String channelId) {
+            this.channelId = channelId;
         }
     }
 
@@ -188,38 +183,31 @@ public class PushConfigMappingResource {
         int mappingId;
         int configId;
         String appId;
-        String channelName;
+        String channelId;
 
         public int getMappingId() {
             return mappingId;
         }
-
         public void setMappingId(int mappingId) {
             this.mappingId = mappingId;
         }
-
         public int getConfigId() {
             return configId;
         }
-
         public void setConfigId(int configId) {
             this.configId = configId;
         }
-
         public String getAppId() {
             return appId;
         }
-
         public void setAppId(String appId) {
             this.appId = appId;
         }
-
-        public String getChannelName() {
-            return channelName;
+        public String getChannelId() {
+            return channelId;
         }
-
-        public void setChannelName(String channelName) {
-            this.channelName = channelName;
+        public void setChannelId(String channelId) {
+            this.channelId = channelId;
         }
     }
 }
