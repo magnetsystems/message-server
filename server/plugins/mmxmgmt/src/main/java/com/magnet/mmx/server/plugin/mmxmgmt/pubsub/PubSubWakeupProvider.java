@@ -19,7 +19,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +40,7 @@ import com.magnet.mmx.protocol.PushMessage;
 import com.magnet.mmx.protocol.PushResult;
 import com.magnet.mmx.protocol.PushResult.Unsent;
 import com.magnet.mmx.protocol.StatusCode;
+import com.magnet.mmx.protocol.TemplateDataModel;
 import com.magnet.mmx.server.common.data.AppEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
@@ -76,6 +76,12 @@ import freemarker.template.TemplateNotFoundException;
  * <tr>
  * <th>Object</th>
  * <th colspan="3">Properties</th>
+ * </tr>
+ * <tr>
+ * <td>config</td>
+ * <td>silentPush (boolean)</td>
+ * <td>meta (Map)</td>
+ * </td>
  * </tr>
  * <tr>
  * <td>application</td>
@@ -207,9 +213,11 @@ public class PubSubWakeupProvider implements WakeupProvider {
                                             MMXPacketExtension mmxExt0) {
       HashMap<String, Object> context = new HashMap<String, Object>();
       try {
-        context.put("application", new NameDesc(ae.getName(), null, 0));
+        context.put("application", new TemplateDataModel.NameDesc(
+            ae.getName(), null, 0));
         // channel name is just its name (not nodeID)
-        context.put("channel", new NameDesc(node.getName(), node.getDescription(), count));
+        context.put("channel", new TemplateDataModel.NameDesc(
+            node.getName(),  node.getDescription(), count));
         context.put("config", sFmCfg.getTemplateLoader().findTemplateSource(mName));
       } catch (IOException e) {
         LOGGER.error("Caught IOException while building context for template "+mName, e);
@@ -225,7 +233,7 @@ public class PubSubWakeupProvider implements WakeupProvider {
       } catch (UserNotFoundException e) {
         displayName = null;
       }
-      context.put("msg", new MsgData(displayName,
+      context.put("msg", new TemplateDataModel.MsgData(displayName,
           mmxExt0.getPayload().getSentTime(), mmxExt0.getHeaders()));
       return context;
     }
@@ -439,54 +447,6 @@ public class PubSubWakeupProvider implements WakeupProvider {
         LOGGER.trace("@@@ wakeup(): no disconnected devices for jid="+jid+
                       ", nodeID="+node.getNodeID()+"; registered devices="+deList.size());
       }
-    }
-  }
-
-  public static class NameDesc {
-    private final String name;
-    private final String desc;
-    private final int count;
-
-    public NameDesc(String name, String desc, int count) {
-      this.name = name;
-      this.desc = desc;
-      this.count = count;
-    }
-
-    public String getName() {
-      return this.name;
-    }
-
-    public String getDesc() {
-      return this.desc;
-    }
-
-    public int getCount() {
-      return count;
-    }
-  }
-
-  public static class MsgData {
-    private final String from;
-    private final Date date;
-    private final Map<String, String> content;
-
-    public MsgData(String from, Date pubDate, Map<String, String> content) {
-      this.from = from;
-      this.date = pubDate;
-      this.content = content;
-    }
-
-    public String getFrom() {
-      return this.from;
-    }
-
-    public Date getDate() {
-      return this.date;
-    }
-
-    public Map<String, String> getContent() {
-      return this.content;
     }
   }
 
