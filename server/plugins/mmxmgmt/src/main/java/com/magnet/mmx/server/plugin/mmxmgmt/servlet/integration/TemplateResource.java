@@ -111,7 +111,7 @@ public class TemplateResource {
     @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateTemplate(@PathParam("templateId") final Integer templateId, TemplateRequest request) {
+    public Response updateTemplate(@PathParam("templateId") final Integer templateId, TemplateDataModel.TemplateRequest request) {
 
         RestMethod<TemplateDataModel.TemplateRequest, TemplateDataModel.TemplateResponse> method = new RestMethod<TemplateDataModel.TemplateRequest, TemplateDataModel.TemplateResponse>() {
             @Override

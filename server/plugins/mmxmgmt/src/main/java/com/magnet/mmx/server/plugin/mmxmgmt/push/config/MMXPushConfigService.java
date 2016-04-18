@@ -76,14 +76,12 @@ public class MMXPushConfigService {
 
     public boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
 
-        Collection<MMXPushSuppress> suppressList = getPushSuppressForAppAndUser(appId, userId);
-        if (suppressList != null) {
-            for (MMXPushSuppress s : suppressList) {
-                if (s.getUntilDate() != null && s.getUntilDate() > 0 ) {
-                    if (s.getUntilDate() < System.currentTimeMillis()) {
-                        //expired
-                        continue;
-                    }
+        MMXPushSuppress s = getPushSuppressForAppUserAndChannel(appId, userId, channelId);
+        if (s != null) {
+            if (s.getUntilDate() != null && s.getUntilDate() > 0 ) {
+                if (s.getUntilDate() < System.currentTimeMillis()) {
+                    //expired
+                    return false;
                 }
             }
             if (s.getAppId().equals(appId)) {
@@ -103,7 +101,7 @@ public class MMXPushConfigService {
 //        Collection<MMXPushSuppress> suppressList = getPushSuppressForAppAndUser(appId, userId);
 //        if (suppressList != null) {
 //            for (MMXPushSuppress s : suppressList) {
-//                if (s.getUntilDate() != null) {
+//                if (s.getUntilDate() != null && s.getUntilDate() > 0 ) {
 //                    if (s.getUntilDate() < System.currentTimeMillis()) {
 //                        //expired
 //                        continue;
