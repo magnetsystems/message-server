@@ -18,6 +18,7 @@ package com.magnet.mmx.server.api.v1.protocol;
  */
 public class TopicInfo {
   private int maxItems = -1;
+  private String topicId;         // [userID#]topicId
   private String publisherType;
   private String topicName;
   private String description;
@@ -25,6 +26,14 @@ public class TopicInfo {
 
 
   public TopicInfo() {
+  }
+
+  public String getTopicId() {
+    return topicId;
+  }
+
+  public void setTopicId(String topicId) {
+    this.topicId = topicId;
   }
 
   public int getMaxItems() {
@@ -69,18 +78,33 @@ public class TopicInfo {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof TopicInfo)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof TopicInfo)) {
+      return false;
+    }
 
     TopicInfo topicInfo = (TopicInfo) o;
 
-    if (maxItems != topicInfo.maxItems) return false;
-    if (subscriptionEnabled != topicInfo.subscriptionEnabled) return false;
-    if (description != null ? !description.equals(topicInfo.description) : topicInfo.description != null) return false;
-    if (publisherType != null ? !publisherType.equals(topicInfo.publisherType) : topicInfo.publisherType != null)
+    if (maxItems != topicInfo.maxItems) {
       return false;
-    if (topicName != null ? !topicName.equals(topicInfo.topicName) : topicInfo.topicName != null) return false;
-
+    }
+    if (subscriptionEnabled != topicInfo.subscriptionEnabled) {
+      return false;
+    }
+    if (description != null ? !description.equals(topicInfo.description) : topicInfo.description != null) {
+      return false;
+    }
+    if (publisherType != null ? !publisherType.equals(topicInfo.publisherType) : topicInfo.publisherType != null) {
+      return false;
+    }
+    if (topicName != null ? !topicName.equals(topicInfo.topicName) : topicInfo.topicName != null) {
+      return false;
+    }
+    if (topicId != null ? !topicId.equals(topicInfo.topicId) : topicInfo.topicId != null) {
+      return false;
+    }
     return true;
   }
 

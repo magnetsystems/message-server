@@ -60,6 +60,7 @@ public class PushConfigSuppressResource {
         return method.doMethod(request);
     }
 
+
     @GET
     @Path("/suppress/all")
     @Produces(MediaType.APPLICATION_JSON)

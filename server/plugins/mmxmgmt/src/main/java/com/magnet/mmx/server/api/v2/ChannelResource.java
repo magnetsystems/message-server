@@ -311,7 +311,7 @@ public class ChannelResource {
         }
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
-        MMXChannelId channelId = nameToId(channelName);
+        MMXChannelId channelId = ChannelHelper.nameToId(channelName);
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         try {
@@ -354,7 +354,7 @@ public class ChannelResource {
         }
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
-        MMXChannelId channelId = nameToId(channelName);
+        MMXChannelId channelId = ChannelHelper.nameToId(channelName);
 
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
         try {
@@ -393,7 +393,7 @@ public class ChannelResource {
 
         JID from = RestUtils.createJID(tokenInfo);
         String appId = tokenInfo.getMmxAppId();
-        MMXChannelId tid = nameToId(channelName);
+        MMXChannelId tid = ChannelHelper.nameToId(channelName);
         String channelId = ChannelHelper.makeChannel(appId, tid.getEscUserId(), tid
                 .getName());
         MMXChannelManager channelManager = MMXChannelManager.getInstance();
@@ -472,7 +472,7 @@ public class ChannelResource {
 
         try {
             long startTime = System.nanoTime();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             List<ChannelSubscription> infoList = getChannelSubscriptions(appId,
                                                                     channelId);
             long endTime = System.nanoTime();
@@ -546,7 +546,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             ChannelTags tags = channelManager.getTags(from, appId, channelId);
             ChannelTagInfo tagInfo = new ChannelTagInfo(channelName, tags.getTags());
             return RestUtils.getOKJAXRSResp(tagInfo);
@@ -709,7 +709,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             SummaryRequest rqt = new SummaryRequest(Arrays.asList(channelId));
             SummaryResponse resp = channelManager.getSummary(from, appId, rqt);
 //            List<MMXChannelSummary> summaryList = new ArrayList<MMXChannelSummary>();
@@ -787,7 +787,7 @@ public class ChannelResource {
       try {
         String appId = tokenInfo.getMmxAppId();
         JID from = RestUtils.createJID(tokenInfo);
-        MMXChannelId channelId = nameToId(channelName);
+        MMXChannelId channelId = ChannelHelper.nameToId(channelName);
         MMXChannelManager channelMgr = MMXChannelManager.getInstance();
         com.magnet.mmx.protocol.ChannelInfo channelInfo = channelMgr.getChannel(
             from, appId, channelId);
@@ -913,7 +913,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             FetchOptions opt = new FetchOptions()
                     .setMaxItems(size)
                     .setOffset(offset)
@@ -1019,7 +1019,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             ItemsByIdsRequest rqt = new ItemsByIdsRequest(channelId.getEscUserId(),
                     channelId.getName(), idList);
             FetchResponse resp = channelManager.getItems(from, appId, rqt);
@@ -1078,7 +1078,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             RetractAllRequest rqt = new RetractAllRequest(channelName, myChannel);
             MMXStatus resp = channelManager.retractAllFromChannel(from, appId, rqt);
             return RestUtils.getOKJAXRSResp();
@@ -1131,7 +1131,7 @@ public class ChannelResource {
         String appId = tokenInfo.getMmxAppId();
         try {
             MMXChannelManager channelManager = MMXChannelManager.getInstance();
-            MMXChannelId channelId = nameToId(channelName);
+            MMXChannelId channelId = ChannelHelper.nameToId(channelName);
             RetractRequest rqt = new RetractRequest(channelId.getEscUserId(),
                     channelId.getName(), idList);
             Map<String, Integer> resp = channelManager.retractFromChannel(from, appId, rqt);
@@ -1171,14 +1171,16 @@ public class ChannelResource {
         return list;
     }
 
-    private List<MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId, List<TopicItemEntity> entityList) {
+    private List<MMXPubSubItemChannel2> toPubSubItems(final MMXChannelId channelId,
+                                                      List<TopicItemEntity> entityList) {
         Function<TopicItemEntity, MMXPubSubItemChannel> entityToItem =
                 new Function<TopicItemEntity, MMXPubSubItemChannel>() {
                     @Override
                     public MMXPubSubItemChannel apply(TopicItemEntity i) {
-                        return new MMXPubSubItemChannel(idToName(channelId.getEscUserId(),
+                        return new MMXPubSubItemChannel(
+                            ChannelHelper.idToName(channelId.getEscUserId(),
                                 channelId.getName()),
-                                i.getId(), new JID(i.getJid()), i.getPayload());
+                            i.getId(), new JID(i.getJid()), i.getPayload());
                     }
 
                     ;
@@ -1244,29 +1246,6 @@ public class ChannelResource {
             infoList.add(info);
         }
         return infoList;
-    }
-
-    // The hack to fix MOB-2516 that allows the console to display user channels as
-    // userID#channelName. This method parses the global channel or user channel
-    // properly.
-    public static MMXChannelId nameToId(String channelName) {
-        int index = channelName.indexOf(ChannelHelper.CHANNEL_SEPARATOR);
-        if (index < 0) {
-            return new MMXChannelId(channelName);
-        } else {
-            return new MMXChannelId(channelName.substring(0, index), channelName
-                    .substring(index + 1));
-        }
-    }
-
-    // The hack to fix MOB-2516 to convert a user channel to userID#channelName
-    public static String idToName(String userId, String channelName) {
-
-        if (userId == null) {
-            return channelName;
-        } else {
-            return userId + ChannelHelper.CHANNEL_SEPARATOR + channelName;
-        }
     }
 
     public static class MMXPubSubItemChannel2Ext extends MMXPubSubItemChannel2 {

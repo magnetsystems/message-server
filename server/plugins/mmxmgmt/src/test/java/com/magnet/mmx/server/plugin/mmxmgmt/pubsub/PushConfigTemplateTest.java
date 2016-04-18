@@ -14,6 +14,7 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.pubsub;
 
+import com.magnet.mmx.protocol.TemplateDataModel;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider.FmPushConfig;
 import com.magnet.mmx.util.TimeUtil;
@@ -206,9 +207,9 @@ public class PushConfigTemplateTest {
 
     // Too hard to create a mock LeafNode, so we just simulate the context.
     Map<String, Object> context = new HashMap<String, Object>();
-    context.put("application", new PubSubWakeupProvider.NameDesc(APP_NAME, null, 0));
-    context.put("channel", new PubSubWakeupProvider.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
-    context.put("msg", new PubSubWakeupProvider.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
+    context.put("application", new TemplateDataModel.NameDesc(APP_NAME, null, 0));
+    context.put("channel", new TemplateDataModel.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
+    context.put("msg", new TemplateDataModel.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
 
     // Use config1 template
     FmPushConfig fmPushConfig = new FmPushConfig(SUBSCRIBER_USER_ID, APP_ID, CHANNEL_ID, CONFIG1);
@@ -263,9 +264,9 @@ public class PushConfigTemplateTest {
 
     // Too hard to create a mock LeafNode, so we just simulate the context.
     Map<String, Object> context = new HashMap<String, Object>();
-    context.put("application", new PubSubWakeupProvider.NameDesc(APP_NAME, null, 0));
-    context.put("channel", new PubSubWakeupProvider.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
-    context.put("msg", new PubSubWakeupProvider.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
+    context.put("application", new TemplateDataModel.NameDesc(APP_NAME, null, 0));
+    context.put("channel", new TemplateDataModel.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
+    context.put("msg", new TemplateDataModel.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
 
     MockPushConfig mpc = (MockPushConfig) context.get("config");
@@ -293,9 +294,9 @@ public class PushConfigTemplateTest {
 
     // Too hard to create a mock LeafNode, so we just simulate the context.
     Map<String, Object> context = new HashMap<String, Object>();
-    context.put("application", new PubSubWakeupProvider.NameDesc(APP_NAME, null, 0));
-    context.put("channel", new PubSubWakeupProvider.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
-    context.put("msg", new PubSubWakeupProvider.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
+    context.put("application", new TemplateDataModel.NameDesc(APP_NAME, null, 0));
+    context.put("channel", new TemplateDataModel.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
+    context.put("msg", new TemplateDataModel.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
 
     MockPushConfig mpc = (MockPushConfig) context.get("config");
@@ -316,9 +317,9 @@ public class PushConfigTemplateTest {
 
     // Too hard to create a mock LeafNode, so we just simulate the context.
     Map<String, Object> context = new HashMap<String, Object>();
-    context.put("application", new PubSubWakeupProvider.NameDesc(APP_NAME, null, 0));
-    context.put("channel", new PubSubWakeupProvider.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
-    context.put("msg", new PubSubWakeupProvider.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
+    context.put("application", new TemplateDataModel.NameDesc(APP_NAME, null, 0));
+    context.put("channel", new TemplateDataModel.NameDesc(CHANNEL_NAME, CHANNEL_DESC, count));
+    context.put("msg", new TemplateDataModel.MsgData(PUBLISHER_NAME, TimeUtil.toDate(SENT_TIME), meta));
     context.put("config", FmPushConfig.getFmConfig().getTemplateLoader().findTemplateSource(fmPushConfig.getName()));
 
     MockPushConfig mpc = (MockPushConfig) context.get("config");

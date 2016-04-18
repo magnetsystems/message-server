@@ -35,6 +35,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
@@ -212,7 +213,7 @@ public class MMXTopicManager {
       info.setMaxItems(lnode.isPersistPublishedItems() ?
           lnode.getMaxPublishedItems() : 0);
     }
-    info.setTopicName(TopicHelper.parseNode(node.getNodeID()).getName());
+    info.setTopicId(TopicHelper.convertToId(node.getNodeID()));
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
@@ -1125,7 +1126,7 @@ public class MMXTopicManager {
   private TopicInfo nodeToInfo(String userId, String topic, Node node) {
     TopicInfo info = new TopicInfo(userId,
         node.getName() != null ? node.getName() : topic, node.isCollectionNode())
-      .setId(topic)
+      .setId(TopicHelper.convertToId(node.getNodeID()))
       .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
@@ -1368,7 +1369,7 @@ public class MMXTopicManager {
     for (TopicEntity entity : entities) {
       MMXTopicId topic = TopicHelper.parseNode(entity.getNodeId());
       TopicInfo info =  new TopicInfo(topic.getUserId(), topic.getName(), !entity.isLeaf())
-        .setId(topic.getName())
+        .setId(TopicHelper.convertToId(entity.getNodeId()))
         .setDisplayName(entity.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())
@@ -1559,7 +1560,9 @@ public class MMXTopicManager {
         .setMaxItems(ti.isPersistent() ? ti.getMaxItems() : 0)
         .setPersistent(ti.isPersistent())
         .setCreator(ti.getCreator())
-        .setSubscriptionEnabled(ti.isSubscriptionEnabled());
+        .setSubscriptionEnabled(ti.isSubscriptionEnabled())
+        .setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(JIDUtil.getUserId(from), appId, ti.getId()));
+
       topicList.add(info);
     }
     TopicAction.TopicQueryResponse resp = new TopicAction.TopicQueryResponse(results.getTotal(), topicList);
