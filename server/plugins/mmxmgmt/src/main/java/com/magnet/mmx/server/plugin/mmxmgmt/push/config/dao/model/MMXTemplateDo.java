@@ -1,21 +1,28 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
+import javax.persistence.*;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
+
+@Entity
+@Table(name = "mmxTemplate")
 public class MMXTemplateDo {
 
-    private int templateId;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer templateId;
     private String appId;
     private String templateType;
     private String templateName;
     private String template;
 
-    public int getTemplateId() {
+    public Integer getTemplateId() {
         return templateId;
     }
-    public void setTemplateId(int templateId) {
+    public void setTemplateId(Integer templateId) {
         this.templateId = templateId;
     }
 

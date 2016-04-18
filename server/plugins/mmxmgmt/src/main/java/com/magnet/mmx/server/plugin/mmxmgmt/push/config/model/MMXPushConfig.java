@@ -25,19 +25,19 @@ import java.util.Set;
  */
 public class MMXPushConfig {
 
-    private int configId;
+    private Integer configId;
     private String appId;
     private String configName;
-    private MMXTemplate template;
+    private Integer templateId;
     private boolean silentPush;
     private boolean enabled;
     private Map<String, String> meta = new HashMap<>();
     private Set<String> channelIds = new HashSet<>();
 
-    public int getConfigId() {
+    public Integer getConfigId() {
         return configId;
     }
-    public void setConfigId(int configId) {
+    public void setConfigId(Integer configId) {
         this.configId = configId;
     }
 
@@ -55,11 +55,11 @@ public class MMXPushConfig {
         this.configName = configName;
     }
 
-    public MMXTemplate getTemplate() {
-        return template;
+    public Integer getTemplateId() {
+        return templateId;
     }
-    public void setTemplate(MMXTemplate template) {
-        this.template = template;
+    public void setTemplateId(Integer templateId) {
+        this.templateId = templateId;
     }
 
     public boolean isSilentPush() {

@@ -17,7 +17,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDaoFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock.MMXPushMockDaoFactory;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate.MMXPushConfigDaoFactoryHbn;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock.MMXPushDaoFactoryMock;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
@@ -49,7 +50,8 @@ public class MMXPushConfigService {
         return instance;
     }
 
-    private final MMXPushConfigDaoFactory daoFactory = new MMXPushMockDaoFactory();
+    private final MMXPushConfigDaoFactory daoFactory = new MMXPushDaoFactoryMock();
+//    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryHbn();
 
     private MMXPushConfigService() {
 
@@ -59,7 +61,7 @@ public class MMXPushConfigService {
             MMXPushConfig c = new MMXPushConfig();
             c.setAppId(SYSTEM_APP);
             c.setConfigName(DEFAULT_CONFIG);
-            c.setTemplate(t);
+            c.setTemplateId(t.getTemplateId());
             c.setEnabled(true);
             c = createConfig(c);
 
@@ -74,28 +76,50 @@ public class MMXPushConfigService {
 
     private boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
 
-        Collection<MMXPushSuppress> suppressList = getPushSuppressForAppAndUser(appId, userId);
-        if (suppressList != null) {
-            for (MMXPushSuppress s : suppressList) {
-                if (s.getUntilDate() != null) {
-                    if (s.getUntilDate() < System.currentTimeMillis()) {
-                        //expired
-                        continue;
-                    }
+        MMXPushSuppress s = getPushSuppressForAppUserAndChannel(appId, userId, channelId);
+        if (s != null) {
+            if (s.getUntilDate() != null) {
+                if (s.getUntilDate() < System.currentTimeMillis()) {
+                    //expired
+                    return false;
                 }
-                if (s.getAppId().equals(appId)) {
-                    if (StringUtils.isBlank(s.getChannelId())) {
-                        //blocked on app level
-                        return true;
-                    } else if (s.getChannelId().equals(channelId)) {
-                        //blocked on channel level
-                        return true;
-                    }
+            }
+            if (s.getAppId().equals(appId)) {
+                if (StringUtils.isBlank(s.getChannelId())) {
+                    //blocked on app level
+                    return true;
+                } else if (s.getChannelId().equals(channelId)) {
+                    //blocked on channel level
+                    return true;
                 }
             }
         }
         return false;
     }
+//    private boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
+//
+//        Collection<MMXPushSuppress> suppressList = getPushSuppressForAppAndUser(appId, userId);
+//        if (suppressList != null) {
+//            for (MMXPushSuppress s : suppressList) {
+//                if (s.getUntilDate() != null) {
+//                    if (s.getUntilDate() < System.currentTimeMillis()) {
+//                        //expired
+//                        continue;
+//                    }
+//                }
+//                if (s.getAppId().equals(appId)) {
+//                    if (StringUtils.isBlank(s.getChannelId())) {
+//                        //blocked on app level
+//                        return true;
+//                    } else if (s.getChannelId().equals(channelId)) {
+//                        //blocked on channel level
+//                        return true;
+//                    }
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     public MMXPushConfig getPushConfig(String userId, String appId, String channelId, String configName) {
 
@@ -241,10 +265,10 @@ public class MMXPushConfigService {
         }
         return templateDo2Bo(t);
     }
-    public MMXTemplate getTemplate(int templateId) throws MMXException {
+    public MMXTemplate getTemplate(Integer templateId) throws MMXException {
         MMXTemplateDo t = daoFactory.getMMXTemplateDao().getTemplate(templateId);
         if (t == null) {
-            throw new MMXException("template not found", ErrorCode.NOT_FOUND.getCode());
+            throw new MMXException("template not found '" + templateId + "'", ErrorCode.NOT_FOUND.getCode());
         }
         return templateDo2Bo(t);
     }
@@ -260,7 +284,7 @@ public class MMXPushConfigService {
     public void deleteTemplate(String appId, String templateName) throws MMXException {
         deleteTemplate(getTemplate(appId, templateName));
     }
-    public void deleteTemplate(int templateId) throws MMXException {
+    public void deleteTemplate(Integer templateId) throws MMXException {
         deleteTemplate(getTemplate(templateId));
     }
     public void deleteTemplate(MMXTemplate template) throws MMXException {
@@ -285,7 +309,7 @@ public class MMXPushConfigService {
         }
         return metaBo;
     }
-    private Collection<MMXPushConfigMetadataDo> metaBo2Do(int configId, Map<String, String> metaBo) {
+    private Collection<MMXPushConfigMetadataDo> metaBo2Do(Integer configId, Map<String, String> metaBo) {
 
         if (metaBo == null) {
             return null;
@@ -313,8 +337,7 @@ public class MMXPushConfigService {
         bo.setEnabled(configDo.isEnabled());
         bo.setEnabled(configDo.isEnabled());
         //template
-        MMXTemplate template = getTemplate(configDo.getTemplateId());
-        bo.setTemplate(template);
+        bo.setTemplateId(configDo.getTemplateId());
         Map<String, String> meta = metaDo2Bo(daoFactory.getMXPushConfigMetadataDao().getConfigAllMetadata(configDo.getConfigId()));
         bo.setMeta(meta);
 
@@ -357,21 +380,11 @@ public class MMXPushConfigService {
         configDo.setConfigName(bo.getConfigName());
         configDo.setSilentPush(bo.isSilentPush());
         configDo.setEnabled(bo.isEnabled());
-        configDo.setTemplateId(bo.getTemplate().getTemplateId());
+        configDo.setTemplateId(bo.getTemplateId());
         return configDo;
     }
 
 
-    public MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {
-        MMXPushConfig config = new MMXPushConfig();
-        config.setAppId(appId);
-        config.setConfigName(configName);
-        config.setSilentPush(isSilentPush);
-        config.setEnabled(isEnabled);
-        config.setTemplate(getTemplate(appId, templateName));
-        config.setMeta(meta);
-        return createConfig(config);
-    }
     public MMXPushConfig createConfig(MMXPushConfig config) throws MMXException {
         validateConfig(config);
         Map<String, String> meta = config.getMeta();
@@ -422,10 +435,10 @@ public class MMXPushConfigService {
         }
         return configDo2Bo(c);
     }
-    public MMXPushConfig getConfig(int configId) throws MMXException {
+    public MMXPushConfig getConfig(Integer configId) throws MMXException {
         MMXPushConfigDo c = daoFactory.getMMXPushConfigDao().getConfig(configId);
         if (c == null) {
-            throw new MMXException("config not found", ErrorCode.NOT_FOUND.getCode());
+            throw new MMXException("config not found '" + configId + "'" , ErrorCode.NOT_FOUND.getCode());
         }
         return configDo2Bo(c);
     }
@@ -443,17 +456,17 @@ public class MMXPushConfigService {
         MMXPushConfigDo configDo = configBo2Do(config);
         daoFactory.getMMXPushConfigDao().updateConfig(configDo);
         Map<String, String> meta = config.getMeta();
-        int configId = config.getConfigId();
+        Integer configId = config.getConfigId();
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(configId, metaBo2Do(configId, meta));
         updateMappings(config);
         return config;
     }
-    public void deleteConfig(int configId) throws MMXException {
+    public void deleteConfig(Integer configId) throws MMXException {
         deleteConfig(getConfig(configId));
     }
     public void deleteConfig(MMXPushConfig config) throws MMXException {
         validateConfig(config);
-        int configId = config.getConfigId();
+        Integer configId = config.getConfigId();
         daoFactory.getMXPushConfigMetadataDao().deleteConfigAllMetadata(configId);
         daoFactory.getMMXPushConfigMappingDao().deleteAllMappingsForConfig(configId);
         daoFactory.getMMXPushConfigDao().deleteConfig(configBo2Do(config));
@@ -462,7 +475,7 @@ public class MMXPushConfigService {
         validateMandatoryObject("config", config);
         validateMandatoryArgument("config.appId", config.getAppId());
         validateMandatoryArgument("config.configName", config.getConfigName());
-        validateMandatoryObject("config.template", config.getTemplate());
+        validateMandatoryArgumentObject("config.templateId", config.getTemplateId());
     }
 
 
@@ -501,7 +514,7 @@ public class MMXPushConfigService {
         mappingDo.setChannelId(bo.getChannelId());
         return mappingDo;
     }
-    public MMXPushConfigMapping createConfigMapping(int configId, String appId, String channelId) throws MMXException {
+    public MMXPushConfigMapping createConfigMapping(Integer configId, String appId, String channelId) throws MMXException {
         MMXPushConfigMapping mapping = new MMXPushConfigMapping();
         mapping.setConfigId(configId);
         mapping.setAppId(appId);
@@ -512,7 +525,7 @@ public class MMXPushConfigService {
         validateMapping(mapping);
         return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mappingBo2Do(mapping)));
     }
-    public MMXPushConfigMapping getConfigMapping(int mappingId) throws MMXException {
+    public MMXPushConfigMapping getConfigMapping(Integer mappingId) throws MMXException {
         MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(mappingId);
         if (m == null) {
             throw new MMXException("mapping not found", ErrorCode.NOT_FOUND.getCode());
@@ -535,7 +548,7 @@ public class MMXPushConfigService {
     }
 
 
-    //    public MMXPushConfigMapping updateConfigMapping(int mappingId, int configId, String appId, String channelId) throws MMXException {
+    //    public MMXPushConfigMapping updateConfigMapping(Integer mappingId, Integer configId, String appId, String channelId) throws MMXException {
 //        MMXPushConfigMapping mapping = getConfigMapping(mappingId);
 //        mapping.setConfigId(configId);
 //        mapping.setAppId(appId);
@@ -546,7 +559,7 @@ public class MMXPushConfigService {
         validateMapping(mapping);
         return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().updateConfigMapping(mappingBo2Do(mapping)));
     }
-    public void deleteConfigMapping(int mappingId) throws MMXException {
+    public void deleteConfigMapping(Integer mappingId) throws MMXException {
         deleteConfigMapping(getConfigMapping(mappingId));
     }
     public void deleteConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
@@ -591,6 +604,9 @@ public class MMXPushConfigService {
     }
     private static MMXPushSuppress suppressDo2Bo(MMXPushSuppressDo suppressDo) {
 
+        if (suppressDo == null) {
+            return null;
+        }
         MMXPushSuppress bo = new MMXPushSuppress();
         bo.setSuppressId(suppressDo.getSuppressId());
         bo.setUserId(suppressDo.getUserId());
@@ -630,18 +646,26 @@ public class MMXPushConfigService {
         validateSuppress(suppress);
         daoFactory.getMXPushSuppressDao().unSuppress(suppressBo2Do(suppress));
     }
-    public MMXPushSuppress getPushSuppress(int suppressId) throws MMXException {
+    public MMXPushSuppress getPushSuppress(Integer suppressId) throws MMXException {
         MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppressId);
         if (s == null) {
             throw new MMXException("suppress record not found", ErrorCode.NOT_FOUND.getCode());
         }
         return suppressDo2Bo(s);
     }
+    public Collection<MMXPushSuppress> getAllPushSuppress(String appId) {
+        Collection<MMXPushSuppressDo> listDo = daoFactory.getMXPushSuppressDao().getAllSuppress(appId);
+        return suppressDo2Bo(listDo);
+    }
     public Collection<MMXPushSuppress> getPushSuppressForAppAndUser(String appId, String userId) {
         Collection<MMXPushSuppressDo> listDo = daoFactory.getMXPushSuppressDao().getSuppress(appId, userId);
         return suppressDo2Bo(listDo);
     }
-    public void deletePushSuppress(int suppressId) throws MMXException {
+    public MMXPushSuppress getPushSuppressForAppUserAndChannel(String appId, String userId, String channelId) {
+        MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(appId, userId, channelId);
+        return suppressDo2Bo(s);
+    }
+    public void deletePushSuppress(Integer suppressId) throws MMXException {
         deletePushSuppress(getPushSuppress(suppressId));
     }
     public void deletePushSuppress(MMXPushSuppress suppress) throws MMXException {
@@ -659,6 +683,11 @@ public class MMXPushConfigService {
     }
     private void validateMandatoryArgument(String name, String value) throws MMXException {
         if (StringUtils.isBlank(value)) {
+            throw new MMXException("Argument " + name + " is null or empty", ErrorCode.ILLEGAL_ARGUMENT.getCode());
+        }
+    }
+    private void validateMandatoryArgumentObject(String name, Object value) throws MMXException {
+        if (value == null) {
             throw new MMXException("Argument " + name + " is null or empty", ErrorCode.ILLEGAL_ARGUMENT.getCode());
         }
     }

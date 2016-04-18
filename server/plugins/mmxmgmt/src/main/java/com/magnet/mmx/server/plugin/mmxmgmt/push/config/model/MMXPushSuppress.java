@@ -6,16 +6,16 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
  */
 public class MMXPushSuppress {
 
-    private int suppressId;
+    private Integer suppressId;
     private String userId;
     private String appId;
     private String channelId;
     private Long untilDate;
 
-    public int getSuppressId() {
+    public Integer getSuppressId() {
         return suppressId;
     }
-    public void setSuppressId(int suppressId) {
+    public void setSuppressId(Integer suppressId) {
         this.suppressId = suppressId;
     }
 

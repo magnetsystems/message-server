@@ -18,12 +18,12 @@ public class MMXPushConfigMetadataDaoMock implements MMXPushConfigMetadataDao {
     }
 
     @Override
-    public MMXPushConfigMetadataDo getMetadata(int metaId) {
+    public MMXPushConfigMetadataDo getMetadata(Integer metaId) {
         return MMXPushConfigMockStorage.getConfigMetadata(metaId);
     }
 
     @Override
-    public MMXPushConfigMetadataDo getMetadata(int configId, String name) {
+    public MMXPushConfigMetadataDo getMetadata(Integer configId, String name) {
         return MMXPushConfigMockStorage.getConfigMetadata(configId, name);
     }
 
@@ -38,17 +38,17 @@ public class MMXPushConfigMetadataDaoMock implements MMXPushConfigMetadataDao {
     }
 
     @Override
-    public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(int configId) {
+    public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(Integer configId) {
         return MMXPushConfigMockStorage.getConfigAllMetadata(configId);
     }
 
     @Override
-    public void updateConfigAllMetadata(int configId, Collection<MMXPushConfigMetadataDo> list) {
+    public void updateConfigAllMetadata(Integer configId, Collection<MMXPushConfigMetadataDo> list) {
         MMXPushConfigMockStorage.updateConfigAllMetadata(configId, list);
     }
 
     @Override
-    public void deleteConfigAllMetadata(int configId) {
+    public void deleteConfigAllMetadata(Integer configId) {
         MMXPushConfigMockStorage.deleteConfigAllMetadata(configId);
     }
 }

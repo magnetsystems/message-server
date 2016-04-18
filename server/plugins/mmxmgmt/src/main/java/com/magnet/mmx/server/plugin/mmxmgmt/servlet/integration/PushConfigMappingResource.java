@@ -43,7 +43,7 @@ public class PushConfigMappingResource {
     @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrievePushConfigMapping(@PathParam("mappingId") int mappingId) {
+    public Response retrievePushConfigMapping(@PathParam("mappingId") Integer mappingId) {
 
         RestMethod<Integer, PushConfigMappingResponse> method = new RestMethod<Integer, PushConfigMappingResponse>() {
             @Override
@@ -83,7 +83,7 @@ public class PushConfigMappingResource {
     @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updatePushConfigMapping(@PathParam("mappingId") final int mappingId, PushConfigMappingRequest request) {
+    public Response updatePushConfigMapping(@PathParam("mappingId") final Integer mappingId, PushConfigMappingRequest request) {
 
         RestMethod<PushConfigMappingRequest, PushConfigMappingResponse> method = new RestMethod<PushConfigMappingRequest, PushConfigMappingResponse>() {
             @Override
@@ -105,7 +105,7 @@ public class PushConfigMappingResource {
     @Path("/{mappingId}")
     @Produces(MediaType.APPLICATION_JSON)
 //    @Consumes(MediaType.APPLICATION_JSON)
-    public Response deletePushConfigMapping(@PathParam("mappingId") int mappingId) {
+    public Response deletePushConfigMapping(@PathParam("mappingId") Integer mappingId) {
 
         RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer, RestMethod.SimpleMessage>() {
             @Override
@@ -154,14 +154,14 @@ public class PushConfigMappingResource {
 
     public static class PushConfigMappingRequest {
 
-        int configId;
+        Integer configId;
         String appId;
         String channelId;
 
-        public int getConfigId() {
+        public Integer getConfigId() {
             return configId;
         }
-        public void setConfigId(int configId) {
+        public void setConfigId(Integer configId) {
             this.configId = configId;
         }
         public String getAppId() {
@@ -180,21 +180,21 @@ public class PushConfigMappingResource {
 
     public static class PushConfigMappingResponse {
 
-        int mappingId;
-        int configId;
+        Integer mappingId;
+        Integer configId;
         String appId;
         String channelId;
 
-        public int getMappingId() {
+        public Integer getMappingId() {
             return mappingId;
         }
-        public void setMappingId(int mappingId) {
+        public void setMappingId(Integer mappingId) {
             this.mappingId = mappingId;
         }
-        public int getConfigId() {
+        public Integer getConfigId() {
             return configId;
         }
-        public void setConfigId(int configId) {
+        public void setConfigId(Integer configId) {
             this.configId = configId;
         }
         public String getAppId() {

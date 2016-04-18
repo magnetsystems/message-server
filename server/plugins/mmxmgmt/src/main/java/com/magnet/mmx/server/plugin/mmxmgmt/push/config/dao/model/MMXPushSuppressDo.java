@@ -1,22 +1,29 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
+import javax.persistence.*;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
+
+@Entity
+@Table(name = "mmxPushSuppress")
 public class MMXPushSuppressDo {
 
-    private int suppressId;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer suppressId;
     private String userId;
     private String appId;
     private String channelId;
     private Long untilDate;
 
 
-    public int getSuppressId() {
+    public Integer getSuppressId() {
         return suppressId;
     }
-    public void setSuppressId(int suppressId) {
+    public void setSuppressId(Integer suppressId) {
         this.suppressId = suppressId;
     }
 

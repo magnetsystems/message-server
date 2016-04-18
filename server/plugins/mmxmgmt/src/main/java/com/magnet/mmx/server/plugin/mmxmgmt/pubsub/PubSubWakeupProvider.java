@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.user.UserManager;
@@ -135,9 +136,18 @@ public class PubSubWakeupProvider implements WakeupProvider {
     public Reader getReader(Object templateSource, String encoding) throws IOException {
       if (templateSource instanceof MMXPushConfig) {
         MMXPushConfig pushConfig = (MMXPushConfig) templateSource;
-        return new StringReader(pushConfig.getTemplate().getTemplate());
+        return new StringReader(getTemplate(pushConfig));
       }
       return null;
+    }
+    private String getTemplate(MMXPushConfig pushConfig) throws IOException  {
+      try {
+        MMXTemplate template = MMXPushConfigService.getInstance().getTemplate(pushConfig.getTemplateId());
+        return template.getTemplate();
+      }
+      catch (MMXException e) {
+        throw new IOException(e);
+      }
     }
   }
 

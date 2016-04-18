@@ -6,7 +6,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.*;
  * Created by mmicevic on 4/4/16.
  *
  */
-public class MMXPushMockDaoFactory implements MMXPushConfigDaoFactory {
+public class MMXPushDaoFactoryMock implements MMXPushConfigDaoFactory {
 
     private static final MMXTemplateDao TEMPLATE_DAO = new MMXTemplateDaoMock();
     private static final MMXPushConfigMappingDao CONFIG_MAPPING_DAO = new MMXPushConfigMappingDaoMock();

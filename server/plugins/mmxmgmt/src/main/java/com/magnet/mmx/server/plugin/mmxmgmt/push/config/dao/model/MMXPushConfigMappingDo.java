@@ -1,27 +1,34 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
+import javax.persistence.*;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
+
+@Entity
+@Table(name = "mmxPushConfigMapping")
 public class MMXPushConfigMappingDo {
 
-    private int mappingId;
-    private int configId;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer mappingId;
+    private Integer configId;
     private String appId;
     private String channelId;
 
-    public int getMappingId() {
+    public Integer getMappingId() {
         return mappingId;
     }
-    public void setMappingId(int mappingId) {
+    public void setMappingId(Integer mappingId) {
         this.mappingId = mappingId;
     }
 
-    public int getConfigId() {
+    public Integer getConfigId() {
         return configId;
     }
-    public void setConfigId(int configId) {
+    public void setConfigId(Integer configId) {
         this.configId = configId;
     }
 

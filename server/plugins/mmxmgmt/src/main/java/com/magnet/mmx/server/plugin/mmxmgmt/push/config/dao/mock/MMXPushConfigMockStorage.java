@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class MMXPushConfigMockStorage {
 
-    private static int SEQUENCE = 0;
+    private static Integer SEQUENCE = 0;
     private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = new HashMap<>();
     private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = new HashMap<>();
     private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
@@ -34,13 +34,13 @@ public class MMXPushConfigMockStorage {
 
     //TEMPLATE
     public static MMXTemplateDo createTemplate(MMXTemplateDo template) {
-        int id = SEQUENCE++;
+        Integer id = SEQUENCE++;
         template.setTemplateId(id);
         TEMPLATE_BY_ID.put(id, template);
         TEMPLATE_BY_APP_AND_NAME.put(getKey(template.getAppId(), template.getTemplateName()), template);
         return template;
     }
-    public static MMXTemplateDo getTemplate(int templateId) {
+    public static MMXTemplateDo getTemplate(Integer templateId) {
         return TEMPLATE_BY_ID.get(templateId);
     }
     public static MMXTemplateDo getTemplate(String appId, String templateName) {
@@ -76,13 +76,13 @@ public class MMXPushConfigMockStorage {
 
     //CONFIG
     public static MMXPushConfigDo createConfig(MMXPushConfigDo config) {
-        int id = SEQUENCE++;
+        Integer id = SEQUENCE++;
         config.setConfigId(id);
         CONFIG_BY_ID.put(id, config);
         CONFIG_BY_APP_AND_NAME.put(getKey(config.getAppId(), config.getConfigName()), config);
         return config;
     }
-    public static MMXPushConfigDo getConfig(int configId) {
+    public static MMXPushConfigDo getConfig(Integer configId) {
         MMXPushConfigDo c = CONFIG_BY_ID.get(configId);
         return c;
     }
@@ -117,19 +117,19 @@ public class MMXPushConfigMockStorage {
 
     //CONFIG META
     public static MMXPushConfigMetadataDo createConfigMetadata(MMXPushConfigMetadataDo meta) {
-        int id = SEQUENCE++;
+        Integer id = SEQUENCE++;
         meta.setMetadataId(id);
         CONFIG_META_BY_ID.put(id, meta);
         CONFIG_META_BY_CONFIG_AND_NAME.put(getKey("" + meta.getConfigId(), meta.getName()), meta);
         return meta;
     }
-    public static MMXPushConfigMetadataDo getConfigMetadata(int metaId) {
+    public static MMXPushConfigMetadataDo getConfigMetadata(Integer metaId) {
         return CONFIG_META_BY_ID.get(metaId);
     }
-    public static MMXPushConfigMetadataDo getConfigMetadata(int configId, String name) {
+    public static MMXPushConfigMetadataDo getConfigMetadata(Integer configId, String name) {
         return CONFIG_META_BY_CONFIG_AND_NAME.get(getKey("" + configId, name));
     }
-    public static Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(int configId) {
+    public static Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(Integer configId) {
         List<MMXPushConfigMetadataDo> list = new ArrayList<>();
         for(Integer key: CONFIG_META_BY_ID.keySet()) {
             MMXPushConfigMetadataDo meta =  CONFIG_META_BY_ID.get(key);
@@ -139,7 +139,7 @@ public class MMXPushConfigMockStorage {
         }
         return list;
     }
-    public static void updateConfigAllMetadata(int configId, Collection<MMXPushConfigMetadataDo> list) {
+    public static void updateConfigAllMetadata(Integer configId, Collection<MMXPushConfigMetadataDo> list) {
 
         deleteConfigAllMetadata(configId);
         if (list != null) {
@@ -155,7 +155,7 @@ public class MMXPushConfigMockStorage {
         CONFIG_META_BY_CONFIG_AND_NAME.put(getKey("" + meta.getConfigId(), meta.getName()), meta);
         return meta;
     }
-    public static void deleteConfigAllMetadata(int configId) {
+    public static void deleteConfigAllMetadata(Integer configId) {
 
         Set<Integer> keys = new HashSet<>();
         keys.addAll(CONFIG_META_BY_ID.keySet());
@@ -174,13 +174,13 @@ public class MMXPushConfigMockStorage {
 
     //CONFIG MAPPING
     public static MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping) {
-        int id = SEQUENCE++;
+        Integer id = SEQUENCE++;
         mapping.setMappingId(id);
         CONFIG_MAPPING_BY_ID.put(id, mapping);
         CONFIG_MAPPING_BY_APP_AND_CHANNEL.put(getKey(mapping.getAppId(), mapping.getChannelId()), mapping);
         return mapping;
     }
-    public static MMXPushConfigMappingDo getConfigMapping(int mappingId) {
+    public static MMXPushConfigMappingDo getConfigMapping(Integer mappingId) {
         return CONFIG_MAPPING_BY_ID.get(mappingId);
     }
     public static MMXPushConfigMappingDo getConfigMapping(String appId, String channelId) {
@@ -195,7 +195,7 @@ public class MMXPushConfigMockStorage {
         }
         return list;
     }
-    public static Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(int configId) {
+    public static Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(Integer configId) {
         List<MMXPushConfigMappingDo> list = new ArrayList<>();
         for (MMXPushConfigMappingDo c : CONFIG_MAPPING_BY_ID.values()) {
             if (configId == c.getConfigId()) {
@@ -223,7 +223,7 @@ public class MMXPushConfigMockStorage {
         }
     }
 
-    public static void deleteAllMappingsForConfig(int configId) {
+    public static void deleteAllMappingsForConfig(Integer configId) {
         Collection<MMXPushConfigMappingDo> mappings = getAllMappingsForConfig(configId);
         if (mappings != null) {
             for (MMXPushConfigMappingDo mapping : mappings) {
@@ -235,7 +235,7 @@ public class MMXPushConfigMockStorage {
 
     ///////////// SUPPRESS
     public static MMXPushSuppressDo suppress(MMXPushSuppressDo suppress) {
-        int id = SEQUENCE++;
+        Integer id = SEQUENCE++;
         suppress.setSuppressId(id);
         SUPPRESS_BY_ID.put(id, suppress);
         return suppress;
@@ -251,7 +251,7 @@ public class MMXPushConfigMockStorage {
         }
         return null;
     }
-    public static MMXPushSuppressDo getSuppress(int suppressId) {
+    public static MMXPushSuppressDo getSuppress(Integer suppressId) {
         return SUPPRESS_BY_ID.get(suppressId);
     }
     private static boolean compareStrings(String str1, String str2) {
@@ -261,6 +261,15 @@ public class MMXPushConfigMockStorage {
         List<MMXPushSuppressDo> list = new ArrayList<>();
         for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
             if (compareStrings(s.getAppId(), appId) &&  compareStrings(s.getUserId(), userId)) {
+                list.add(s);
+            }
+        }
+        return list;
+    }
+    public static Collection<MMXPushSuppressDo> getSuppressForApp(String appId) {
+        List<MMXPushSuppressDo> list = new ArrayList<>();
+        for (MMXPushSuppressDo s : SUPPRESS_BY_ID.values()) {
+            if (compareStrings(s.getAppId(), appId)) {
                 list.add(s);
             }
         }

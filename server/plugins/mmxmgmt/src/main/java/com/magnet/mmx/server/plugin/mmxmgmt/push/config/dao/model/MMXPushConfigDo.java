@@ -1,22 +1,31 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
+import javax.persistence.*;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
+
+@Entity
+@Table(name = "mmxPushConfig")
 public class MMXPushConfigDo {
 
-    private int configId;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer configId;
     private String appId;
     private String configName;
-    private int templateId;
+    private Integer templateId;
+    @Column(name = "isSilentPush")
     private boolean silentPush;
+    @Column(name = "isEnabled")
     private boolean enabled;
 
-    public int getConfigId() {
+    public Integer getConfigId() {
         return configId;
     }
-    public void setConfigId(int configId) {
+    public void setConfigId(Integer configId) {
         this.configId = configId;
     }
 
@@ -34,10 +43,10 @@ public class MMXPushConfigDo {
         this.configName = configName;
     }
 
-    public int getTemplateId() {
+    public Integer getTemplateId() {
         return templateId;
     }
-    public void setTemplateId(int templateId) {
+    public void setTemplateId(Integer templateId) {
         this.templateId = templateId;
     }
 

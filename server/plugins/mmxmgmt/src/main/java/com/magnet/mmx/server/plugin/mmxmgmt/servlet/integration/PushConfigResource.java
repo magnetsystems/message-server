@@ -3,7 +3,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.servlet.integration;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.*;
@@ -63,7 +62,7 @@ public class PushConfigResource {
     @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrievePushConfig(@PathParam("configId") int configId) {
+    public Response retrievePushConfig(@PathParam("configId") Integer configId) {
 
         RestMethod<Integer, PushConfigResponse> method = new RestMethod<Integer, PushConfigResponse>() {
             @Override
@@ -115,7 +114,7 @@ public class PushConfigResource {
     @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updatePushConfig(@PathParam("configId") final int configId, PushConfigRequest request) {
+    public Response updatePushConfig(@PathParam("configId") final Integer configId, PushConfigRequest request) {
 
         RestMethod<PushConfigRequest, PushConfigResponse> method = new RestMethod<PushConfigRequest, PushConfigResponse>() {
             @Override
@@ -137,7 +136,7 @@ public class PushConfigResource {
     @Path("/{configId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deletePushConfig(@PathParam("configId") int configId) {
+    public Response deletePushConfig(@PathParam("configId") Integer configId) {
 
         RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer, RestMethod.SimpleMessage>() {
             @Override
@@ -162,8 +161,7 @@ public class PushConfigResource {
         c.setConfigName(StringUtils.isBlank(request.configName) ? null : request.configName);
         c.setSilentPush(request.silentPush);
         c.setEnabled(request.enabled);
-        MMXTemplate t =  MMXPushConfigService.getInstance().getTemplate(request.templateId);
-        c.setTemplate(t);
+        c.setTemplateId(request.templateId);
         c.setMeta(request.meta);
         if (request.getChannelIds() != null) {
             c.getChannelIds().addAll(request.getChannelIds());
@@ -181,7 +179,7 @@ public class PushConfigResource {
         response.configName = c.getConfigName();
         response.silentPush = c.isSilentPush();
         response.enabled = c.isEnabled();
-        response.templateId = c.getTemplate().getTemplateId();
+        response.templateId = c.getTemplateId();
         response.meta = c.getMeta();
         response.channelIds = c.getChannelIds();
         return response;
@@ -202,7 +200,7 @@ public class PushConfigResource {
 
         String appId;
         String configName;
-        int templateId;
+        Integer templateId;
         boolean silentPush;
         boolean enabled;
         Map<String, String> meta;
@@ -220,10 +218,10 @@ public class PushConfigResource {
         public void setConfigName(String configName) {
             this.configName = configName;
         }
-        public int getTemplateId() {
+        public Integer getTemplateId() {
             return templateId;
         }
-        public void setTemplateId(int templateId) {
+        public void setTemplateId(Integer templateId) {
             this.templateId = templateId;
         }
         public boolean getIsSilentPush() {
@@ -267,19 +265,19 @@ public class PushConfigResource {
 
     public static class PushConfigResponse {
 
-        int configId;
+        Integer configId;
         String appId;
         String configName;
-        int templateId;
+        Integer templateId;
         boolean silentPush;
         boolean enabled;
         Map<String, String> meta = new HashMap<>();
         Set<String> channelIds;
 
-        public int getConfigId() {
+        public Integer getConfigId() {
             return configId;
         }
-        public void setConfigId(int configId) {
+        public void setConfigId(Integer configId) {
             this.configId = configId;
         }
         public String getAppId() {
@@ -294,10 +292,10 @@ public class PushConfigResource {
         public void setConfigName(String configName) {
             this.configName = configName;
         }
-        public int getTemplateId() {
+        public Integer getTemplateId() {
             return templateId;
         }
-        public void setTemplateId(int templateId) {
+        public void setTemplateId(Integer templateId) {
             this.templateId = templateId;
         }
         public boolean getIsSilentPush() {

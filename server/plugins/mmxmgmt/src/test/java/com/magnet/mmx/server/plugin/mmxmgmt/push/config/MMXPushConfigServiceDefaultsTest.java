@@ -4,6 +4,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -17,6 +18,11 @@ public class MMXPushConfigServiceDefaultsTest {
         MMXTemplate t = MMXPushConfigService.getInstance().getTemplate(MMXPushConfigService.SYSTEM_APP, MMXPushConfigService.DEFAULT_TEMPLATE);
         assertDefaultTemplate(t);
     }
+    private void assertDefaultTemplate(Integer templateId) throws MMXException {
+        MMXTemplate t = MMXPushConfigService.getInstance().getTemplate(templateId);
+        assertDefaultTemplate(t);
+
+    }
     private void assertDefaultTemplate(MMXTemplate t) {
         Assert.assertNotNull(t);
         Assert.assertEquals(MMXPushConfigService.SYSTEM_APP, t.getAppId());
@@ -29,12 +35,12 @@ public class MMXPushConfigServiceDefaultsTest {
         MMXPushConfig c = MMXPushConfigService.getInstance().getConfig(MMXPushConfigService.SYSTEM_APP, MMXPushConfigService.DEFAULT_CONFIG);
         assertDefaultConfig(c);
     }
-    private void assertDefaultConfig(MMXPushConfig c ) {
+    private void assertDefaultConfig(MMXPushConfig c ) throws MMXException {
 
         Assert.assertNotNull(c);
         Assert.assertEquals(MMXPushConfigService.SYSTEM_APP, c.getAppId());
         Assert.assertEquals(MMXPushConfigService.DEFAULT_CONFIG, c.getConfigName());
-        assertDefaultTemplate(c.getTemplate());
+        assertDefaultTemplate(c.getTemplateId());
     }
     @Test
     public void checkDefaultMapping() throws MMXException {

@@ -26,7 +26,7 @@ public class MMXTemplateDaoMock implements MMXTemplateDao {
         return MMXPushConfigMockStorage.getTemplate(appId, templateName);
     }
     @Override
-    public MMXTemplateDo getTemplate(int templateId) {
+    public MMXTemplateDo getTemplate(Integer templateId) {
         return MMXPushConfigMockStorage.getTemplate(templateId);
     }
     @Override

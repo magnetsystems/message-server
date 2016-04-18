@@ -20,16 +20,16 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
  */
 public class MMXTemplate {
 
-    private int templateId;
+    private Integer templateId;
     private String appId;
     private MMXTemplateType templateType;
     private String templateName;
     private String template;
 
-    public int getTemplateId() {
+    public Integer getTemplateId() {
         return templateId;
     }
-    public void setTemplateId(int templateId) {
+    public void setTemplateId(Integer templateId) {
         this.templateId = templateId;
     }
 

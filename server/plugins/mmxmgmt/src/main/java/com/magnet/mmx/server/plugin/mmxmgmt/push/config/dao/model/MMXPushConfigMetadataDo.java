@@ -1,27 +1,34 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
+import javax.persistence.*;
+
 /**
  * Created by mmicevic on 3/31/16.
  *
  */
+
+@Entity
+@Table(name = "mmxPushConfigMetadata")
 public class MMXPushConfigMetadataDo {
 
-    private int metadataId;
-    private int configId;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer metadataId;
+    private Integer configId;
     private String name;
     private String value;
 
-    public int getMetadataId() {
+    public Integer getMetadataId() {
         return metadataId;
     }
-    public void setMetadataId(int metadataId) {
+    public void setMetadataId(Integer metadataId) {
         this.metadataId = metadataId;
     }
 
-    public int getConfigId() {
+    public Integer getConfigId() {
         return configId;
     }
-    public void setConfigId(int configId) {
+    public void setConfigId(Integer configId) {
         this.configId = configId;
     }
 

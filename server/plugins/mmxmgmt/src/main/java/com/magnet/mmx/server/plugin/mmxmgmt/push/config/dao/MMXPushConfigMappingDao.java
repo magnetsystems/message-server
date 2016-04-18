@@ -12,7 +12,7 @@ public interface MMXPushConfigMappingDao {
 
     public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping);
 
-    public MMXPushConfigMappingDo getConfigMapping(int mappingId);
+    public MMXPushConfigMappingDo getConfigMapping(Integer mappingId);
     public MMXPushConfigMappingDo getConfigMapping(String appId, String channelName);
     public Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId);
 
@@ -20,6 +20,6 @@ public interface MMXPushConfigMappingDao {
 
     public void deleteConfigMapping(MMXPushConfigMappingDo mapping);
 
-    public void deleteAllMappingsForConfig(int configId);
-    public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(int configId);
+    public void deleteAllMappingsForConfig(Integer configId);
+    public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(Integer configId);
 }

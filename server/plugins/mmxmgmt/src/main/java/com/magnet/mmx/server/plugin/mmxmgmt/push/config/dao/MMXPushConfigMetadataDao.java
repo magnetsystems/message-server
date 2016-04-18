@@ -11,13 +11,13 @@ import java.util.Collection;
 public interface MMXPushConfigMetadataDao {
 
     public MMXPushConfigMetadataDo createMetadata(MMXPushConfigMetadataDo meta);
-    public MMXPushConfigMetadataDo getMetadata(int metaId);
-    public MMXPushConfigMetadataDo getMetadata(int configId, String name);
+    public MMXPushConfigMetadataDo getMetadata(Integer metaId);
+    public MMXPushConfigMetadataDo getMetadata(Integer configId, String name);
     public MMXPushConfigMetadataDo updateMetadata(MMXPushConfigMetadataDo meta);
     public void deleteMetadata(MMXPushConfigMetadataDo meta);
 
-    public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(int configId);
-    public void updateConfigAllMetadata(int configId, Collection<MMXPushConfigMetadataDo> list);
-    public void deleteConfigAllMetadata(int configId);
+    public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(Integer configId);
+    public void updateConfigAllMetadata(Integer configId, Collection<MMXPushConfigMetadataDo> list);
+    public void deleteConfigAllMetadata(Integer configId);
 
 }

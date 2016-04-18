@@ -17,7 +17,7 @@ public class MMXPushConfigDaoMock implements MMXPushConfigDao {
     }
 
     @Override
-    public MMXPushConfigDo getConfig(int configId) {
+    public MMXPushConfigDo getConfig(Integer configId) {
         return MMXPushConfigMockStorage.getConfig(configId);
     }
 

@@ -87,7 +87,7 @@ public class PushConfigSuppressResource {
     @Path("/suppress/{suppressId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteRecotd(@PathParam("suppressId") int suppressId) {
+    public Response deleteRecotd(@PathParam("suppressId") Integer suppressId) {
 
         RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer, RestMethod.SimpleMessage>() {
             @Override
@@ -201,16 +201,16 @@ public class PushConfigSuppressResource {
     }
     private static class PushConfigSuppressResponse {
 
-        int suppressId;
+        Integer suppressId;
         String userId;
         String appId;
         String channelId;
         Long untilDate;
 
-        public int getSuppressId() {
+        public Integer getSuppressId() {
             return suppressId;
         }
-        public void setSuppressId(int suppressId) {
+        public void setSuppressId(Integer suppressId) {
             this.suppressId = suppressId;
         }
         public String getUserId() {

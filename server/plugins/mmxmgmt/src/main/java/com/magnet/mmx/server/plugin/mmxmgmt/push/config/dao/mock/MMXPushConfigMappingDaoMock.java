@@ -16,7 +16,7 @@ public class MMXPushConfigMappingDaoMock implements MMXPushConfigMappingDao {
     }
 
     @Override
-    public MMXPushConfigMappingDo getConfigMapping(int mappingId) {
+    public MMXPushConfigMappingDo getConfigMapping(Integer mappingId) {
         return MMXPushConfigMockStorage.getConfigMapping(mappingId);
     }
 
@@ -41,12 +41,12 @@ public class MMXPushConfigMappingDaoMock implements MMXPushConfigMappingDao {
     }
 
     @Override
-    public void deleteAllMappingsForConfig(int configId) {
+    public void deleteAllMappingsForConfig(Integer configId) {
         MMXPushConfigMockStorage.deleteAllMappingsForConfig(configId);
     }
 
     @Override
-    public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(int configId) {
+    public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(Integer configId) {
         return MMXPushConfigMockStorage.getAllMappingsForConfig(configId);
     }
 }

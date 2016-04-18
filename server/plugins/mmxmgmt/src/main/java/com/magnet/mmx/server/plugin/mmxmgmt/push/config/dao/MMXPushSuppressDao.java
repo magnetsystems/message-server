@@ -12,7 +12,9 @@ public interface MMXPushSuppressDao {
 
     public MMXPushSuppressDo suppress(MMXPushSuppressDo suppress);
     public void unSuppress(MMXPushSuppressDo suppress);
-    public MMXPushSuppressDo getSuppress(int suppressId);
+    public MMXPushSuppressDo getSuppress(Integer suppressId);
     public Collection<MMXPushSuppressDo> getSuppress(String appId, String userId);
+    public Collection<MMXPushSuppressDo> getAllSuppress(String appId);
+    public MMXPushSuppressDo getSuppress(String appId, String userId, String channelId);
     public void deleteSuppress(MMXPushSuppressDo suppress);
 }

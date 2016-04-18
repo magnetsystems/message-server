@@ -46,7 +46,7 @@ public class TemplateResource {
     @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response retrieveTemplateById(@PathParam("templateId") int templateId) {
+    public Response retrieveTemplateById(@PathParam("templateId") Integer templateId) {
 
         RestMethod<Integer, TemplateResponse> method = new RestMethod<Integer, TemplateResponse>() {
             @Override
@@ -86,7 +86,7 @@ public class TemplateResource {
     @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateTemplate(@PathParam("templateId") final int templateId, TemplateRequest request) {
+    public Response updateTemplate(@PathParam("templateId") final Integer templateId, TemplateRequest request) {
 
         RestMethod<TemplateRequest, TemplateResponse> method = new RestMethod<TemplateRequest, TemplateResponse>() {
             @Override
@@ -108,7 +108,7 @@ public class TemplateResource {
     @Path("/{templateId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteTemplate(@PathParam("templateId") int templateId) {
+    public Response deleteTemplate(@PathParam("templateId") Integer templateId) {
 
         RestMethod<Integer, RestMethod.SimpleMessage> method = new RestMethod<Integer,RestMethod.SimpleMessage>() {
             @Override
@@ -185,16 +185,16 @@ public class TemplateResource {
 
     public static class TemplateResponse {
 
-        int templateId;
+        Integer templateId;
         String appId;
         String templateType;
         String templateName;
         String template;
 
-        public int getTemplateId() {
+        public Integer getTemplateId() {
             return templateId;
         }
-        public void setTemplateId(int templateId) {
+        public void setTemplateId(Integer templateId) {
             this.templateId = templateId;
         }
         public String getAppId() {

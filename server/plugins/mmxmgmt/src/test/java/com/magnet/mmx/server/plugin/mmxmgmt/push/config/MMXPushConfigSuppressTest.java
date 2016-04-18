@@ -3,6 +3,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppress;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -12,6 +13,14 @@ import java.util.Collection;
  *
  */
 public class MMXPushConfigSuppressTest {
+
+    private static final String APP_ID = "test-app";
+
+    @Before
+    public void cleanUp() throws MMXException {
+        PushConfigTestUtil.deleteAllDataForApp(APP_ID);
+    }
+
 
     @Test(expected = MMXException.class)
     public void createSuppressNull() throws MMXException {
@@ -52,11 +61,11 @@ public class MMXPushConfigSuppressTest {
     @Test
     public void createSuppressAppIdCorrectAll() throws MMXException {
         MMXPushSuppress suppress = new MMXPushSuppress();
-        suppress.setAppId("app1");
+        suppress.setAppId(APP_ID);
         suppress.setUserId("u1");
         suppress.setChannelId("ch1");
         suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
-        Assert.assertEquals("app1", suppress.getAppId());
+        Assert.assertEquals(APP_ID, suppress.getAppId());
         Assert.assertEquals("u1", suppress.getUserId());
         Assert.assertEquals("ch1", suppress.getChannelId());
         Assert.assertTrue(suppress.getSuppressId() > 0);
@@ -64,30 +73,30 @@ public class MMXPushConfigSuppressTest {
     @Test
     public void createSuppressAppIdCorrectAppId() throws MMXException {
         MMXPushSuppress suppress = new MMXPushSuppress();
-        suppress.setAppId("app1");
+        suppress.setAppId(APP_ID);
         suppress.setUserId(null);
         suppress.setChannelId(null);
         suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
-        Assert.assertEquals("app1", suppress.getAppId());
+        Assert.assertEquals(APP_ID, suppress.getAppId());
         Assert.assertNull(suppress.getUserId());
         Assert.assertNull(suppress.getChannelId());
         Assert.assertTrue(suppress.getSuppressId() > 0);
     }
     @Test
     public void createSuppressAndRetrieveWithUserAndChannel() throws MMXException {
-        doCreateSuppressAndRetrieve("app1", "u1", "ch1");
+        doCreateSuppressAndRetrieve(APP_ID, "u1", "ch1");
     }
     @Test
     public void createSuppressAndRetrieveWithUserAndNoChannel() throws MMXException {
-        doCreateSuppressAndRetrieve("app1", "u2", null);
+        doCreateSuppressAndRetrieve(APP_ID, "u2", null);
     }
     @Test
     public void createSuppressAndRetrieveWNoUserAndNoChannel() throws MMXException {
-        doCreateSuppressAndRetrieve("app2", null, null);
+        doCreateSuppressAndRetrieve(APP_ID, null, null);
     }
     @Test
     public void createSuppressAndRetrieveNoUserAndWithChannel() throws MMXException {
-        doCreateSuppressAndRetrieve("app3", null, "ch1");
+        doCreateSuppressAndRetrieve(APP_ID, null, "ch1");
     }
     private void doCreateSuppressAndRetrieve(String appId, String userId, String channelName) throws MMXException {
         MMXPushSuppress suppress = new MMXPushSuppress();
@@ -112,16 +121,16 @@ public class MMXPushConfigSuppressTest {
     }
     @Test
     public void createSuppressAndDeleteNoUserNoChannel(String appId, String userId, String channelName) throws MMXException {
-        doCreateSuppressAndDelete("app-d-1", null, null);
+        doCreateSuppressAndDelete(APP_ID, null, null);
     }
     public void createSuppressAndDeleteWithUserNoChannel(String appId, String userId, String channelName) throws MMXException {
-        doCreateSuppressAndDelete("app-d-2", "u1", null);
+        doCreateSuppressAndDelete(APP_ID, "u1", null);
     }
     public void createSuppressAndDeleteNoUserWithChannel(String appId, String userId, String channelName) throws MMXException {
-        doCreateSuppressAndDelete("app-d-3", null, "ch1");
+        doCreateSuppressAndDelete(APP_ID, null, "ch1");
     }
     public void createSuppressAndDelete(String appId, String userId, String channelName) throws MMXException {
-        doCreateSuppressAndDelete("app-d-4", "u1", "ch1");
+        doCreateSuppressAndDelete(APP_ID, "u1", "ch1");
     }
     public void doCreateSuppressAndDelete(String appId, String userId, String channelName) throws MMXException {
         MMXPushSuppress suppress = new MMXPushSuppress();
