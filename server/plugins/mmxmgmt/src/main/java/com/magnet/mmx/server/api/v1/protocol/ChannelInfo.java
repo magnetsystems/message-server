@@ -18,6 +18,7 @@ package com.magnet.mmx.server.api.v1.protocol;
  */
 public class ChannelInfo {
   private int maxItems = -1;
+  private String channelId;         // [userID#]channelID
   private String publisherType;
   private String channelName;
   private String description;
@@ -25,6 +26,14 @@ public class ChannelInfo {
 
 
   public ChannelInfo() {
+  }
+
+  public String getChannelId() {
+    return channelId;
+  }
+
+  public void setChannelId(String channelId) {
+    this.channelId = channelId;
   }
 
   public int getMaxItems() {
@@ -69,17 +78,30 @@ public class ChannelInfo {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ChannelInfo)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ChannelInfo)) {
+      return false;
+    }
 
     ChannelInfo channelInfo = (ChannelInfo) o;
 
-    if (maxItems != channelInfo.maxItems) return false;
-    if (subscriptionEnabled != channelInfo.subscriptionEnabled) return false;
-    if (description != null ? !description.equals(channelInfo.description) : channelInfo.description != null) return false;
-    if (publisherType != null ? !publisherType.equals(channelInfo.publisherType) : channelInfo.publisherType != null)
+    if (maxItems != channelInfo.maxItems) {
       return false;
-    if (channelName != null ? !channelName.equals(channelInfo.channelName) : channelInfo.channelName != null) return false;
+    }
+    if (subscriptionEnabled != channelInfo.subscriptionEnabled) {
+      return false;
+    }
+    if (description != null ? !description.equals(channelInfo.description) : channelInfo.description != null) {
+      return false;
+    }
+    if (publisherType != null ? !publisherType.equals(channelInfo.publisherType) : channelInfo.publisherType != null) {
+      return false;
+    }
+    if (channelName != null ? !channelName.equals(channelInfo.channelName) : channelInfo.channelName != null) {
+      return false;
+    }
 
     return true;
   }

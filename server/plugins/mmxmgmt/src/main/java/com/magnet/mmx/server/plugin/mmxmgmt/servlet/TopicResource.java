@@ -245,8 +245,8 @@ public class TopicResource {
           query, appId, paginationInfo, null,
           Collections.singletonList(MMXServerConstants.TOPIC_ROLE_PUBLIC));
 
-      SearchResult<TopicInfoWithSubscriptionCount> topicList = 
-          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(), 
+      SearchResult<TopicInfoWithSubscriptionCount> topicList =
+          PubSubPersistenceManagerExt.getTopicWithPagination(getConnectionProvider(),
               builtQuery, paginationInfo);
 
       SearchResult<TopicNode> nodes = transform(appId, topicList);
@@ -258,7 +258,7 @@ public class TopicResource {
         String topic = node.getTopicName();
         // TODO: hack for MOB-2516 that topic may have the format as userID/topicName.
         // When the console UI is fixed, don't call nametoId().
-        MMXTopicId tid = nameToId(topic);
+        MMXTopicId tid = TopicHelper.nameToId(topic);
         List<String> topicTags = tagDAO.getTagsForTopic(appId, "pubsub",
             TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName()));
         node.setTags(topicTags);
@@ -292,13 +292,14 @@ public class TopicResource {
   @Produces(MediaType.APPLICATION_JSON)
   public Response getTopic(@PathParam(TOPIC_NAME) String topicName) {
     String appId = RestUtils.getAppEntity(servletRequest).getAppId();
-    MMXTopicId tid = nameToId(topicName);
+    MMXTopicId tid = TopicHelper.nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
     Node node = topicManager.getTopicNode(topicId);
     if(node instanceof LeafNode) {
       LeafNode leafNode = (LeafNode) node;
       TopicInfo info = new TopicInfo();
+      info.setTopicId(TopicHelper.convertToId(node.getNodeID()));
       info.setTopicName(node.getName());
       info.setPublisherType(leafNode.getPublisherModel().getName());
       info.setSubscriptionEnabled(leafNode.isSubscriptionEnabled());
@@ -327,7 +328,7 @@ public class TopicResource {
     }
 
     String appId = appEntity.getAppId();
-    MMXTopicId tid = nameToId(topicName);
+    MMXTopicId tid = TopicHelper.nameToId(topicName);
     String topicId = TopicHelper.makeTopic(appId, tid.getEscUserId(), tid.getName());
 
     MMXTopicManager topicManager = MMXTopicManager.getInstance();
@@ -373,7 +374,7 @@ public class TopicResource {
             .status(Response.Status.INTERNAL_SERVER_ERROR)
             .build();
       }
-      MMXTopicId tid = nameToId(topicName);
+      MMXTopicId tid = TopicHelper.nameToId(topicName);
       List<TopicSubscription> infoList = getTopicSubscriptions(
           appEntity.getAppId(), tid);
       Response response = Response
@@ -414,9 +415,11 @@ public class TopicResource {
     for (TopicInfoWithSubscriptionCount object : objects) {
       TopicNode node = new TopicNode();
       // TODO: hack to fix MOB-2516;display a user topic as userId#topicName.
-      node.setTopicName(idToName(object.getUserId(), object.getName()));
+      node.setTopicName(TopicHelper.idToName(object.getUserId(), object.getName()));
       node.setUserId(object.getUserId());
       node.setCollection(object.isCollection());
+      node.setTopicId(object.getId());
+      node.setDisplayName(object.getDisplayName());
       node.setDescription(object.getDescription());
       node.setPersistent(object.isPersistent());
       node.setMaxItems(object.getMaxItems());
@@ -447,25 +450,5 @@ public class TopicResource {
       infoList.add(info);
     }
     return infoList;
-  }
-  
-  // The hack to fix MOB-2516 that allows the console to display user topics as
-  // userID#topicName.  This method parses the global topic or user topic properly.
-  public static MMXTopicId nameToId(String topicName) {
-    int index = topicName.indexOf(TopicHelper.TOPIC_SEPARATOR);
-    if (index < 0) {
-      return new MMXTopicId(topicName);
-    } else {
-      return new MMXTopicId(topicName.substring(0, index), topicName.substring(index+1));
-    }
-  }
-  
-  // The hack to fix MOB-2516 to convert a user topic to userId#topicName
-  public static String idToName(String userId, String topicName) {
-    if (userId == null) {
-      return topicName;
-    } else {
-      return userId + TopicHelper.TOPIC_SEPARATOR + topicName;
-    }
   }
 }

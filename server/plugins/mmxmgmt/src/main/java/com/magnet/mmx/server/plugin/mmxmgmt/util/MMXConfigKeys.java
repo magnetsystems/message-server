@@ -14,8 +14,6 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
-import com.magnet.mmx.protocol.PushMessage;
-
 /**
  * Keys for the configuration values.
  */
@@ -161,4 +159,5 @@ public interface MMXConfigKeys {
   public static final String PUBSUB_NOTIFICATION_TYPE = "mmx.pubsub.notification.type";
   public static final String PUBSUB_NOTIFICATION_TITLE = "mmx.pubsub.notification.title";
   public static final String PUBSUB_NOTIFICATION_BODY = "mmx.pubsub.notification.body";
+  public static final String PUBSUB_NOTIFICATION_SOUND = "mmx.pubsub.notification.sound";
 }

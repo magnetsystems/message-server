@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration SYSTEM
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+        <property name="hibernate.connection.driver_class">org.mariadb.jdbc.Driver</property>
+        <property name="hibernate.connection.url">jdbc:mysql://127.0.0.1:3306/maxdb</property>
+        <property name="hibernate.connection.username">root</property>
+        <property name="hibernate.connection.password"></property>
+        <!--<property name="hibernate.connection.autocommit">true</property>-->
+        <property name="hibernate.hbm2ddl.auto">update</property>
+        <!--conn pool-->
+        <property name="hibernate.c3p0.acquire_increment">1</property>
+        <property name="hibernate.c3p0.idle_test_period">100</property>
+        <property name="hibernate.c3p0.max_size">10</property>
+        <property name="hibernate.c3p0.max_statements">10</property>
+        <property name="hibernate.c3p0.min_size">10</property>
+        <property name="hibernate.c3p0.timeout">100</property>
+
+        <property name="show_sql">false</property>
+        <property name="hibernate.current_session_context_class">thread</property>
+        <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo" />
+        <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo" />
+        <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo" />
+        <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo" />
+        <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushSuppressDo" />
+    </session-factory>
+</hibernate-configuration>

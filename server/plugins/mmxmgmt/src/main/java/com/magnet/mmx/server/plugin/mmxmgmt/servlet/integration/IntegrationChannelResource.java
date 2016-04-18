@@ -30,6 +30,9 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXChannelManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
@@ -106,6 +109,19 @@ public class IntegrationChannelResource {
             return RestUtils.getOKJAXRSResp(chatChannelResponse);
         }
 
+        //validate push config name
+        Integer pushConfigId = null;
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(channelInfo.getPushConfigName())) {
+            try {
+                MMXPushConfig pushConfig = MMXPushConfigService.getInstance().getConfig(channelInfo.getMmxAppId(), channelInfo.getPushConfigName());
+                pushConfigId = pushConfig.getConfigId();
+            }
+            catch (MMXException e) {
+                errorResponse = new ErrorResponse(ErrorCode.ILLEGAL_ARGUMENT,
+                        "push config name '" + channelInfo.getPushConfigName() + "' does not exist ");
+                return RestUtils.getBadReqJAXRSResp(errorResponse);
+            }
+        }
         // Attempt to create or Fetch Channel
         String channelName = channelInfo.getChannelName();
 
@@ -180,6 +196,9 @@ public class IntegrationChannelResource {
 
                 }
             }
+            if (pushConfigId != null) {
+                setConfigMapping(channelInfo.getMmxAppId(), channelInfo.getChannelName(), pushConfigId);
+            }
 
         } catch (MMXException e) {
             LOGGER.error("Exception during createChannel request", e);
@@ -199,6 +218,20 @@ public class IntegrationChannelResource {
         return RestUtils.getCreatedJAXRSResp(chatChannelResponse);
 
 
+    }
+    // config mapping
+    private void setConfigMapping(String appId, String channelName, int pushConfigId) throws MMXException {
+
+        MMXPushConfigMapping mapping = null;
+        try {
+            mapping = MMXPushConfigService.getInstance().getConfigMapping(appId, channelName);
+            //if found ==> delete
+            MMXPushConfigService.getInstance().deleteConfigMapping(mapping);
+        }
+        catch (MMXException e) {
+            //does not exist
+        }
+        MMXPushConfigService.getInstance().createConfigMapping(pushConfigId, appId, channelName);
     }
 
 

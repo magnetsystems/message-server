@@ -15,6 +15,7 @@
 package com.magnet.mmx.server.api.v1.protocol;
 
 import com.magnet.mmx.protocol.TopicAction;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class ChannelCreateInfo {
     private boolean subscribeOnCreate;
     private List<String> roles;
     private TopicAction.PublisherType publishPermission;
+    private String pushConfigName;
 
 
     public int getMaxItems() {
@@ -97,6 +99,14 @@ public class ChannelCreateInfo {
         this.publishPermission = permission;
     }
 
+    public String getPushConfigName() {
+        return pushConfigName;
+    }
+
+    public void setPushConfigName(String pushConfigName) {
+        this.pushConfigName = pushConfigName;
+    }
+
     @Override
     public String toString() {
         return "ChannelInfo{" +
@@ -108,6 +118,7 @@ public class ChannelCreateInfo {
                 ", subscriptionEnabled=" + subscriptionEnabled +
                 ", subscribeOnCreate=" + subscribeOnCreate +
                 ", publishPermission=" + publishPermission +
+                (StringUtils.isNotBlank(pushConfigName) ? ", pushConfigName=" + pushConfigName : "") +
                 '}';
     }
 }

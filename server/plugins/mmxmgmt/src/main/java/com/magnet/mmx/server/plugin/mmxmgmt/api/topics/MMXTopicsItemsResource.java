@@ -52,7 +52,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.TopicItemEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXTopicManager;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPubSubItem;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.PubSubItemResult;
-import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicResource;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.DBUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.TopicHelper;
@@ -129,7 +128,7 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
     }
     
     // MMX-3207 to handle user topic
-    MMXTopicId topicId = TopicResource.nameToId(topicName);
+    MMXTopicId topicId = TopicHelper.nameToId(topicName);
     String nodeId = TopicHelper.makeTopic(appId, topicId.getEscUserId(), topicId.getName());
 
     LOGGER.trace("getItems : constructed nodeId={}", nodeId);
@@ -173,7 +172,7 @@ public class MMXTopicsItemsResource extends AbstractBaseResource {
       PubSubService pubSubService = getPubSubService();
       String topic = TopicHelper.normalizePath(topicName);
       // MMX-3207 handle user topic.
-      MMXTopicId topicId = TopicResource.nameToId(topicName);
+      MMXTopicId topicId = TopicHelper.nameToId(topicName);
       String realTopic = TopicHelper.makeTopic(appId, topicId.getEscUserId(), topicId.getName());
       Node node = pubSubService.getNode(realTopic);
       if (node == null || node.isCollectionNode()) {

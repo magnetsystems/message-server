@@ -34,6 +34,10 @@ public final class AdminRESTResourceListing {
       IntegrationDeviceResource.class.getName(),
       IntegrationChannelResource.class.getName(),
       AdminResource.class.getName(),
+          PushConfigResource.class.getName(),
+          PushConfigSuppressResource.class.getName(),
+          PushConfigMappingResource.class.getName(),
+          TemplateResource.class.getName(),
   };
 
 

@@ -14,12 +14,11 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.util;
 
-import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketExtension;
 
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.Constants;
@@ -27,48 +26,73 @@ import com.magnet.mmx.protocol.Constants;
 /**
  */
 public class MMXMessageUtil {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MMXMessageUtil.class);
+  private static final boolean ENABLE_TRACE = false;
+  private static final Logger LOGGER = LoggerFactory
+      .getLogger(MMXMessageUtil.class);
 
   public static boolean isValidDistributableMessage(Packet packet) {
     if(!(packet instanceof Message)) {
-      LOGGER.debug("isValidDistributableMessage : false packet is not a XMPP Message stanza");
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+          "isValidDistributableMessage(): false; packet is "+packet.getClass().getSimpleName());
+      }
       return false;
     }
 
     Message mmxMessage = (Message) packet;
 
     if (isMulticastMessage(mmxMessage)) {
-      LOGGER.debug("isValidDistributableMessage :false packet is a Multicast message");
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+          "isValidDistributableMessage(): false; packet is a Multicast message");
+      }
       return false;
     }
-    
-    if (isGeoEventMessage(mmxMessage)) {
-      LOGGER.debug("isValidDistributableMessage :false packet is a GeoEvent message");
-      return false;
 
-    }
-    if (isPubSubMessage(mmxMessage)) {
-      LOGGER.debug("isValidDistributableMessage :false packet is a PubSub message");
+    if (isGeoEventMessage(mmxMessage)) {
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+          "isValidDistributableMessage(): false; packet is a GeoEvent message");
+      }
       return false;
     }
+
+//    if (isPubSubMessage(mmxMessage)) {
+//      if (ENABLE_TRACE) {
+//        LOGGER.trace("isValidDistributableMessage(): false; packet is a PubSub message");
+//      }
+//      return false;
+//    }
 
     if(Strings.isNullOrEmpty(mmxMessage.getID())){
-      LOGGER.debug("isValidDistributableMessage : false bad messageId={}", mmxMessage.getID());
+      if (ENABLE_TRACE) {
+        LOGGER.trace("isValidDistributableMessage(): false; bad messageId={}",
+          mmxMessage.getID());
+      }
       return false;
     }
 
     if(mmxMessage.getType() == Message.Type.error) {
-      LOGGER.debug("isValidDistributableMessage : false message is an error message={}", mmxMessage.getID());
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+          "isValidDistributableMessage(): false; message is an error message={}",
+          mmxMessage.getID());
+      }
       return false;
     }
 
     if(mmxMessage.getTo() == null) {
-      LOGGER.trace("isValidDistributableMessage : false toJID=null");
+      if (ENABLE_TRACE) {
+        LOGGER.trace("isValidDistributableMessage(): false; toJID=null");
+      }
       return false;
     }
 
     if (isSignalMessage(mmxMessage)) {
-      LOGGER.debug("isValidDistributableMessage :false packet is a signal message");
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+            "isValidDistributableMessage():false; packet is a MMX signal message");
+      }
       return false;
     }
 
@@ -81,33 +105,18 @@ public class MMXMessageUtil {
     final String namespace = "http://jabber.org/protocol/address";
     return (message.getExtension(addresses, namespace) != null);
   }
-  
-  private static boolean isGeoEventMessage(Message message) {
-    return message.getExtension(Constants.MMX_ELEMENT, Constants.MMX_NS_CONTEXT) != null;
-  }
 
+  private static boolean isGeoEventMessage(Message message) {
+    return message.getExtension(Constants.MMX_ELEMENT,
+        Constants.MMX_NS_CONTEXT) != null;
+  }
 
   public static boolean isPubSubMessage(Message message) {
     if (message == null) {
       return false;
     }
-    final String namespace = "http://jabber.org/protocol/pubsub#event";
-    final String event = "event";
-    final String items = "items";
-
-    PacketExtension extension = message.getExtension(event, namespace);
-    if (extension != null) {
-      Element eventElement = extension.getElement();
-      if (eventElement != null) {
-        Element itemElement = eventElement.element(items);
-        if (itemElement != null) {
-          return true;
-        }
-      }
-    } else {
-      return false;
-    }
-    return false;
+    return message.getFrom().toString()
+        .equals(XMPPServer.getInstance().getPubSubModule().getServiceDomain());
   }
 
   public static boolean isConfirmationMessage(Message message) {
@@ -118,12 +127,13 @@ public class MMXMessageUtil {
     // MMX Multicast Message
     return Constants.MMX_MULTICAST.equalsIgnoreCase(JIDUtil.getUserId(message.getTo()));
   }
+
   /**
    * Check if the message is a signal message.
    * @param message
    * @return
    */
-  private static boolean isSignalMessage(Message message) {
+  public static boolean isSignalMessage(Message message) {
     return message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_SIGNAL) != null;
   }
 }

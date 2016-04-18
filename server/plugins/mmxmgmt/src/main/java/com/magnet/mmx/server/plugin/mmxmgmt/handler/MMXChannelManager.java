@@ -32,6 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
+import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
@@ -159,6 +160,7 @@ public class MMXChannelManager {
                   String appId, Node node) {
     com.magnet.mmx.server.api.v1.protocol.ChannelInfo info = new
         com.magnet.mmx.server.api.v1.protocol.ChannelInfo();
+    info.setChannelId(ChannelHelper.converToId(node.getNodeID()));
     info.setDescription(node.getDescription());
     info.setChannelName(node.getName());
     if(node instanceof  LeafNode) {
@@ -167,7 +169,7 @@ public class MMXChannelManager {
       info.setMaxItems(lnode.isPersistPublishedItems() ?
           lnode.getMaxPublishedItems() : 0);
     }
-    info.setChannelName(ChannelHelper.parseNode(node.getNodeID()).getName());
+    info.setChannelId(ChannelHelper.converToId(node.getNodeID()));
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
@@ -708,9 +710,8 @@ public class MMXChannelManager {
     // Don't set other options; it will change the subscription state to
     // pending because it will wait for the owner's approval.
 
-    // Need a modified Node.java from mmx-openfire repo.
-    NodeSubscription subscription = node.createSubscription(null, owner,
-        subscriber, false, optionsForm);
+    node.createSubscription(null, owner, subscriber, false, optionsForm);
+    NodeSubscription subscription = node.getSubscription(subscriber);
     return subscription;
   }
 
@@ -874,13 +875,13 @@ public class MMXChannelManager {
       }
       PublishedItem item = leafNode.getPublishedItem(itemId);
       if (item == null) {
-        results.put(itemId, StatusCode.ITEM_NOT_FOUND.getCode());
-      }
-      if (!item.canDelete(from)) {
+        results.put(itemId, StatusCode.GONE.getCode());
+      } else if (!item.canDelete(from)) {
         results.put(itemId, StatusCode.FORBIDDEN.getCode());
+      } else {
+        pubItems.add(item);
+        results.put(itemId, StatusCode.SUCCESS.getCode());
       }
-      pubItems.add(item);
-      results.put(itemId, StatusCode.SUCCESS.getCode());
     }
     leafNode.deleteItems(pubItems);
     return results;
@@ -1058,6 +1059,8 @@ public class MMXChannelManager {
   private ChannelInfo nodeToInfo(String userId, String channel, Node node) {
     ChannelInfo info = new ChannelInfo(
         userId, node.getName() != null ? node.getName() : channel, node.isCollectionNode())
+      .setId(TopicHelper.convertToId(node.getNodeID()))
+      .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
       .setModifiedDate(node.getModificationDate())
@@ -1300,6 +1303,8 @@ public class MMXChannelManager {
       MMXChannelId channel = ChannelHelper.parseNode(entity.getNodeId());
       ChannelInfo info =  new ChannelInfo(channel.getUserId(),
             channel.getName(), !entity.isLeaf())
+        .setId(ChannelHelper.converToId(entity.getNodeId()))
+        .setDisplayName(entity.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())
         .setMaxItems(entity.isPersistItems() ? entity.getMaxItems() : 0)
@@ -1468,6 +1473,8 @@ public class MMXChannelManager {
 
     for (TopicAction.TopicInfoWithSubscriptionCount ti : results.getResults()) {
       ChannelInfo info = new ChannelInfo(ti.getUserId(), ti.getName(), ti.isCollection())
+        .setId(ti.getId())
+        .setDisplayName(ti.getDisplayName())
         .setDescription(ti.getDescription())
         .setCreationDate(ti.getCreationDate())
         .setModifiedDate(ti.getModifiedDate())

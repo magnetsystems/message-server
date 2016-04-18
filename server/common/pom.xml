@@ -14,17 +14,17 @@
   <name>Magnet Messaging Server Common Root</name>
   <description>${project.name}</description>
 
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-        <source>1.6</source>
-        <target>1.6</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <!--<build>-->
+    <!--<plugins>-->
+      <!--<plugin>-->
+        <!--<artifactId>maven-compiler-plugin</artifactId>-->
+        <!--<configuration>-->
+        <!--<source>1.6</source>-->
+        <!--<target>1.6</target>-->
+        <!--</configuration>-->
+      <!--</plugin>-->
+    <!--</plugins>-->
+  <!--</build>-->
   <!-- Add your module here -->
 
   <dependencies>
