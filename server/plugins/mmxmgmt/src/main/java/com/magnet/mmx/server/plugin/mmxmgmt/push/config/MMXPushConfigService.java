@@ -23,6 +23,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import org.apache.commons.lang3.StringUtils;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.util.*;
 
@@ -43,6 +44,8 @@ public class MMXPushConfigService {
         MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE+'='+TITLE+'\n'+
         MMXConfigKeys.PUBSUB_NOTIFICATION_BODY+'='+BODY+'\n'+
         MMXConfigKeys.PUBSUB_NOTIFICATION_SOUND+"=default\n";
+
+    private static final String PUSH_SUPPRESS_CONFIG_CACHE = "PushSuppressConfigCache";
 
     private static MMXPushConfigService instance = new MMXPushConfigService();
 
@@ -75,6 +78,23 @@ public class MMXPushConfigService {
     }
 
     public boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
+
+        Boolean isPushSuppressed = null;
+        isPushSuppressed = (Boolean)CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).get(getCacheLookupKey(userId,appId,channelId));
+        if(isPushSuppressed != null) {
+            return isPushSuppressed;
+        }
+
+        isPushSuppressed = isPushSuppressedByUserFromDB(userId,appId,channelId);
+        CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).put(getCacheLookupKey(userId,appId,channelId), isPushSuppressed);
+        return isPushSuppressed;
+
+    }
+    private String getCacheLookupKey(String userId, String appId, String channelId){
+        return userId + "-" + appId + "-" + channelId;
+    }
+
+    private boolean isPushSuppressedByUserFromDB(String userId, String appId, String channelId) {
 
         MMXPushSuppress s = getPushSuppressForAppUserAndChannel(appId, userId, channelId);
         if (s != null) {
@@ -640,11 +660,17 @@ public class MMXPushConfigService {
     }
     public MMXPushSuppress createPushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
-        return suppressDo2Bo(daoFactory.getMXPushSuppressDao().suppress(suppressBo2Do(suppress)));
+        MMXPushSuppress pushSuppress = suppressDo2Bo(daoFactory.getMXPushSuppressDao().suppress(suppressBo2Do(suppress)));
+        CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE)
+                .put(getCacheLookupKey(pushSuppress.getUserId(),pushSuppress.getAppId(),pushSuppress.getChannelId()), Boolean.TRUE);
+        return pushSuppress;
     }
     public void createPushUnSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
         daoFactory.getMXPushSuppressDao().unSuppress(suppressBo2Do(suppress));
+        CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE)
+                .put(getCacheLookupKey(suppress.getUserId(),suppress.getAppId(),suppress.getChannelId()), Boolean.FALSE);
+
     }
     public MMXPushSuppress getPushSuppress(Integer suppressId) throws MMXException {
         MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppressId);
