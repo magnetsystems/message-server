@@ -34,7 +34,7 @@ public class MMXPushConfigMockStorage {
         return normalize(userId) + "@" + normalize(channelId) + "@" + normalize(appId);
     }
 
- 
+
     //TEMPLATE
     public static MMXTemplateDo createTemplate(MMXTemplateDo template) {
         Integer id = SEQUENCE++;
