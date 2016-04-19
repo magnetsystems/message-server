@@ -2,6 +2,8 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 
 import java.util.*;
 
@@ -12,15 +14,15 @@ import java.util.*;
 public class MMXPushConfigMockStorage {
 
     private static Integer SEQUENCE = 0;
-    private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = new HashMap<>();
-    private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = new HashMap<>();
-    private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = new HashMap<>();
-    private static Map<Integer, MMXPushConfigDo> CONFIG_BY_ID = new HashMap<>();
-    private static Map<String, MMXPushConfigDo> CONFIG_BY_APP_AND_NAME = new HashMap<>();
-    private static Map<Integer, MMXPushConfigMetadataDo> CONFIG_META_BY_ID = new HashMap<>();
-    private static Map<String, MMXPushConfigMetadataDo> CONFIG_META_BY_CONFIG_AND_NAME = new HashMap<>();
-    private static Map<Integer, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_ID = new HashMap<>();
-    private static Map<String, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_APP_AND_CHANNEL = new HashMap<>();
+    private static final Map<Integer, MMXPushSuppressDo> SUPPRESS_BY_ID = CacheFactory.createCache("SUPPRESS_BY_ID");
+    private static Map<Integer, MMXTemplateDo> TEMPLATE_BY_ID = CacheFactory.createCache("TEMPLATE_BY_ID");
+    private static Map<String, MMXTemplateDo> TEMPLATE_BY_APP_AND_NAME = CacheFactory.createCache("TEMPLATE_BY_APP_AND_NAME");
+    private static Map<Integer, MMXPushConfigDo> CONFIG_BY_ID = CacheFactory.createCache("CONFIG_BY_ID");
+    private static Map<String, MMXPushConfigDo> CONFIG_BY_APP_AND_NAME = CacheFactory.createCache("CONFIG_BY_APP_AND_NAME");
+    private static Map<Integer, MMXPushConfigMetadataDo> CONFIG_META_BY_ID = CacheFactory.createCache("CONFIG_META_BY_ID");
+    private static Map<String, MMXPushConfigMetadataDo> CONFIG_META_BY_CONFIG_AND_NAME = CacheFactory.createCache("CONFIG_META_BY_CONFIG_AND_NAME");
+    private static Map<Integer, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_ID = CacheFactory.createCache("CONFIG_MAPPING_BY_ID");
+    private static Map<String, MMXPushConfigMappingDo> CONFIG_MAPPING_BY_APP_AND_CHANNEL = CacheFactory.createCache("CONFIG_MAPPING_BY_APP_AND_CHANNEL");;
 
     private static String normalize(String str) {
         return StringUtils.isBlank(str) ? "" : str;
@@ -32,6 +34,7 @@ public class MMXPushConfigMockStorage {
         return normalize(userId) + "@" + normalize(channelId) + "@" + normalize(appId);
     }
 
+ 
     //TEMPLATE
     public static MMXTemplateDo createTemplate(MMXTemplateDo template) {
         Integer id = SEQUENCE++;
