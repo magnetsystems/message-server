@@ -251,20 +251,20 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
  
  
  INSERT INTO mmxTemplate(appId,templateType,templateName,template)
- VALUES ('system', 'PUSH', 'default-template’, 
- 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=${msg.from}: ${msg.content.message[0..*30]}...\nmmx.pubsub.notification.sound=default\n’
+ VALUES ('system', 'PUSH', 'default-template', 
+ 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=${msg.from}: ${msg.content.message[0..*30]}...\nmmx.pubsub.notification.sound=default\n'
  );
  
  INSERT INTO mmxPushConfig(appId,configName,isEnabled,isSilentPush,templateId)
  select t.appId, 'default-config', '1', '0', t.templateId
  from mmxTemplate t
- where t.appId = ’system’
- and t.templateName = 'default-template’;
+ where t.appId = 'system'
+ and t.templateName = 'default-template';
 
  INSERT INTO mmxPushConfigMapping(appId,channelId,configId)
- select c.appId, ‘’, c.configId
+ select c.appId, ‘', c.configId
  from mmxPushConfig c
- where c.appId = ’system’
- and c. configName = 'default-config’;
+ where c.appId = 'system'
+ and c. configName = 'default-config';
  
 
