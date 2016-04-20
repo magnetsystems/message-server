@@ -853,7 +853,11 @@ public class MMXTopicManager {
 //      throw new MMXException(StatusCode.FORBIDDEN.getMessage(topic.getName()),
 //          StatusCode.FORBIDDEN.getCode());
 //    }
-    return nodeToInfo(topic.getUserId(), topic.getName(), node);
+    TopicInfo info = nodeToInfo(topic.getUserId(), topic.getName(), node);
+    info.setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(JIDUtil.getUserId(from),
+            TopicHelper.parseTopic(node.getNodeID()).getAppId(),
+            TopicHelper.convertToId(node.getNodeID())));
+    return info;
   }
 
   public List<TopicInfo> getTopics(JID from, String appId, List<MMXTopicId> topics)
@@ -1132,10 +1136,7 @@ public class MMXTopicManager {
       .setDescription(node.getDescription())
       .setModifiedDate(node.getModificationDate())
       .setCreator(node.getCreator().toString())
-      .setSubscriptionEnabled(node.isSubscriptionEnabled())
-      .setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(userId,
-                                                                                    TopicHelper.parseTopic(node.getNodeID()).getAppId(),
-                                                                                    topic));
+      .setSubscriptionEnabled(node.isSubscriptionEnabled());
     if (!node.isCollectionNode()) {
       LeafNode leafNode = (LeafNode) node;
       info.setMaxItems(leafNode.isPersistPublishedItems() ?
