@@ -1,6 +1,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 /**
  * Created by mmicevic on 3/31/16.
@@ -9,7 +10,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "mmxPushConfigMapping")
-public class MMXPushConfigMappingDo {
+public class MMXPushConfigMappingDo implements Serializable {
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)

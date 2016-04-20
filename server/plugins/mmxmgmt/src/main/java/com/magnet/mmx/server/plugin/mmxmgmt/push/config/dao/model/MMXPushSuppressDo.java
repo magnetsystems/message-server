@@ -1,6 +1,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 /**
  * Created by mmicevic on 3/31/16.
@@ -9,7 +10,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "mmxPushSuppress")
-public class MMXPushSuppressDo {
+public class MMXPushSuppressDo implements Serializable{
 
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
