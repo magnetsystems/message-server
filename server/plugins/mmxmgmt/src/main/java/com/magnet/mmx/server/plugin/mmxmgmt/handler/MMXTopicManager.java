@@ -1132,7 +1132,10 @@ public class MMXTopicManager {
       .setDescription(node.getDescription())
       .setModifiedDate(node.getModificationDate())
       .setCreator(node.getCreator().toString())
-      .setSubscriptionEnabled(node.isSubscriptionEnabled());
+      .setSubscriptionEnabled(node.isSubscriptionEnabled())
+      .setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(userId,
+                                                                                    TopicHelper.parseTopic(node.getNodeID()).getAppId(),
+                                                                                    topic));
     if (!node.isCollectionNode()) {
       LeafNode leafNode = (LeafNode) node;
       info.setMaxItems(leafNode.isPersistPublishedItems() ?
@@ -1524,7 +1527,7 @@ public class MMXTopicManager {
     int maxItems = rqt.getLimit();
     List<MMXAttribute<TopicAction.TopicAttr>> criteria = rqt.getCriteria();
     TopicAction.TopicQueryResponse resp = PubSubPersistenceManagerExt.searchTopic(
-        userId, appId, offset, maxItems, criteria);
+            userId, appId, offset, maxItems, criteria);
     return resp;
   }
 
@@ -1623,7 +1626,7 @@ public class MMXTopicManager {
       }
     } else {
       List<PublishedItem> items = PubSubPersistenceManagerExt.getPublishedItems(from,
-          (LeafNode) node, maxItems, since);
+              (LeafNode) node, maxItems, since);
       if (items != null) {
         for (PublishedItem item : items) {
           if (sendLastPublishedItem(item, sub, from)) {
