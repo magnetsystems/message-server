@@ -65,7 +65,7 @@ ALTER TABLE mmxWakeupQueue MODIFY payload VARCHAR(2000);
  and t.templateName = 'default-template';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 0, c.appId, ‘', c.configId
+ select 0, c.appId, '', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c. configName = 'default-config';
