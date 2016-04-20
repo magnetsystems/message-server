@@ -256,7 +256,7 @@ CREATE TABLE mmxTemplate (
  );
 
  INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
- select 0, t.appId, 'default-config', '1', '0', t.templateId
+ select 0, t.appId, 'default-config', true, false, t.templateId
  from mmxTemplate t
  where t.appId = 'system'
  and t.templateName = 'default-template';
