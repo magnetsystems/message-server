@@ -6,7 +6,7 @@
 # version and schema.  The upgrade scripts are for existing installation.
 #
 
-INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 9);
+INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 10);
 
 CREATE TABLE mmxApp (
   id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -81,7 +81,7 @@ CREATE INDEX mmxMessage_messageId ON mmxMessage(messageId);
     tokenType       varchar(10),
     appId           varchar(16) NULL,
     googleApiKey    varchar(100),
-    payload         varchar(400)   NOT NULL,
+    payload         varchar(2000)  NOT NULL,
     messageId       varchar(100)   NOT NULL,
     dateCreatedUTC     int(11),
     dateSentUTC        int(11),     /* date when we sent the wakeup */

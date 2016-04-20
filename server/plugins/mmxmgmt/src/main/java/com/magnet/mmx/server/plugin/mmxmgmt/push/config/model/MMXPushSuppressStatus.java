@@ -2,23 +2,29 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.model;
 
 import java.io.Serializable;
 
-/**
- * Created by mmicevic on 4/13/16.
- *
- */
-public class MMXPushSuppress implements Serializable {
+
+public class MMXPushSuppressStatus implements Serializable {
 
     private Integer suppressId;
     private String userId;
     private String appId;
     private String channelId;
     private Long untilDate;
+    private Boolean suppressed;
 
-    public Integer getSuppressId() {
-        return suppressId;
+    public MMXPushSuppressStatus(MMXPushSuppress pushSuppress) {
+        this.userId = pushSuppress.getUserId();
+        this.appId = pushSuppress.getAppId();
+        this.channelId = pushSuppress.getChannelId();
+        this.untilDate = pushSuppress.getUntilDate();
+        suppressed = true;
     }
-    public void setSuppressId(Integer suppressId) {
-        this.suppressId = suppressId;
+
+    public MMXPushSuppressStatus(String appId, String userId, String channelId) {
+        this.userId = userId;
+        this.appId = appId;
+        this.channelId = channelId;
+        suppressed = false;
     }
 
     public String getUserId() {
@@ -49,5 +55,12 @@ public class MMXPushSuppress implements Serializable {
         this.untilDate = untilDate;
     }
 
+    public boolean isSuppressed() {
+        return suppressed;
+    }
 
+    public MMXPushSuppressStatus setSuppressed(boolean suppressed) {
+        this.suppressed = suppressed;
+        return this;
+    }
 }
