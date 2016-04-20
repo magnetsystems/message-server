@@ -21,6 +21,7 @@
 
   <properties>
      <resteasy.version>3.0.9.Final</resteasy.version>
+     <mariadb.driver.version>1.2.3</mariadb.driver.version>
   </properties>
 
   <build>
@@ -332,5 +333,11 @@
       <artifactId>hibernate-core</artifactId>
       <version>4.3.11.Final</version>
     </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-c3p0</artifactId>
+      <version>4.3.11.Final</version>
+    </dependency>
+
   </dependencies>
 </project>

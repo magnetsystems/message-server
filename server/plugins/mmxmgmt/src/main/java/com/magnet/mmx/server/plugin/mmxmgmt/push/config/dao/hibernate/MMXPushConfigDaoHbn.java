@@ -2,7 +2,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
-import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
@@ -11,56 +10,41 @@ import java.util.Collection;
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushConfigDaoHbn extends HibernateBase implements MMXPushConfigDao {
+public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implements MMXPushConfigDao {
 
+    public MMXPushConfigDaoHbn() {
+        super(MMXPushConfigDo.class);
+    }
 
     @Override
     public MMXPushConfigDo createConfig(MMXPushConfigDo config) {
-
-        openCurrentSessionwithTransaction();
-        Integer configId = (Integer) getCurrentSession().save(config);
-        closeCurrentSessionwithTransaction();
+        save(config);
         return config;
     }
 
     @Override
     public MMXPushConfigDo getConfig(Integer configId) {
-        openCurrentSession();
-        MMXPushConfigDo config = (MMXPushConfigDo) getCurrentSession().get(MMXPushConfigDo.class, configId);
-        closeCurrentSession();
-        return config;
+        return findById(configId);
     }
 
     @Override
     public MMXPushConfigDo getConfig(String appId, String configName) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushConfigDo.class);
-        MMXPushConfigDo config = (MMXPushConfigDo) criteria.add(Restrictions.eq("appId", appId)).add(Restrictions.eq("configName", configName)).uniqueResult();
-        closeCurrentSession();
-        return config;
+        return findSingleByCriteria(Restrictions.eq("appId", appId), Restrictions.eq("configName", configName));
     }
 
     @Override
     public Collection<MMXPushConfigDo> getAllConfigs(String appId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushConfigDo.class);
-        Collection<MMXPushConfigDo> list = (Collection<MMXPushConfigDo>) criteria.add(Restrictions.eq("appId", appId)).list();
-        closeCurrentSession();
-        return list;
+        return findManyByCriteria(Restrictions.eq("appId", appId));
     }
 
     @Override
     public MMXPushConfigDo updateConfig(MMXPushConfigDo config) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().saveOrUpdate(config);
-        closeCurrentSessionwithTransaction();
+        update(config);
         return config;
     }
 
     @Override
     public void deleteConfig(MMXPushConfigDo config) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().delete(config);
-        closeCurrentSessionwithTransaction();
+        delete(config);
     }
 }

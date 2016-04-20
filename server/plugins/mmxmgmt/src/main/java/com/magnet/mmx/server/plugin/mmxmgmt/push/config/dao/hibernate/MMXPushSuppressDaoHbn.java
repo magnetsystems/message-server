@@ -2,7 +2,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushSuppressDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushSuppressDo;
-import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
@@ -11,13 +10,15 @@ import java.util.Collection;
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushSuppressDaoHbn extends HibernateBase implements MMXPushSuppressDao {
+public class MMXPushSuppressDaoHbn extends HibernateBase<MMXPushSuppressDo> implements MMXPushSuppressDao {
+
+    public MMXPushSuppressDaoHbn() {
+        super(MMXPushSuppressDo.class);
+    }
 
     @Override
     public MMXPushSuppressDo suppress(MMXPushSuppressDo suppress) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().saveOrUpdate(suppress);
-        closeCurrentSessionwithTransaction();
+        save(suppress);
         return suppress;
     }
 
@@ -29,52 +30,33 @@ public class MMXPushSuppressDaoHbn extends HibernateBase implements MMXPushSuppr
 
     @Override
     public MMXPushSuppressDo getSuppress(Integer suppressId) {
-        openCurrentSession();
-        MMXPushSuppressDo suppress = (MMXPushSuppressDo) getCurrentSession().get(MMXPushSuppressDo.class, suppressId);
-        closeCurrentSession();
-        return suppress;
+        return findById(suppressId);
     }
 
     @Override
     public Collection<MMXPushSuppressDo> getSuppress(String appId, String userId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushSuppressDo.class);
-        Collection<MMXPushSuppressDo> list = (Collection<MMXPushSuppressDo>) criteria
-                .add(Restrictions.eq("appId", appId))
-                .add(Restrictions.eq("userId", userId))
-                .list();
-        closeCurrentSession();
-        return list;
+        return findManyByCriteria(
+                Restrictions.eq("appId", appId),
+                Restrictions.eq("userId", userId == null ? "" : userId)
+        );
     }
 
     @Override
     public Collection<MMXPushSuppressDo> getAllSuppress(String appId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushSuppressDo.class);
-        Collection<MMXPushSuppressDo> list = (Collection<MMXPushSuppressDo>) criteria
-                .add(Restrictions.eq("appId", appId))
-                .list();
-        closeCurrentSession();
-        return list;
+        return findManyByCriteria(Restrictions.eq("appId", appId));
     }
 
     @Override
     public MMXPushSuppressDo getSuppress(String appId, String userId, String channelId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushSuppressDo.class);
-        MMXPushSuppressDo result = (MMXPushSuppressDo) criteria
-                .add(Restrictions.eq("appId", appId))
-                .add(Restrictions.eq("userId", userId))
-                .add(Restrictions.eq("channelId", channelId))
-                .uniqueResult();
-        closeCurrentSession();
-        return result;
+        return findSingleByCriteria(
+                Restrictions.eq("appId", appId),
+                Restrictions.eq("userId", userId),
+                Restrictions.eq("channelId", channelId)
+        );
     }
 
     @Override
     public void deleteSuppress(MMXPushSuppressDo suppress) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().delete(suppress);
-        closeCurrentSessionwithTransaction();
+        delete(suppress);
     }
 }

@@ -4,6 +4,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppress;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Collection;
  * Created by mmicevic on 4/13/16.
  *
  */
+@Ignore
 public class MMXPushConfigSuppressTest {
 
     private static final String APP_ID = "test-app";

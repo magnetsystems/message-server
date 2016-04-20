@@ -50,28 +50,29 @@ public class MMXPushConfigService {
         return instance;
     }
 
-    private final MMXPushConfigDaoFactory daoFactory = new MMXPushDaoFactoryMock();
-//    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryHbn();
+//    private final MMXPushConfigDaoFactory daoFactory = new MMXPushDaoFactoryMock();
+    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryHbn();
 
     private MMXPushConfigService() {
 
-        try {
-            MMXTemplate t = createTemplate(SYSTEM_APP, DEFAULT_TEMPLATE, MMXTemplateType.PUSH, PUSH_CONFIG_TEMPLATE);
-
-            MMXPushConfig c = new MMXPushConfig();
-            c.setAppId(SYSTEM_APP);
-            c.setConfigName(DEFAULT_CONFIG);
-            c.setTemplateId(t.getTemplateId());
-            c.setEnabled(true);
-            c = createConfig(c);
-
-            MMXPushConfigMapping m = new MMXPushConfigMapping();
-            m.setAppId(SYSTEM_APP);
-            m.setConfigId(c.getConfigId());
-            createConfigMapping(m);
-        } catch (MMXException e) {
-            e.printStackTrace();
-        }
+//        try {
+////            MMXTemplate t = createTemplate(SYSTEM_APP, DEFAULT_TEMPLATE, MMXTemplateType.PUSH, PUSH_CONFIG_TEMPLATE);
+//            MMXTemplate t = getTemplate(SYSTEM_APP, DEFAULT_TEMPLATE);
+//
+//            MMXPushConfig c = new MMXPushConfig();
+//            c.setAppId(SYSTEM_APP);
+//            c.setConfigName(DEFAULT_CONFIG);
+//            c.setTemplateId(t.getTemplateId());
+//            c.setEnabled(true);
+//            c = createConfig(c);
+//
+//            MMXPushConfigMapping m = new MMXPushConfigMapping();
+//            m.setAppId(SYSTEM_APP);
+//            m.setConfigId(c.getConfigId());
+//            createConfigMapping(m);
+//        } catch (MMXException e) {
+//            e.printStackTrace();
+//        }
     }
 
     public boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
@@ -407,15 +408,18 @@ public class MMXPushConfigService {
                 MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
                 mapping.setConfigId(config.getConfigId());
                 mapping.setAppId(config.getAppId());
-                mapping.setChannelId(channelId);
+                mapping.setChannelId(channelId == null ? "" : channelId);
                 daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
             }
         } else {
-            MMXPushConfigMappingDo mapping = new MMXPushConfigMappingDo();
-            mapping.setConfigId(config.getConfigId());
-            mapping.setAppId(config.getAppId());
-            mapping.setChannelId(null);
-            daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
+            MMXPushConfigMappingDo mapping = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(config.getAppId(), "");
+            if (mapping == null) {
+                mapping = new MMXPushConfigMappingDo();
+                mapping.setConfigId(config.getConfigId());
+                mapping.setAppId(config.getAppId());
+                mapping.setChannelId("");
+                daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mapping);
+            }
         }
     }
 
@@ -489,7 +493,7 @@ public class MMXPushConfigService {
         bo.setMappingId(mappingDo.getMappingId());
         bo.setAppId(mappingDo.getAppId());
         bo.setConfigId(mappingDo.getConfigId());
-        bo.setChannelId(mappingDo.getChannelId());
+        bo.setChannelId(mappingDo.getChannelId() == null ? "" : mappingDo.getChannelId());
         return bo;
     }
     private Collection<MMXPushConfigMapping> mappingDo2Bo(Collection<MMXPushConfigMappingDo> allConfigMappings) {
@@ -511,7 +515,7 @@ public class MMXPushConfigService {
         mappingDo.setMappingId(bo.getMappingId());
         mappingDo.setAppId(bo.getAppId());
         mappingDo.setConfigId(bo.getConfigId());
-        mappingDo.setChannelId(bo.getChannelId());
+        mappingDo.setChannelId(bo.getChannelId() == null ? "" : bo.getChannelId());
         return mappingDo;
     }
     public MMXPushConfigMapping createConfigMapping(Integer configId, String appId, String channelId) throws MMXException {
@@ -596,9 +600,9 @@ public class MMXPushConfigService {
 
         MMXPushSuppressDo suppressDo = new MMXPushSuppressDo();
         suppressDo.setSuppressId(bo.getSuppressId());
-        suppressDo.setUserId(bo.getUserId());
+        suppressDo.setUserId(bo.getUserId() == null ? "" : bo.getUserId());
         suppressDo.setAppId(bo.getAppId());
-        suppressDo.setChannelId(bo.getChannelId());
+        suppressDo.setChannelId(bo.getChannelId() == null ? "" : bo.getChannelId());
         suppressDo.setUntilDate(bo.getUntilDate());
         return suppressDo;
     }
@@ -609,9 +613,9 @@ public class MMXPushConfigService {
         }
         MMXPushSuppress bo = new MMXPushSuppress();
         bo.setSuppressId(suppressDo.getSuppressId());
-        bo.setUserId(suppressDo.getUserId());
+        bo.setUserId(suppressDo.getUserId().equals("") ? null : suppressDo.getUserId());
         bo.setAppId(suppressDo.getAppId());
-        bo.setChannelId(suppressDo.getChannelId());
+        bo.setChannelId(suppressDo.getChannelId().equals("") ? null : suppressDo.getChannelId());
         bo.setUntilDate(suppressDo.getUntilDate());
         return bo;
     }

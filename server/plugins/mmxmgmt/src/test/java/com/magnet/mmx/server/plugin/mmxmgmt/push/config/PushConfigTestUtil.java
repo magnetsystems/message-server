@@ -27,6 +27,14 @@ public class PushConfigTestUtil {
         return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelId);
     }
 
+    public static MMXPushConfig updateConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelIds) throws MMXException {
+        MMXPushConfig c = MMXPushConfigService.getInstance().getConfig(appId, configName);
+        c.setSilentPush(isSilentPush);
+        c.setEnabled(isEnabled);
+        c.setMeta(meta);
+        c.setChannelIds(channelIds);
+        return MMXPushConfigService.getInstance().updateConfig(c);
+    }
     public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelIds) throws MMXException {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(appId);

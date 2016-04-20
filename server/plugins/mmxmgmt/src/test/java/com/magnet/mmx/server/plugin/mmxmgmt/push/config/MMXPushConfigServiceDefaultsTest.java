@@ -5,12 +5,14 @@ import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Created by mmicevic on 4/1/16.
  *
  */
+@Ignore
 public class MMXPushConfigServiceDefaultsTest {
 
     @Test

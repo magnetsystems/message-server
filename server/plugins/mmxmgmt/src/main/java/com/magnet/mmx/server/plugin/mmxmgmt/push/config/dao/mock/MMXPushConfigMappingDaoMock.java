@@ -21,8 +21,8 @@ public class MMXPushConfigMappingDaoMock implements MMXPushConfigMappingDao {
     }
 
     @Override
-    public MMXPushConfigMappingDo getConfigMapping(String appId, String channelName) {
-        return MMXPushConfigMockStorage.getConfigMapping(appId, channelName);
+    public MMXPushConfigMappingDo getConfigMapping(String appId, String channelId) {
+        return MMXPushConfigMockStorage.getConfigMapping(appId, channelId);
     }
 
     @Override

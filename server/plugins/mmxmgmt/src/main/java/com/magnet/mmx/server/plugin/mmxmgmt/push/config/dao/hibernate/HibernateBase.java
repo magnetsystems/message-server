@@ -1,62 +1,143 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
+import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
+import org.hibernate.criterion.Criterion;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * Created by mmicevic on 4/15/16.
  *
  */
-public class HibernateBase {
+public class HibernateBase<D> {
 
     private Session currentSession;
     private Transaction currentTransaction;
+    private Class<D> clazz;
 
-    private static SessionFactory getSessionFactory() {
-        Configuration configuration = new Configuration().configure();
-        StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
-                .applySettings(configuration.getProperties());
-        SessionFactory sessionFactory = configuration.buildSessionFactory(builder.build());
-        return sessionFactory;
+    public HibernateBase(Class<D> clazz) {
+        this.clazz = clazz;
     }
 
+//    private static SessionFactory getSessionFactory() {
+//        Configuration configuration = new Configuration().configure();
+//        StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder()
+//                .applySettings(configuration.getProperties());
+//        SessionFactory sessionFactory = configuration.buildSessionFactory(builder.build());
+//        return sessionFactory;
+//    }
 
-    public Session openCurrentSession() {
-        currentSession = getSessionFactory().openSession();
+
+    private Session openCurrentSession() {
+        currentSession = Hibernate.getSessionFactory().openSession();
         return currentSession;
     }
+//    private Session openCurrentSession() {
+//        try {
+//            currentSession = Hibernate.getSessionFactory().withOptions().connection(DbConnectionManager.getConnection()).openSession();
+//        }
+//        catch (SQLException e) {
+//            e.printStackTrace();
+//        }
+//        return currentSession;
+//    }
 
-    public Session openCurrentSessionwithTransaction() {
-        currentSession = getSessionFactory().openSession();
+    private Session openCurrentSessionWithTransaction() {
+        openCurrentSession();
         currentTransaction = currentSession.beginTransaction();
         return currentSession;
     }
 
-    public void closeCurrentSession() {
+    private void closeCurrentSession() {
         currentSession.close();
     }
 
-    public void closeCurrentSessionwithTransaction() {
-        currentTransaction.commit();
-        currentSession.close();
-    }
-
-    public Session getCurrentSession() {
+    private Session getCurrentSession() {
         return currentSession;
     }
 
-    public void setCurrentSession(Session currentSession) {
-        this.currentSession = currentSession;
-    }
-
-    public Transaction getCurrentTransaction() {
+    private Transaction getCurrentTransaction() {
         return currentTransaction;
     }
 
-    public void setCurrentTransaction(Transaction currentTransaction) {
-        this.currentTransaction = currentTransaction;
+
+
+    //CRUD
+    public Serializable save(D doObject) {
+        try {
+            openCurrentSessionWithTransaction();
+            Serializable id = getCurrentSession().save(doObject);
+            getCurrentTransaction().commit();
+            return id;
+        } catch (Throwable t){
+            getCurrentTransaction().rollback();
+            throw t;
+        } finally {
+            closeCurrentSession();
+        }
+    }
+    public D findById(Serializable id) {
+        try {
+            openCurrentSession();
+            return (D) getCurrentSession().get(clazz, id);
+        } finally {
+            closeCurrentSession();
+        }
+    }
+    public D findSingleByCriteria(Criterion... restrictions) {
+        try {
+            openCurrentSession();
+            Criteria criteria = getCurrentSession().createCriteria(clazz);
+            if (restrictions != null) {
+                for(Criterion restriction: restrictions) {
+                    criteria.add(restriction);
+                }
+            }
+            return (D) criteria.uniqueResult();
+        } finally {
+            closeCurrentSession();
+        }
+    }
+    public List<D> findManyByCriteria(Criterion... restrictions) {
+        try {
+            openCurrentSession();
+            Criteria criteria = getCurrentSession().createCriteria(clazz);
+            if (restrictions != null) {
+                for(Criterion restriction: restrictions) {
+                    criteria.add(restriction);
+                }
+            }
+            return (List<D>) criteria.list();
+        } finally {
+            closeCurrentSession();
+        }
+    }
+
+    public void update(D doObject) {
+        try {
+            openCurrentSessionWithTransaction();
+            getCurrentSession().saveOrUpdate(doObject);
+            getCurrentTransaction().commit();
+        } catch (Throwable t){
+            getCurrentTransaction().rollback();
+            throw t;
+        } finally {
+            closeCurrentSession();
+        }
+    }
+    public void delete(D doObject) {
+        try {
+            openCurrentSessionWithTransaction();
+            getCurrentSession().delete(doObject);
+            getCurrentTransaction().commit();
+        } catch (Throwable t){
+            getCurrentTransaction().rollback();
+            throw t;
+        } finally {
+            closeCurrentSession();
+        }
     }
 }
