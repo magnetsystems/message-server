@@ -201,7 +201,7 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
 
 /*** push config ***/
  CREATE TABLE mmxTemplate (
-   templateId int(11) NOT NULL AUTO_INCREMENT,
+   templateId int(11) NOT NULL AUTO_INCREMENT DEFAULT 0,
    appId varchar(45) COLLATE utf8_unicode_ci NOT NULL,
    templateType varchar(45) COLLATE utf8_unicode_ci NOT NULL,
    templateName varchar(45) COLLATE utf8_unicode_ci NOT NULL,
@@ -211,7 +211,7 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
  
  CREATE TABLE mmxPushConfig (
-   configId int(11) NOT NULL AUTO_INCREMENT,
+   configId int(11) NOT NULL AUTO_INCREMENT DEFAULT 0,
    appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    configName varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    isEnabled bit(1) NOT NULL,
@@ -222,7 +222,7 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
  
  CREATE TABLE mmxPushConfigMetadata (
-   metadataId int(11) NOT NULL AUTO_INCREMENT,
+   metadataId int(11) NOT NULL AUTO_INCREMENT DEFAULT 0,
    configId int(11) NOT NULL,
    name varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -231,7 +231,7 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
  
  CREATE TABLE mmxPushConfigMapping (
-   mappingId int(11) NOT NULL AUTO_INCREMENT,
+   mappingId int(11) NOT NULL AUTO_INCREMENT DEFAULT 0,
    appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    channelId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    configId int(11) NOT NULL,
@@ -240,7 +240,7 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
  ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
  
  CREATE TABLE mmxPushSuppress (
-   suppressId int(11) NOT NULL AUTO_INCREMENT,
+   suppressId int(11) NOT NULL AUTO_INCREMENT DEFAULT 0,
    appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    channelId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
    untilDate bigint(20) DEFAULT NULL,
