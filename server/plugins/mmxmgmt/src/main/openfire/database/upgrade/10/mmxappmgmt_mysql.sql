@@ -55,7 +55,7 @@ ALTER TABLE mmxWakeupQueue MODIFY payload VARCHAR(2000);
 
  INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
  VALUES (0, 'system', 'PUSH', 'default-template',
- 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=${msg.from}: ${msg.content.message[0..*30]}...\nmmx.pubsub.notification.sound=default\n'
+ 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=New message from ${msg.from}\nmmx.pubsub.notification.sound=default\n'
  );
 
  INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
@@ -68,4 +68,4 @@ INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
  select 0, c.appId, '', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
- and c. configName = 'default-config';
+ and c.configName = 'default-config';
