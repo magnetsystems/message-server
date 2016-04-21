@@ -50,8 +50,8 @@ public class MMXPushSuppressDaoHbn extends HibernateBase<MMXPushSuppressDo> impl
     public MMXPushSuppressDo getSuppress(String appId, String userId, String channelId) {
         return findSingleByCriteria(
                 Restrictions.eq("appId", appId),
-                Restrictions.eq("userId", userId),
-                Restrictions.eq("channelId", channelId)
+                Restrictions.eq("userId", userId == null ? "" : userId),
+                Restrictions.eq("channelId", channelId == null ? "" : channelId)
         );
     }
 
