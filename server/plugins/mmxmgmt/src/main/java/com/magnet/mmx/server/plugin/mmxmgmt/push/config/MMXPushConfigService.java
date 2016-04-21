@@ -98,7 +98,7 @@ public class MMXPushConfigService {
 
     }
     private String getCacheLookupKey(String userId, String appId, String channelId){
-        return userId + "-" + appId + "-" + channelId;
+        return (userId == null ? "" : userId) + "-" + appId + "-" + (channelId == null ? "" : channelId);
     }
 
     private boolean isPushSuppressed(MMXPushSuppressStatus pushSuppressStatus) {
@@ -688,11 +688,17 @@ public class MMXPushConfigService {
         validateSuppress(suppress);
         MMXPushSuppress pushSuppress = suppressDo2Bo(daoFactory.getMXPushSuppressDao().suppress(suppressBo2Do(suppress)));
         CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE)
-                .put(getCacheLookupKey(pushSuppress.getUserId(),pushSuppress.getAppId(),pushSuppress.getChannelId()), new MMXPushSuppressStatus(suppress));
+                .put(getCacheLookupKey(pushSuppress.getUserId(), pushSuppress.getAppId(), pushSuppress.getChannelId()), new MMXPushSuppressStatus(suppress));
         return pushSuppress;
     }
     public void createPushUnSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
+        if (suppress.getSuppressId() == null) {
+            MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppress.getAppId(), suppress.getUserId(), suppress.getChannelId());
+            if (s != null) {
+                suppress.setSuppressId(s.getSuppressId());
+            }
+        }
         daoFactory.getMXPushSuppressDao().unSuppress(suppressBo2Do(suppress));
         MMXPushSuppressStatus pushSuppressStatus = new MMXPushSuppressStatus(suppress);
         pushSuppressStatus.setSuppressed(false);
