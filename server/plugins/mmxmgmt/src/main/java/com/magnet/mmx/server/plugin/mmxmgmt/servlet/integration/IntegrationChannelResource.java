@@ -198,7 +198,7 @@ public class IntegrationChannelResource {
                 }
             }
             if (pushConfigId != null) {
-                setConfigMapping(channelInfo.getMmxAppId(), channelInfo.getChannelName(), pushConfigId);
+                setConfigMapping(channelInfo.getMmxAppId(), channelId.toString(), pushConfigId);
             }
 
         } catch (MMXException e) {
