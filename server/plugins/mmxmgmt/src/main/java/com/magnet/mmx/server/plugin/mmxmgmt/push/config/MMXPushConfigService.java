@@ -79,11 +79,15 @@ public class MMXPushConfigService {
     }
 
     public boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
+        return isPushSuppressed(getPushSuppressedStatus(userId, appId,channelId) );
+    }
+
+    public MMXPushSuppressStatus getPushSuppressedStatus(String userId, String appId, String channelId) {
 
         MMXPushSuppressStatus pushSuppressStatus = null;
         pushSuppressStatus = (MMXPushSuppressStatus)CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).get(getCacheLookupKey(userId,appId,channelId));
         if(pushSuppressStatus != null) {
-            return isPushSuppressed(pushSuppressStatus);
+            return pushSuppressStatus;
         }
 
         MMXPushSuppress pushSuppress = getPushSuppressForAppUserAndChannel(appId, userId, channelId);
@@ -94,9 +98,10 @@ public class MMXPushConfigService {
         }
 
         CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).put(getCacheLookupKey(userId,appId,channelId), pushSuppressStatus);
-        return isPushSuppressed(pushSuppressStatus);
+        return pushSuppressStatus;
 
     }
+
     private String getCacheLookupKey(String userId, String appId, String channelId){
         return userId + "-" + appId + "-" + channelId;
     }
