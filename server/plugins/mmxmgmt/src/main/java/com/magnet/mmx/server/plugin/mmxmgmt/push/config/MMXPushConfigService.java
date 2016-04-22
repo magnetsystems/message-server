@@ -38,7 +38,7 @@ public class MMXPushConfigService {
     public static final String DEFAULT_CONFIG = "default-config";
 
     public static final String TITLE = "";
-    public static final String BODY = "${msg.from}: ${msg.content.message[0..*30]}...";
+    public static final String BODY = "New message from ${msg.from}";
     public static final String PUSH_CONFIG_TEMPLATE =
         MMXConfigKeys.PUBSUB_NOTIFICATION_TYPE+"=push\n"+
         MMXConfigKeys.PUBSUB_NOTIFICATION_TITLE+'='+TITLE+'\n'+
@@ -79,11 +79,15 @@ public class MMXPushConfigService {
     }
 
     public boolean isPushSuppressedByUser(String userId, String appId, String channelId) {
+        return isPushSuppressed(getPushSuppressedStatus(userId, appId,channelId) );
+    }
+
+    public MMXPushSuppressStatus getPushSuppressedStatus(String userId, String appId, String channelId) {
 
         MMXPushSuppressStatus pushSuppressStatus = null;
         pushSuppressStatus = (MMXPushSuppressStatus)CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).get(getCacheLookupKey(userId,appId,channelId));
         if(pushSuppressStatus != null) {
-            return isPushSuppressed(pushSuppressStatus);
+            return pushSuppressStatus;
         }
 
         MMXPushSuppress pushSuppress = getPushSuppressForAppUserAndChannel(appId, userId, channelId);
@@ -94,9 +98,10 @@ public class MMXPushConfigService {
         }
 
         CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE).put(getCacheLookupKey(userId,appId,channelId), pushSuppressStatus);
-        return isPushSuppressed(pushSuppressStatus);
+        return pushSuppressStatus;
 
     }
+
     private String getCacheLookupKey(String userId, String appId, String channelId){
         return (userId == null ? "" : userId) + "-" + appId + "-" + (channelId == null ? "" : channelId);
     }
