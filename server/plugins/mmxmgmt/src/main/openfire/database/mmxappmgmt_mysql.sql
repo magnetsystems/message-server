@@ -27,7 +27,7 @@ CREATE TABLE mmxApp (
   ownerEmail        VARCHAR(255) DEFAULT NULL,
   guestUserId       VARCHAR(200),
   guestSecret       VARCHAR(255),
-  UNIQUE KEY `mmxApp_appId` (`appId`)
+  UNIQUE KEY mmxApp_appId (appId)
 );
 
 CREATE INDEX mmxApp_serverUserJJID ON mmxApp(serverUserId);
@@ -54,7 +54,7 @@ CREATE TABLE mmxDevice (
   protocolVersionMinor  int(11),
   pushStatus   varchar(20)  NULL, /* push status indicating if Push message can be sent to this device */
   PRIMARY KEY (id),
-  UNIQUE KEY `devicid_type_osType_appid` (`deviceId`,`osType`, `appId`)
+  UNIQUE KEY devicid_type_osType_appid (deviceId,osType, appId)
 );
 
 CREATE TABLE mmxMessage (
@@ -116,9 +116,9 @@ create Table mmxTag (
   serviceID varchar(100) DEFAULT NULL,
   nodeID varchar(100) DEFAULT NULL,
   PRIMARY KEY(id),
-  CONSTRAINT UNIQUE `tagname_appId_deviceId` (tagname, appId, deviceId),
-  CONSTRAINT UNIQUE `tagname_appId_username` (tagname, appId, username),
-  CONSTRAINT UNIQUE `tagname_appId_topic` (tagname,appid,serviceID, nodeID),
+  CONSTRAINT UNIQUE tagname_appId_deviceId (tagname, appId, deviceId),
+  CONSTRAINT UNIQUE tagname_appId_username (tagname, appId, username),
+  CONSTRAINT UNIQUE tagname_appId_topic (tagname,appid,serviceID, nodeID),
   CONSTRAINT CHECK (deviceId IS NOT NULL OR ofUsername IS NOT NULL OR (serviceID IS NOT NULL AND nodeID IS NOT NULL)),
   FOREIGN KEY (deviceId) REFERENCES mmxDevice(id) ON DELETE CASCADE,
   FOREIGN KEY (username) REFERENCES ofUser(username) ON DELETE CASCADE,
@@ -134,7 +134,7 @@ CREATE TABLE mmxAppConfiguration (
     FOREIGN KEY (appId) REFERENCES mmxApp(appId) ON DELETE CASCADE
 );
 
-ALTER TABLE mmxAppConfiguration ADD UNIQUE KEY `mmxAppConfiguration_uk` (appId, configKey);
+ALTER TABLE mmxAppConfiguration ADD UNIQUE KEY mmxAppConfiguration_uk (appId, configKey);
 
 /* Table for mapping topics to roles that are allowed access to the topic */
 CREATE TABLE mmxTopicRole (
@@ -146,7 +146,7 @@ CREATE TABLE mmxTopicRole (
     FOREIGN KEY (serviceID, nodeID) REFERENCES ofPubsubNode(serviceID, nodeID) ON DELETE CASCADE
 );
 
-ALTER TABLE mmxTopicRole ADD UNIQUE KEY `mmxTopicRole_uk` (serviceID, nodeID, role);
+ALTER TABLE mmxTopicRole ADD UNIQUE KEY mmxTopicRole_uk (serviceID, nodeID, role);
 
 
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.admin.api.enable.https', 'true') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
@@ -198,3 +198,105 @@ ALTER TABLE ofOffline MODIFY stanza MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf
 ALTER TABLE ofPubsubItem MODIFY payload MEDIUMTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+
+/*** push config ***/
+CREATE TABLE mmxTemplate (
+   templateId int(11) NOT NULL AUTO_INCREMENT,
+   appId varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+   templateType varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+   templateName varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+   template text COLLATE utf8_unicode_ci NOT NULL,
+   PRIMARY KEY (templateId),
+   UNIQUE KEY template_name_unq (appId,templateName)
+ ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+ CREATE TABLE mmxPushConfig (
+   configId int(11) NOT NULL AUTO_INCREMENT,
+   appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   configName varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   isEnabled bit(1) NOT NULL,
+   isSilentPush bit(1) NOT NULL,
+   templateId int(11) NOT NULL,
+   PRIMARY KEY (configId),
+   UNIQUE KEY i_push_config_unq (appId,configName)
+ ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+ CREATE TABLE mmxPushConfigMetadata (
+   metadataId int(11) NOT NULL AUTO_INCREMENT,
+   configId int(11) NOT NULL,
+   name varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   value varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+   PRIMARY KEY (metadataId),
+   UNIQUE KEY i_push_config_meta_unq (configId,name)
+ ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+ CREATE TABLE mmxPushConfigMapping (
+   mappingId int(11) NOT NULL AUTO_INCREMENT,
+   appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   channelId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   configId int(11) NOT NULL,
+   PRIMARY KEY (mappingId),
+   UNIQUE KEY i_push_config_mapp_unq (appId,channelId)
+ ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+ CREATE TABLE mmxPushSuppress (
+   suppressId int(11) NOT NULL AUTO_INCREMENT,
+   appId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   channelId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   untilDate bigint(20) DEFAULT NULL,
+   userId varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+   PRIMARY KEY (suppressId),
+   UNIQUE KEY i_push_suppress_unq (appId,userId,channelId)
+ ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+ INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
+ VALUES (1, 'system', 'PUSH', 'default-template',
+ 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=New message from ${msg.from}\nmmx.pubsub.notification.sound=default\n'
+ );
+
+ INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
+ VALUES (2, 'system', 'PUSH', 'DefaultPollTemplate',
+ 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=Poll: ${msg.content.question[0..*30]}\nmmx.pubsub.notification.sound=default\n'
+ );
+
+ INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
+ VALUES (3, 'system', 'PUSH', 'DefaultPollAnswerTemplate',
+ 'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=${msg.from} voted on ${msg.content.question[0..*30]}\nmmx.pubsub.notification.sound=default\n'
+ );
+
+ INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
+ select 1, t.appId, 'default-config', true, false, t.templateId
+ from mmxTemplate t
+ where t.appId = 'system'
+ and t.templateName = 'default-template';
+
+ INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
+ select 2, t.appId, 'DefaultPollConfig', true, false, t.templateId
+ from mmxTemplate t
+ where t.appId = 'system'
+ and t.templateName = 'DefaultPollTemplate';
+
+ INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
+ select 3, t.appId, 'DefaultPollAnswerConfig', true, false, t.templateId
+ from mmxTemplate t
+ where t.appId = 'system'
+ and t.templateName = 'DefaultPollAnswerTemplate';
+
+ INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
+ select 1, c.appId, '', c.configId
+ from mmxPushConfig c
+ where c.appId = 'system'
+ and c.configName = 'default-config';
+
+ INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
+ select 2, c.appId, 'system#poll-1', c.configId
+ from mmxPushConfig c
+ where c.appId = 'system'
+ and c.configName = 'DefaultPollConfig';
+
+ INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
+ select 3, c.appId, 'system#poll-2', c.configId
+ from mmxPushConfig c
+ where c.appId = 'system'
+ and c.configName = 'DefaultPollAnswerConfig';

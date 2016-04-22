@@ -13,8 +13,8 @@ public class MMXPushConfigMetadataDaoMock implements MMXPushConfigMetadataDao {
 
 
     @Override
-    public MMXPushConfigMetadataDo createMetadata(MMXPushConfigMetadataDo meta) {
-        return MMXPushConfigMockStorage.createConfigMetadata(meta);
+    public void createMetadata(MMXPushConfigMetadataDo meta) {
+        MMXPushConfigMockStorage.createConfigMetadata(meta);
     }
 
     @Override
@@ -28,8 +28,8 @@ public class MMXPushConfigMetadataDaoMock implements MMXPushConfigMetadataDao {
     }
 
     @Override
-    public MMXPushConfigMetadataDo updateMetadata(MMXPushConfigMetadataDo meta) {
-        return MMXPushConfigMockStorage.updateConfigMetadata(meta);
+    public void updateMetadata(MMXPushConfigMetadataDo meta) {
+        MMXPushConfigMockStorage.updateConfigMetadata(meta);
     }
 
     @Override

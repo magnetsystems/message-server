@@ -20,13 +20,22 @@ public class PushConfigTestUtil {
         m.setAppId(appId);
         m.setConfigId(configId);
         m.setChannelId(channelId);
-        return MMXPushConfigService.getInstance().createConfigMapping(m);
+        MMXPushConfigService.getInstance().createConfigMapping(m);
+        return m;
     }
 
     public static MMXPushConfigMapping createMapping2(String appId, Integer configId, String channelId) throws MMXException {
         return MMXPushConfigService.getInstance().createConfigMapping(configId, appId, channelId);
     }
 
+    public static void updateConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelIds) throws MMXException {
+        MMXPushConfig c = MMXPushConfigService.getInstance().getConfig(appId, configName);
+        c.setSilentPush(isSilentPush);
+        c.setEnabled(isEnabled);
+        c.setMeta(meta);
+        c.setChannelIds(channelIds);
+        MMXPushConfigService.getInstance().updateConfig(c);
+    }
     public static MMXPushConfig createConfig(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta, Set<String> channelIds) throws MMXException {
         MMXPushConfig c = new MMXPushConfig();
         c.setAppId(appId);
@@ -37,12 +46,13 @@ public class PushConfigTestUtil {
         c.setEnabled(isEnabled);
         c.setMeta(meta);
         c.setChannelIds(channelIds);
-        return MMXPushConfigService.getInstance().createConfig(c);
+        MMXPushConfigService.getInstance().createConfig(c);
+        return c;
     }
     public static MMXPushConfig createConfig2(String appId, String configName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {
-        String name = "nn" + SEQ++;
-        MMXTemplate t = createTemplate(appId, MMXTemplateType.PUSH, name, "tt" + SEQ++);
-        return createConfig(appId, configName, name, isSilentPush, isEnabled, meta);
+        String templateName = "nn" + SEQ++;
+        createTemplate(appId, MMXTemplateType.PUSH, templateName, "tt" + SEQ++);
+        return createConfig(appId, configName, templateName, isSilentPush, isEnabled, meta);
     }
     private static MMXPushConfig createConfig(String appId, String configName, String templateName, boolean isSilentPush, boolean isEnabled, Map<String, String> meta) throws MMXException {
         MMXPushConfig config = new MMXPushConfig();
@@ -52,7 +62,8 @@ public class PushConfigTestUtil {
         config.setEnabled(isEnabled);
         config.setTemplateId(MMXPushConfigService.getInstance().getTemplate(appId, templateName).getTemplateId());
         config.setMeta(meta);
-        return MMXPushConfigService.getInstance().createConfig(config);
+        MMXPushConfigService.getInstance().createConfig(config);
+        return config;
     }
 
 

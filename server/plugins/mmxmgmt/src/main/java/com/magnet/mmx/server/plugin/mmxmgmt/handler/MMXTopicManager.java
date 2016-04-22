@@ -36,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppressStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
@@ -855,9 +856,14 @@ public class MMXTopicManager {
 //          StatusCode.FORBIDDEN.getCode());
 //    }
     TopicInfo info = nodeToInfo(topic.getUserId(), topic.getName(), node);
-    info.setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(JIDUtil.getUserId(from),
+    MMXPushSuppressStatus suppressStatus = MMXPushConfigService.getInstance().getPushSuppressedStatus(JIDUtil.getUserId(from),
             TopicHelper.parseTopic(node.getNodeID()).getAppId(),
-            TopicHelper.convertToId(node.getNodeID())));
+            TopicHelper.convertToId(node.getNodeID()));
+
+    info.setPushMutedByUser(suppressStatus.isSuppressed());
+    if(suppressStatus.isSuppressed()){
+      info.setPushMutedUntil(new Date(suppressStatus.getUntilDate()));
+    }
     return info;
   }
 
@@ -1554,19 +1560,24 @@ public class MMXTopicManager {
     List<TopicInfo> topicList = new ArrayList<TopicInfo>(results.getResults().size());
 
     for (TopicAction.TopicInfoWithSubscriptionCount ti : results.getResults()) {
+      MMXPushSuppressStatus suppressStatus = MMXPushConfigService.getInstance().getPushSuppressedStatus(JIDUtil.getUserId(from), appId, ti.getId());
       TopicInfo info = new TopicInfo(ti.getUserId(), ti.getName(), ti.isCollection())
-        .setId(ti.getId())
-        .setDisplayName(ti.getDisplayName())
-        .setDescription(ti.getDescription())
-        .setCreationDate(ti.getCreationDate())
-        .setModifiedDate(ti.getModifiedDate())
-        .setPublisherType(ti.getPublisherType())
-        .setMaxPayloadSize(ti.getMaxPayloadSize())
-        .setMaxItems(ti.isPersistent() ? ti.getMaxItems() : 0)
-        .setPersistent(ti.isPersistent())
-        .setCreator(ti.getCreator())
-        .setSubscriptionEnabled(ti.isSubscriptionEnabled())
-        .setPushMutedByUser(MMXPushConfigService.getInstance().isPushSuppressedByUser(JIDUtil.getUserId(from), appId, ti.getId()));
+              .setId(ti.getId())
+              .setDisplayName(ti.getDisplayName())
+              .setDescription(ti.getDescription())
+              .setCreationDate(ti.getCreationDate())
+              .setModifiedDate(ti.getModifiedDate())
+              .setPublisherType(ti.getPublisherType())
+              .setMaxPayloadSize(ti.getMaxPayloadSize())
+              .setMaxItems(ti.isPersistent() ? ti.getMaxItems() : 0)
+              .setPersistent(ti.isPersistent())
+              .setCreator(ti.getCreator())
+              .setSubscriptionEnabled(ti.isSubscriptionEnabled())
+              .setPushMutedByUser(suppressStatus.isSuppressed());
+
+      if (suppressStatus.isSuppressed()){
+        info.setPushMutedUntil(new Date(suppressStatus.getUntilDate()));
+      }
 
       topicList.add(info);
     }

@@ -58,7 +58,7 @@ public class TemplateResource {
                 MMXTemplate t = convertRequest(request);
 
                 //do job
-                t = MMXPushConfigService.getInstance().createTemplate(t);
+                MMXPushConfigService.getInstance().createTemplate(t);
 
                 //convert and return response
                 return convertResponse(t);
@@ -121,7 +121,7 @@ public class TemplateResource {
                 t.setTemplateId(templateId);
 
                 //do job
-                t = MMXPushConfigService.getInstance().updateTemplate(t);
+                MMXPushConfigService.getInstance().updateTemplate(t);
 
                 //convert and return response
                 return convertResponse(t);

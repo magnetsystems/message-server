@@ -12,8 +12,8 @@ import java.util.Collection;
 public class MMXPushSuppressDaoMock implements MMXPushSuppressDao {
 
     @Override
-    public MMXPushSuppressDo suppress(MMXPushSuppressDo suppress) {
-        return MMXPushConfigMockStorage.suppress(suppress);
+    public void suppress(MMXPushSuppressDo suppress) {
+        MMXPushConfigMockStorage.suppress(suppress);
     }
 
     @Override

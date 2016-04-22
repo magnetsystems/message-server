@@ -2,7 +2,6 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigMappingDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
-import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
@@ -11,58 +10,40 @@ import java.util.Collection;
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushConfigMappingDaoHbn extends HibernateBase implements MMXPushConfigMappingDao {
+public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappingDo> implements MMXPushConfigMappingDao {
+
+    public MMXPushConfigMappingDaoHbn() {
+        super(MMXPushConfigMappingDo.class);
+    }
 
     @Override
-    public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().save(mapping);
-        closeCurrentSessionwithTransaction();
-        return mapping;
+    public void createConfigMapping(MMXPushConfigMappingDo mapping) {
+        save(mapping);
     }
 
     @Override
     public MMXPushConfigMappingDo getConfigMapping(Integer mappingId) {
-        openCurrentSession();
-        MMXPushConfigMappingDo mapping = (MMXPushConfigMappingDo) getCurrentSession().get(MMXPushConfigMappingDo.class, mappingId);
-        closeCurrentSession();
-        return mapping;
+        return findById(mappingId);
     }
 
     @Override
     public MMXPushConfigMappingDo getConfigMapping(String appId, String channelId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushConfigMappingDo.class);
-        MMXPushConfigMappingDo mapping = (MMXPushConfigMappingDo) criteria
-                .add(Restrictions.eq("appId", appId))
-                .add(Restrictions.eq("channelId", channelId))
-                .uniqueResult();
-        closeCurrentSession();
-        return mapping;
+        return findSingleByCriteria(Restrictions.eq("appId", appId), Restrictions.eq("channelId", (channelId == null ? "" : channelId)));
     }
 
     @Override
     public Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushConfigMappingDo.class);
-        Collection<MMXPushConfigMappingDo> list = (Collection<MMXPushConfigMappingDo>) criteria.add(Restrictions.eq("appId", appId)).list();
-        closeCurrentSession();
-        return list;
+        return findManyByCriteria(Restrictions.eq("appId", appId));
     }
 
     @Override
-    public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().saveOrUpdate(mapping);
-        closeCurrentSessionwithTransaction();
-        return mapping;
+    public void updateConfigMapping(MMXPushConfigMappingDo mapping) {
+        update(mapping);
     }
 
     @Override
     public void deleteConfigMapping(MMXPushConfigMappingDo mapping) {
-        openCurrentSessionwithTransaction();
-        getCurrentSession().delete(mapping);
-        closeCurrentSessionwithTransaction();
+        delete(mapping);
     }
 
     @Override
@@ -77,12 +58,6 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase implements MMXPush
 
     @Override
     public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(Integer configId) {
-        openCurrentSession();
-        Criteria criteria = getCurrentSession().createCriteria(MMXPushConfigMappingDo.class);
-        Collection<MMXPushConfigMappingDo> list = (Collection<MMXPushConfigMappingDo>) criteria
-                .add(Restrictions.eq("configId", configId))
-                .list();
-        closeCurrentSession();
-        return list;
+        return findManyByCriteria(Restrictions.eq("configId", configId));
     }
 }

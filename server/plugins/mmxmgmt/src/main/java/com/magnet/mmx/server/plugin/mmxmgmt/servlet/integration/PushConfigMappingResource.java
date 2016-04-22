@@ -31,7 +31,7 @@ public class PushConfigMappingResource {
                 MMXPushConfigMapping m = convertRequest(request);
 
                 //do job
-                m = MMXPushConfigService.getInstance().createConfigMapping(m);
+                MMXPushConfigService.getInstance().createConfigMapping(m);
 
                 //convert and return response
                 return convertResponse(m);
@@ -93,7 +93,7 @@ public class PushConfigMappingResource {
                 m.setMappingId(mappingId);
 
                 //do job
-                m = MMXPushConfigService.getInstance().updateConfigMapping(m);
+                MMXPushConfigService.getInstance().updateConfigMapping(m);
 
                 //convert and return response
                 return convertResponse(m);

@@ -33,6 +33,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubPersistenceManagerExt;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.MMXPushConfigService;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfigMapping;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppressStatus;
 import com.magnet.mmx.server.plugin.mmxmgmt.servlet.TopicPostResponse;
 import com.magnet.mmx.server.plugin.mmxmgmt.topic.TopicPostMessageRequest;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.*;
@@ -197,7 +198,7 @@ public class IntegrationChannelResource {
                 }
             }
             if (pushConfigId != null) {
-                setConfigMapping(channelInfo.getMmxAppId(), channelInfo.getChannelName(), pushConfigId);
+                setConfigMapping(channelInfo.getMmxAppId(), channelId.getId(), pushConfigId);
             }
 
         } catch (MMXException e) {
@@ -598,6 +599,12 @@ public class IntegrationChannelResource {
                         channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(appChannel.getUserId(), node);
                     } else {
                         channelInfo = MMXChannelManager.getInstance().nodeToChannelInfo(null, node);
+                    }
+                    MMXPushSuppressStatus suppressStatus = MMXPushConfigService.getInstance()
+                            .getPushSuppressedStatus(queryChannelRequest.getUserId(),queryChannelRequest.getMmxAppId(),channelId.toString());
+                    channelInfo.setPushMutedByUser(suppressStatus.isSuppressed());
+                    if(suppressStatus.isSuppressed()){
+                        channelInfo.setPushMutedUntil(new Date(suppressStatus.getUntilDate()));
                     }
                     channels.add(channelInfo);
                 }

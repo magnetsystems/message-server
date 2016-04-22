@@ -30,7 +30,7 @@ public class PushConfigResource {
                 MMXPushConfig c = convertRequest(request);
 
                 //do job
-                c = MMXPushConfigService.getInstance().createConfig(c);
+                MMXPushConfigService.getInstance().createConfig(c);
 
                 //convert and return response
                 return convertResponse(c);
@@ -125,7 +125,7 @@ public class PushConfigResource {
 
                 //do job
 //                transaction
-                c = MMXPushConfigService.getInstance().updateConfig(c);
+                MMXPushConfigService.getInstance().updateConfig(c);
                 //convert and return response
                 return convertResponse(c);
             }

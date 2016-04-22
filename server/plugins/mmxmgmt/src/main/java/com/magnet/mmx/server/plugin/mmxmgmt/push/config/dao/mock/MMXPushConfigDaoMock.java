@@ -12,8 +12,8 @@ import java.util.Collection;
 public class MMXPushConfigDaoMock implements MMXPushConfigDao {
 
     @Override
-    public MMXPushConfigDo createConfig(MMXPushConfigDo config) {
-        return MMXPushConfigMockStorage.createConfig(config);
+    public void createConfig(MMXPushConfigDo config) {
+        MMXPushConfigMockStorage.createConfig(config);
     }
 
     @Override
@@ -32,8 +32,8 @@ public class MMXPushConfigDaoMock implements MMXPushConfigDao {
     }
 
     @Override
-    public MMXPushConfigDo updateConfig(MMXPushConfigDo config) {
-        return MMXPushConfigMockStorage.updateConfig(config);
+    public void updateConfig(MMXPushConfigDo config) {
+        MMXPushConfigMockStorage.updateConfig(config);
     }
 
     @Override

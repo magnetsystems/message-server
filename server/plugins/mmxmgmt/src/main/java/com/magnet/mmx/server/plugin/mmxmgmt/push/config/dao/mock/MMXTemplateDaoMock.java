@@ -12,8 +12,8 @@ import java.util.Collection;
 public class MMXTemplateDaoMock implements MMXTemplateDao {
 
     @Override
-    public MMXTemplateDo createTemplate(MMXTemplateDo template) {
-        return MMXPushConfigMockStorage.createTemplate(template);
+    public void createTemplate(MMXTemplateDo template) {
+        MMXPushConfigMockStorage.createTemplate(template);
     }
 
     @Override
@@ -30,8 +30,8 @@ public class MMXTemplateDaoMock implements MMXTemplateDao {
         return MMXPushConfigMockStorage.getTemplate(templateId);
     }
     @Override
-    public MMXTemplateDo updateTemplate(MMXTemplateDo template) {
-        return MMXPushConfigMockStorage.updateTemplate(template);
+    public void updateTemplate(MMXTemplateDo template) {
+        MMXPushConfigMockStorage.updateTemplate(template);
     }
     @Override
     public void deleteTemplate(MMXTemplateDo template) {
