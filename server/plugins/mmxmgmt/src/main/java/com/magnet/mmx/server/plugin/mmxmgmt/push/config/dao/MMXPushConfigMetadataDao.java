@@ -10,10 +10,10 @@ import java.util.Collection;
  */
 public interface MMXPushConfigMetadataDao {
 
-    public MMXPushConfigMetadataDo createMetadata(MMXPushConfigMetadataDo meta);
+    public void createMetadata(MMXPushConfigMetadataDo meta);
     public MMXPushConfigMetadataDo getMetadata(Integer metaId);
     public MMXPushConfigMetadataDo getMetadata(Integer configId, String name);
-    public MMXPushConfigMetadataDo updateMetadata(MMXPushConfigMetadataDo meta);
+    public void updateMetadata(MMXPushConfigMetadataDo meta);
     public void deleteMetadata(MMXPushConfigMetadataDo meta);
 
     public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(Integer configId);

@@ -2,10 +2,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +17,11 @@ import java.util.Set;
 public class MMXPushConfigServiceConfigTest {
 
     private static final String APP_ID = "test-app";
-    
+
+    @BeforeClass
+    public static void init() {
+        HibernateTestInitalizer.getInstance();
+    }
     @Before
     public void cleanUp() throws MMXException {
         PushConfigTestUtil.deleteAllDataForApp(APP_ID);
@@ -178,8 +179,8 @@ public class MMXPushConfigServiceConfigTest {
         c3.setMeta(meta2);
         c3.setSilentPush(false);
         c3.setEnabled(false);
-        MMXPushConfig c4 = MMXPushConfigService.getInstance().updateConfig(c3);
-        assertConfig(c4, APP_ID, "cc2", false, false, meta2, channelIds);
+        MMXPushConfigService.getInstance().updateConfig(c3);
+        assertConfig(c3, APP_ID, "cc2", false, false, meta2, channelIds);
 
         //retrieve after update
         MMXPushConfig c5 = MMXPushConfigService.getInstance().getConfig(c.getConfigId());

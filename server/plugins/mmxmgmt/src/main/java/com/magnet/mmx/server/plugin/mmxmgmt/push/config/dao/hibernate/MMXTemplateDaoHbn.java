@@ -17,9 +17,8 @@ public class MMXTemplateDaoHbn extends HibernateBase<MMXTemplateDo> implements M
     }
 
     @Override
-    public MMXTemplateDo createTemplate(MMXTemplateDo template) {
+    public void createTemplate(MMXTemplateDo template) {
         save(template);
-        return template;
     }
 
     @Override
@@ -38,9 +37,8 @@ public class MMXTemplateDaoHbn extends HibernateBase<MMXTemplateDo> implements M
     }
 
     @Override
-    public MMXTemplateDo updateTemplate(MMXTemplateDo template) {
+    public void updateTemplate(MMXTemplateDo template) {
         update(template);
-        return template;
     }
 
     @Override

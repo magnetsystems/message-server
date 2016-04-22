@@ -3,10 +3,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushConfig;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 /**
  * Created by mmicevic on 4/1/16.
@@ -14,6 +11,11 @@ import org.junit.Test;
  */
 @Ignore
 public class MMXPushConfigServiceDefaultsTest {
+
+    @BeforeClass
+    public static void init() {
+        HibernateTestInitalizer.getInstance();
+    }
 
     @Test
     public void checkDefultTemplate() throws MMXException {

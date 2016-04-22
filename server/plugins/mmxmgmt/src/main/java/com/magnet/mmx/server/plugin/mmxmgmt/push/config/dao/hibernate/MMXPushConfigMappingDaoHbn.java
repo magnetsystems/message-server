@@ -17,9 +17,8 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappi
     }
 
     @Override
-    public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping) {
+    public void createConfigMapping(MMXPushConfigMappingDo mapping) {
         save(mapping);
-        return mapping;
     }
 
     @Override
@@ -38,9 +37,8 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappi
     }
 
     @Override
-    public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping) {
+    public void updateConfigMapping(MMXPushConfigMappingDo mapping) {
         update(mapping);
-        return mapping;
     }
 
     @Override

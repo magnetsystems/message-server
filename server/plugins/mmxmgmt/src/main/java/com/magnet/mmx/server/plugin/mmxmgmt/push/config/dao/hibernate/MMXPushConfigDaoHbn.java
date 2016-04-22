@@ -17,9 +17,8 @@ public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implemen
     }
 
     @Override
-    public MMXPushConfigDo createConfig(MMXPushConfigDo config) {
+    public void createConfig(MMXPushConfigDo config) {
         save(config);
-        return config;
     }
 
     @Override
@@ -38,9 +37,8 @@ public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implemen
     }
 
     @Override
-    public MMXPushConfigDo updateConfig(MMXPushConfigDo config) {
+    public void updateConfig(MMXPushConfigDo config) {
         update(config);
-        return config;
     }
 
     @Override

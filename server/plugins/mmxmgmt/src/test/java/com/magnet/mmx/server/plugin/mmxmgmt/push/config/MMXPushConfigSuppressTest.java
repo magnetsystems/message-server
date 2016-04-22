@@ -2,10 +2,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXPushSuppress;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Collection;
 
@@ -18,6 +15,10 @@ public class MMXPushConfigSuppressTest {
 
     private static final String APP_ID = "test-app";
 
+    @BeforeClass
+    public static void init() {
+        HibernateTestInitalizer.getInstance();
+    }
     @Before
     public void cleanUp() throws MMXException {
         PushConfigTestUtil.deleteAllDataForApp(APP_ID);
@@ -66,7 +67,7 @@ public class MMXPushConfigSuppressTest {
         suppress.setAppId(APP_ID);
         suppress.setUserId("u1");
         suppress.setChannelId("ch1");
-        suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
+        MMXPushConfigService.getInstance().createPushSuppress(suppress);
         Assert.assertEquals(APP_ID, suppress.getAppId());
         Assert.assertEquals("u1", suppress.getUserId());
         Assert.assertEquals("ch1", suppress.getChannelId());
@@ -78,7 +79,7 @@ public class MMXPushConfigSuppressTest {
         suppress.setAppId(APP_ID);
         suppress.setUserId(null);
         suppress.setChannelId(null);
-        suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
+        MMXPushConfigService.getInstance().createPushSuppress(suppress);
         Assert.assertEquals(APP_ID, suppress.getAppId());
         Assert.assertNull(suppress.getUserId());
         Assert.assertNull(suppress.getChannelId());
@@ -105,7 +106,7 @@ public class MMXPushConfigSuppressTest {
         suppress.setAppId(appId);
         suppress.setUserId(userId);
         suppress.setChannelId(channelName);
-        suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
+        MMXPushConfigService.getInstance().createPushSuppress(suppress);
         Assert.assertEquals(appId, suppress.getAppId());
         Assert.assertEquals(userId, suppress.getUserId());
         Assert.assertEquals(channelName, suppress.getChannelId());
@@ -139,7 +140,7 @@ public class MMXPushConfigSuppressTest {
         suppress.setAppId(appId);
         suppress.setUserId(userId);
         suppress.setChannelId(channelName);
-        suppress = MMXPushConfigService.getInstance().createPushSuppress(suppress);
+        MMXPushConfigService.getInstance().createPushSuppress(suppress);
         Assert.assertEquals(appId, suppress.getAppId());
         Assert.assertEquals(userId, suppress.getUserId());
         Assert.assertEquals(channelName, suppress.getChannelId());

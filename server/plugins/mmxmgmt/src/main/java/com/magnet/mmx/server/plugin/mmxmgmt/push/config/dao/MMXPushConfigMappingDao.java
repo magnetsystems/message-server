@@ -10,13 +10,13 @@ import java.util.Collection;
  */
 public interface MMXPushConfigMappingDao {
 
-    public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping);
+    public void createConfigMapping(MMXPushConfigMappingDo mapping);
 
     public MMXPushConfigMappingDo getConfigMapping(Integer mappingId);
     public MMXPushConfigMappingDo getConfigMapping(String appId, String channelId);
     public Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId);
 
-    public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping);
+    public void updateConfigMapping(MMXPushConfigMappingDo mapping);
 
     public void deleteConfigMapping(MMXPushConfigMappingDo mapping);
 

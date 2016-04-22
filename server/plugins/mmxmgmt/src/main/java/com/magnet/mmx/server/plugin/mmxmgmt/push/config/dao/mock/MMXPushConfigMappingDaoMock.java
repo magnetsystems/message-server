@@ -11,8 +11,8 @@ import java.util.Collection;
  */
 public class MMXPushConfigMappingDaoMock implements MMXPushConfigMappingDao {
     @Override
-    public MMXPushConfigMappingDo createConfigMapping(MMXPushConfigMappingDo mapping) {
-        return MMXPushConfigMockStorage.createConfigMapping(mapping);
+    public void createConfigMapping(MMXPushConfigMappingDo mapping) {
+        MMXPushConfigMockStorage.createConfigMapping(mapping);
     }
 
     @Override
@@ -31,8 +31,8 @@ public class MMXPushConfigMappingDaoMock implements MMXPushConfigMappingDao {
     }
 
     @Override
-    public MMXPushConfigMappingDo updateConfigMapping(MMXPushConfigMappingDo mapping) {
-        return MMXPushConfigMockStorage.updateConfigMapping(mapping);
+    public void updateConfigMapping(MMXPushConfigMappingDo mapping) {
+        MMXPushConfigMockStorage.updateConfigMapping(mapping);
     }
 
     @Override

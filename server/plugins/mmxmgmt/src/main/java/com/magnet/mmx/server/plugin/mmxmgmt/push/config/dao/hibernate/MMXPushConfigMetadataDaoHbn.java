@@ -17,9 +17,8 @@ public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMeta
     }
 
     @Override
-    public MMXPushConfigMetadataDo createMetadata(MMXPushConfigMetadataDo meta) {
+    public void createMetadata(MMXPushConfigMetadataDo meta) {
         save(meta);
-        return meta;
     }
 
     @Override
@@ -33,9 +32,8 @@ public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMeta
     }
 
     @Override
-    public MMXPushConfigMetadataDo updateMetadata(MMXPushConfigMetadataDo meta) {
+    public void updateMetadata(MMXPushConfigMetadataDo meta) {
         update(meta);
-        return meta;
     }
 
     @Override

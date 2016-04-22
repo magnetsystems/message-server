@@ -30,7 +30,7 @@ public class PushConfigSuppressResource {
                 MMXPushSuppress s = convertRequest(request);
 
                 //do job
-                s = MMXPushConfigService.getInstance().createPushSuppress(s);
+                MMXPushConfigService.getInstance().createPushSuppress(s);
 
                 //convert and return response
                 return convertResponse(s);

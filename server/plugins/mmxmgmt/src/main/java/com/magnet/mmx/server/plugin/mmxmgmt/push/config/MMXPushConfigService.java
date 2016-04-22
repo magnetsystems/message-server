@@ -287,11 +287,14 @@ public class MMXPushConfigService {
         t.setTemplateName(templateName);
         t.setTemplateType(type);
         t.setTemplate(template);
-        return createTemplate(t);
+        createTemplate(t);
+        return t;
     }
-    public MMXTemplate createTemplate(MMXTemplate template) throws MMXException {
+    public void createTemplate(MMXTemplate template) throws MMXException {
         validateTemplate(template);
-        return templateDo2Bo(daoFactory.getMMXTemplateDao().createTemplate(templateBo2Do(template)));
+        MMXTemplateDo templateDo = templateBo2Do(template);
+        daoFactory.getMMXTemplateDao().createTemplate(templateDo);
+        template.setTemplateId(templateDo.getTemplateId());
     }
     public Collection<MMXTemplate> getAllTemplates(String appId) throws MMXException {
         validateMandatoryArgument("appId", appId);
@@ -315,9 +318,9 @@ public class MMXPushConfigService {
         }
         return templateDo2Bo(t);
     }
-    public MMXTemplate updateTemplate(MMXTemplate template) throws MMXException {
+    public void updateTemplate(MMXTemplate template) throws MMXException {
         validateTemplate(template);
-        return templateDo2Bo(daoFactory.getMMXTemplateDao().updateTemplate(templateBo2Do(template)));
+        daoFactory.getMMXTemplateDao().updateTemplate(templateBo2Do(template));
     }
 //    public MMXTemplate updateTemplate(String appId, String templateName, String template) throws MMXException {
 //        MMXTemplate t = getTemplate(appId, templateName);
@@ -428,19 +431,21 @@ public class MMXPushConfigService {
     }
 
 
-    public MMXPushConfig createConfig(MMXPushConfig config) throws MMXException {
+    public void createConfig(MMXPushConfig config) throws MMXException {
         validateConfig(config);
-        Map<String, String> meta = config.getMeta();
-        MMXPushConfigDo newConf = daoFactory.getMMXPushConfigDao().createConfig(configBo2Do(config));
-        config.setConfigId(newConf.getConfigId());
+
+        MMXPushConfigDo configDo = configBo2Do(config);
+        daoFactory.getMMXPushConfigDao().createConfig(configDo);
+        config.setConfigId(configDo.getConfigId());
         //meta
+        Map<String, String> meta = config.getMeta();
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(config.getConfigId(), metaBo2Do(config.getConfigId(), meta));
         //mappings
         updateMappings(config);
-        //retrieve fresh
-        MMXPushConfigDo y = daoFactory.getMMXPushConfigDao().getConfig(config.getConfigId());
-        MMXPushConfig x = configDo2Bo(y);
-        return x;
+//        //retrieve fresh
+//        MMXPushConfigDo y = daoFactory.getMMXPushConfigDao().getConfig(config.getConfigId());
+//        MMXPushConfig x = configDo2Bo(y);
+//        return x;
     }
     private void updateMappings(MMXPushConfig config) {
 
@@ -497,7 +502,7 @@ public class MMXPushConfigService {
 //        config.setMeta(meta);
 //        return updateConfig(config);
 //    }
-    public MMXPushConfig updateConfig(MMXPushConfig config) throws MMXException {
+    public void updateConfig(MMXPushConfig config) throws MMXException {
         validateConfig(config);
         MMXPushConfigDo configDo = configBo2Do(config);
         daoFactory.getMMXPushConfigDao().updateConfig(configDo);
@@ -505,7 +510,6 @@ public class MMXPushConfigService {
         Integer configId = config.getConfigId();
         daoFactory.getMXPushConfigMetadataDao().updateConfigAllMetadata(configId, metaBo2Do(configId, meta));
         updateMappings(config);
-        return config;
     }
     public void deleteConfig(Integer configId) throws MMXException {
         deleteConfig(getConfig(configId));
@@ -565,11 +569,14 @@ public class MMXPushConfigService {
         mapping.setConfigId(configId);
         mapping.setAppId(appId);
         mapping.setChannelId(channelId);
-        return createConfigMapping(mapping);
+        createConfigMapping(mapping);
+        return mapping;
     }
-    public MMXPushConfigMapping createConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
+    public void createConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMapping(mapping);
-        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mappingBo2Do(mapping)));
+        MMXPushConfigMappingDo mappingDo = mappingBo2Do(mapping);
+        daoFactory.getMMXPushConfigMappingDao().createConfigMapping(mappingDo);
+        mapping.setMappingId(mappingDo.getMappingId());
     }
     public MMXPushConfigMapping getConfigMapping(Integer mappingId) throws MMXException {
         MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(mappingId);
@@ -582,7 +589,7 @@ public class MMXPushConfigService {
         validateMandatoryArgument("appId", appId);
         MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(appId, channelId);
         if (m == null) {
-            throw new MMXException("mapping not found", ErrorCode.NOT_FOUND.getCode());
+            throw new MMXException("mapping not found appId='" + appId + "' channelId='" + channelId + "'", ErrorCode.NOT_FOUND.getCode());
         }
         return mappingDo2Bo(m);
 
@@ -601,9 +608,13 @@ public class MMXPushConfigService {
 //        mapping.setChannelId(channelId);
 //        return updateConfigMapping(mapping);
 //    }
-    public MMXPushConfigMapping updateConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
+    public void updateConfigMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMapping(mapping);
-        return mappingDo2Bo(daoFactory.getMMXPushConfigMappingDao().updateConfigMapping(mappingBo2Do(mapping)));
+        //find mapping id
+        MMXPushConfigMappingDo m = daoFactory.getMMXPushConfigMappingDao().getConfigMapping(mapping.getAppId(), mapping.getChannelId());
+        mapping.setMappingId(m.getMappingId());
+        //do update
+        daoFactory.getMMXPushConfigMappingDao().updateConfigMapping(mappingBo2Do(mapping));
     }
     public void deleteConfigMapping(Integer mappingId) throws MMXException {
         deleteConfigMapping(getConfigMapping(mappingId));
@@ -615,7 +626,7 @@ public class MMXPushConfigService {
     private void validateMapping(MMXPushConfigMapping mapping) throws MMXException {
         validateMandatoryObject("configMapping", mapping);
         validateMandatoryArgument("configMapping.appId", mapping.getAppId());
-        getConfig(mapping.getConfigId());
+//        getConfig(mapping.getConfigId());
     }
 
 //    //
@@ -682,14 +693,16 @@ public class MMXPushConfigService {
         suppress.setUserId(userId);
         suppress.setAppId(appId);
         suppress.setChannelId(channelId);
-        return createPushSuppress(suppress);
+        createPushSuppress(suppress);
+        return suppress;
     }
-    public MMXPushSuppress createPushSuppress(MMXPushSuppress suppress) throws MMXException {
+    public void createPushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
-        MMXPushSuppress pushSuppress = suppressDo2Bo(daoFactory.getMXPushSuppressDao().suppress(suppressBo2Do(suppress)));
+        MMXPushSuppressDo suppressDo = suppressBo2Do(suppress);
+        daoFactory.getMXPushSuppressDao().suppress(suppressDo);
+        suppress.setSuppressId(suppressDo.getSuppressId());
         CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE)
-                .put(getCacheLookupKey(pushSuppress.getUserId(), pushSuppress.getAppId(), pushSuppress.getChannelId()), new MMXPushSuppressStatus(suppress));
-        return pushSuppress;
+                .put(getCacheLookupKey(suppress.getUserId(), suppress.getAppId(), suppress.getChannelId()), new MMXPushSuppressStatus(suppress));
     }
     public void createPushUnSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);

@@ -1,7 +1,6 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate.Hibernate;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplate;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.MMXTemplateType;
 import org.junit.*;
@@ -17,12 +16,7 @@ public class MMXPushConfigServiceTempateTest {
 
     @BeforeClass
     public static void init() {
-
-        String driver = "org.mariadb.jdbc.Driver";
-        String url = "jdbc:mysql://127.0.0.1:3306/maxdb";
-        String username = "root";
-        String password = "";
-        Hibernate.initialize(driver, url, username, password);
+        HibernateTestInitalizer.getInstance();
     }
 
     @Before
@@ -133,7 +127,8 @@ public class MMXPushConfigServiceTempateTest {
         t.setTemplateType(type);
         t.setTemplateName(name);
         t.setTemplate(template);
-        return MMXPushConfigService.getInstance().createTemplate(t);
+        MMXPushConfigService.getInstance().createTemplate(t);
+        return t;
     }
 
     private static MMXTemplate createTemplate2(String appId, MMXTemplateType type, String name, String template) throws MMXException {
@@ -154,7 +149,7 @@ public class MMXPushConfigServiceTempateTest {
         MMXTemplate t = createTemplate(APP_ID  , MMXTemplateType.PUSH, "nn", "tt");
         t.setTemplateName("nn2");
         //
-        t = MMXPushConfigService.getInstance().updateTemplate(t);
+        MMXPushConfigService.getInstance().updateTemplate(t);
         assertTemplate(t, APP_ID  , MMXTemplateType.PUSH, "nn2", "tt");
         MMXTemplate t2 = MMXPushConfigService.getInstance().getTemplate(t.getTemplateId());
         assertTemplate(t2, APP_ID  , MMXTemplateType.PUSH, "nn2", "tt");
@@ -170,7 +165,7 @@ public class MMXPushConfigServiceTempateTest {
         MMXTemplate t = createTemplate(APP_ID  , MMXTemplateType.PUSH, "nn", "tt");
         t.setTemplate("tt2");
         //
-        t = MMXPushConfigService.getInstance().updateTemplate(t);
+        MMXPushConfigService.getInstance().updateTemplate(t);
         assertTemplate(t, APP_ID  , MMXTemplateType.PUSH, "nn", "tt2");
         MMXTemplate t2 = MMXPushConfigService.getInstance().getTemplate(t.getTemplateId());
         assertTemplate(t2, APP_ID  , MMXTemplateType.PUSH, "nn", "tt2");

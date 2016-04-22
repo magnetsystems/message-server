@@ -11,10 +11,10 @@ import java.util.Collection;
  */
 public interface MMXTemplateDao {
 
-    public MMXTemplateDo createTemplate(MMXTemplateDo template);
+    public void createTemplate(MMXTemplateDo template);
     public Collection<MMXTemplateDo> getAllTemplates(String appId);
     public MMXTemplateDo getTemplate(String appId, String templateName);
     public MMXTemplateDo getTemplate(Integer templateId);
-    public MMXTemplateDo updateTemplate(MMXTemplateDo template);
+    public void updateTemplate(MMXTemplateDo template);
     public void deleteTemplate(MMXTemplateDo template);
 }
