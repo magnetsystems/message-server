@@ -761,6 +761,10 @@ public class MMXPushConfigService {
     public void deletePushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
         daoFactory.getMXPushSuppressDao().deleteSuppress(suppressBo2Do(suppress));
+        MMXPushSuppressStatus pushSuppressStatus = new MMXPushSuppressStatus(suppress);
+        pushSuppressStatus.setSuppressed(false);
+        CacheFactory.createCache(PUSH_SUPPRESS_CONFIG_CACHE)
+                .put(getCacheLookupKey(suppress.getUserId(), suppress.getAppId(), suppress.getChannelId()), pushSuppressStatus);
     }
 
 
