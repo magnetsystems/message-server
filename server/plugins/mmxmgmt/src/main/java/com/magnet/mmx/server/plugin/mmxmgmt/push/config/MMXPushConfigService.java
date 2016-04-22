@@ -198,6 +198,12 @@ public class MMXPushConfigService {
         if (config == null && appId != null) {
             config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, null));
         }
+
+        //System with config name(This is to support poll usecase)
+        if (config == null) {
+            config = getEnabledConfigIgnoreException(SYSTEM_APP, configName);
+        }
+
         //if nothing works fall down on system level
         if (config == null) {
             config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(SYSTEM_APP, null));
