@@ -709,6 +709,12 @@ public class MMXPushConfigService {
     }
     public void createPushSuppress(MMXPushSuppress suppress) throws MMXException {
         validateSuppress(suppress);
+        if (suppress.getSuppressId() == null) {
+            MMXPushSuppressDo s = daoFactory.getMXPushSuppressDao().getSuppress(suppress.getAppId(), suppress.getUserId(), suppress.getChannelId());
+            if (s != null) {
+                suppress.setSuppressId(s.getSuppressId());
+            }
+        }
         MMXPushSuppressDo suppressDo = suppressBo2Do(suppress);
         daoFactory.getMXPushSuppressDao().suppress(suppressDo);
         suppress.setSuppressId(suppressDo.getSuppressId());

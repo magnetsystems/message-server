@@ -18,7 +18,7 @@ public class MMXPushSuppressDaoHbn extends HibernateBase<MMXPushSuppressDo> impl
 
     @Override
     public void suppress(MMXPushSuppressDo suppress) {
-        save(suppress);
+        update(suppress);
     }
 
     @Override
