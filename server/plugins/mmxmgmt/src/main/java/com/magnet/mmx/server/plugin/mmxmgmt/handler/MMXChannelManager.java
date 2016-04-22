@@ -501,7 +501,8 @@ public class MMXChannelManager {
       form.setPersistentItems(options.getMaxItems() != 0);
       form.setMaxItems(options.getMaxItems());
       form.setSubscribe(options.isSubscriptionEnabled());
-      form.setTitle(channelName);
+      form.setTitle((options.getDisplayName() == null) ?
+          channelName : options.getDisplayName());
       form.setDescription(options.getDescription());
     }
     try {

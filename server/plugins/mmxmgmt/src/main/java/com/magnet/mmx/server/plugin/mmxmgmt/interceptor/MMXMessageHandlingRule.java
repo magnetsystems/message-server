@@ -50,6 +50,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceNotFoundException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.MessageEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.PushStatus;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.WakeupEntityDAO;
 import com.magnet.mmx.server.plugin.mmxmgmt.event.MMXXmppRateExceededEvent;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
 import com.magnet.mmx.server.plugin.mmxmgmt.message.ServerAckMessageBuilder;
@@ -230,7 +231,7 @@ public class MMXMessageHandlingRule {
     if (!isDistributed) {
       PacketExtension payload = mmxMessage.getExtension(Constants.MMX,
           Constants.MMX_NS_MSG_PAYLOAD);
-      if (payload == null || !(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK,
+      if (payload == null || !(Boolean) getMmxHeader(payload, MmxHeaders.NO_ACK,
           Boolean.FALSE)) {
         if (isMMXMulticastMessage(mmxMessage)) {
           sendEndAckMessageOnce(mmxMessage, appId, (deviceEntity == null));
@@ -256,9 +257,10 @@ public class MMXMessageHandlingRule {
       boolean wakeupPossible = canBeWokenUp(deviceEntity);
       if (wakeupPossible) {
         AppDAO appDAO = DBUtil.getAppDAO();
+        WakeupEntityDAO wakeupEntityDAO = DBUtil.getWakeupEntityDAO();
         AppEntity appEntity = appDAO.getAppForAppKey(appId);
         messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
-        WakeupUtil.queueWakeup(appEntity, deviceEntity,
+        WakeupUtil.queueWakeup(wakeupEntityDAO, appEntity, deviceEntity,
             messageEntity.getMessageId());
       } else {
         if (LOGGER.isDebugEnabled()) {
@@ -370,7 +372,7 @@ public class MMXMessageHandlingRule {
         Constants.MMX_NS_MSG_PAYLOAD);
     if (payload == null) {
       LOGGER.warn("Dropping a malformed MMX multicast message.");
-      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+      if (!(Boolean) getMmxHeader(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
         sendBeginAckMessageOnce(message, appId, 0, ErrorCode.SEND_MESSAGE_MALFORMED);
       }
       throw new PacketRejectedException(
@@ -380,7 +382,7 @@ public class MMXMessageHandlingRule {
     MMXid[] recipients = getRecipients(payload);
     if (recipients == null || recipients.length == 0) {
       LOGGER.warn("No recipients found in MMX multicast message");
-      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+      if (!(Boolean) getMmxHeader(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
         sendBeginAckMessageOnce(message, appId, 0, ErrorCode.SEND_MESSAGE_NO_TARGET);
       }
     } else {
@@ -388,7 +390,7 @@ public class MMXMessageHandlingRule {
       // ack. The count will be decremented when each routed message is handled
       // later.  When the count reaches zero, the end ack will be sent.  Note,
       // the packet routing in the for-loop is done asynchronously.
-      if (!(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
+      if (!(Boolean) getMmxHeader(payload, MmxHeaders.NO_ACK, Boolean.FALSE)) {
         sendBeginAckMessageOnce(message, appId, recipients.length, ErrorCode.NO_ERROR);
       }
 
@@ -430,17 +432,25 @@ public class MMXMessageHandlingRule {
     return recipients;
   }
 
-  private Object getMmxMeta(PacketExtension payload, String key, Object defVal) {
+  private MmxHeaders getMmxMeta(PacketExtension payload) {
     Element mmxElement = payload.getElement();
     if (mmxElement == null) {
-      return defVal;
+      return null;
     }
     Element element = mmxElement.element(Constants.MMX_MMXMETA);
     if (element == null) {
-      return defVal;
+      return null;
     }
     MmxHeaders mmxMeta = GsonData.getGson().fromJson(element.getText(),
         MmxHeaders.class);
+    return mmxMeta;
+  }
+
+  private Object getMmxHeader(PacketExtension payload, String key, Object defVal) {
+    MmxHeaders mmxMeta = getMmxMeta(payload);
+    if (mmxMeta == null) {
+      return defVal;
+    }
     return mmxMeta.getHeader(key, defVal);
   }
 
@@ -467,6 +477,13 @@ public class MMXMessageHandlingRule {
     AppEntity appEntity = appDAO.getAppForAppKey(messageEntity.getAppId());
     List<MessageDistributor.JIDDevicePair> undistributed = result
         .getNotDistributed();
+    PacketExtension payload = message.getExtension(Constants.MMX,
+        Constants.MMX_NS_MSG_PAYLOAD);
+    MmxHeaders mmxMeta = null;
+    String pushConfigName = null;
+    if (payload != null && (mmxMeta = getMmxMeta(payload)) != null) {
+      pushConfigName = (String) mmxMeta.getHeader(MmxHeaders.PUSH_CONFIG, (String) null);
+    }
     for (MessageDistributor.JIDDevicePair pair : undistributed) {
       message.setTo(pair.getJID());
       MMXOfflineStorageUtil.storeMessage(message);
@@ -476,7 +493,7 @@ public class MMXMessageHandlingRule {
       if (wokenUpPossible) {
         messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
         WakeupUtil.queueWakeup(appEntity, pair.getDevice(),
-            messageEntity.getMessageId());
+            messageEntity.getMessageId(), pushConfigName);
       } else {
         messageEntity.setState(MessageEntity.MessageState.PENDING);
       }
@@ -485,13 +502,12 @@ public class MMXMessageHandlingRule {
 
     if (result.noDevices()) {
       LOGGER.warn(
-              "message={} addressed to user={} is dropped because the user has no active devices. Sending an error message back to originator.",
+              "message={} addressed to user={} is dropped because the user has "+
+              "no active devices. Sending an error message back to originator.",
               message, userId);
     }
 
-    PacketExtension payload = message.getExtension(Constants.MMX,
-        Constants.MMX_NS_MSG_PAYLOAD);
-    if (payload == null || !(Boolean) getMmxMeta(payload, MmxHeaders.NO_ACK,
+    if (mmxMeta == null || !(Boolean) mmxMeta.getHeader(MmxHeaders.NO_ACK,
         Boolean.FALSE)) {
       if (isMMXMulticastMessage(message)) {
         // Send end-ack for the last recipient in the multicast message.

@@ -20,6 +20,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.db.AppConfigurationCache;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.DeviceEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.WakeupEntity;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.WakeupEntityDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushAPNSPayloadBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushGCMPayloadBuilder;
 import org.slf4j.Logger;
@@ -28,11 +29,20 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
+ * Queuing up a wake-up (silent) or push notification for an ad-hoc message.
  */
 public class WakeupUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(WakeupUtil.class);
 
-  public static void queueWakeup(AppEntity appEntity, DeviceEntity deviceEntity, String messageId) {
+  /**
+   * Queue up a silent or push notification for a message.
+   * @param appEntity
+   * @param deviceEntity
+   * @param messageId
+   * @param pushConfigName An optional push config name, or null.
+   */
+  public static void queueWakeup(AppEntity appEntity, DeviceEntity deviceEntity,
+                                 String messageId, String pushConfigName) {
     LOGGER.trace("queueWakeup : messageId={}", messageId);
     WakeupEntityDAO wakeupEntityDAO = DBUtil.getWakeupEntityDAO();
     AppConfigurationCache configurationCache = AppConfigurationCache.getInstance();
@@ -52,20 +62,59 @@ public class WakeupUtil {
       return;
     }
 
+    queueWakeup(wakeupEntityDAO, appEntity, deviceEntity, messageId);
+  }
+
+  /**
+   * Persist a wakeup entity.
+   * @param wakeupEntityDAO
+   * @param appEntity
+   * @param devEntity
+   * @param messageId
+   */
+  public static void queueWakeup(WakeupEntityDAO wakeupEntityDAO, AppEntity appEntity,
+                                DeviceEntity devEntity, String messageId) {
     WakeupEntity wakeupEntity = new WakeupEntity();
-    wakeupEntity.setToken(deviceEntity.getClientToken());
-    wakeupEntity.setDeviceId(deviceEntity.getDeviceId());
-    wakeupEntity.setType(deviceEntity.getTokenType());
+    wakeupEntity.setToken(devEntity.getClientToken());
+    wakeupEntity.setDeviceId(devEntity.getDeviceId());
+    wakeupEntity.setType(devEntity.getTokenType());
     wakeupEntity.setGoogleApiKey(appEntity.getGoogleAPIKey());
+
+//    PubSubWakeupProvider.FmPushConfig pushConfig = new
+//        PubSubWakeupProvider.FmPushConfig(devEntity.getOwnerId(),
+//            appEntity.getAppId(), "", configName);
+//    MessageNotification custom = null;
+//    try {
+//      Map<String, Object> context = pushConfig.buildContext(appEntity, null, 1, mmx);
+//      if (pushConfig.eval(context) == null) {
+//        return;
+//      }
+//      MMXid from = MMXid.fromMap((Map<String, String>) mmx.getMmxMeta().get(
+//          MmxHeaders.FROM));
+//      if (pushConfig.getPushType() == PushMessage.Action.PUSH) {
+//        // Push notification payload
+//        custom = new MessageNotification(mmx.getPayload().getSentTime(), from,
+//            pushConfig.getTitle(), pushConfig.getBody(), pushConfig.getSound());
+//      } else if (pushConfig.getPushType() == PushMessage.Action.WAKEUP) {
+//        // Wakeup (silent) notification payload
+//        custom = new MessageNotification(mmx.getPayload().getSentTime(), from,
+//            pushConfig.getBody());
+//      } else {
+//        return;
+//      }
+//    } catch (MMXException e) {
+//      e.printStackTrace();
+//      return;
+//    }
 
     /**
      * Set the payload based on the Device type.
      * The wakeup payloads are different for iOS and Android devices
      */
-    if (deviceEntity.getTokenType() == PushType.APNS) {
+    if (devEntity.getTokenType() == PushType.APNS) {
       String payload = MMXPushAPNSPayloadBuilder.wakeupPayload();
       wakeupEntity.setPayload(payload);
-    } else if (deviceEntity.getTokenType() == PushType.GCM) {
+    } else if (devEntity.getTokenType() == PushType.GCM) {
       String payload = MMXPushGCMPayloadBuilder.wakeupPayload();
       wakeupEntity.setPayload(payload);
     }

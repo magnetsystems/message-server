@@ -219,16 +219,18 @@ public class PubSubWakeupProvider implements WakeupProvider {
 
     // Build a context with ${application}, ${channel}, ${msg} and ${config}
     // which can be null.
-    private Map<String, Object> buildContext(AppEntity ae, Node node, int count,
+    public Map<String, Object> buildContext(AppEntity ae, Node node, int count,
                                             MMXPacketExtension mmxExt0) {
       HashMap<String, Object> context = new HashMap<String, Object>();
       try {
+        context.put("config", sFmCfg.getTemplateLoader().findTemplateSource(mName));
         context.put("application", new TemplateDataModel.NameDesc(
             ae.getName(), null, 0));
-        // channel name is just its name (not nodeID)
-        context.put("channel", new TemplateDataModel.NameDesc(
-            node.getName(),  node.getDescription(), count));
-        context.put("config", sFmCfg.getTemplateLoader().findTemplateSource(mName));
+        if (node != null) {
+          // channel name is just its name (not nodeID)
+          context.put("channel", new TemplateDataModel.NameDesc(
+              node.getName(),  node.getDescription(), count));
+        }
       } catch (IOException e) {
         LOGGER.error("Caught IOException while building context for template "+mName, e);
       }

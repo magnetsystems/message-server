@@ -544,7 +544,8 @@ public class MMXTopicManager {
       form.setPersistentItems(options.getMaxItems() != 0);
       form.setMaxItems(options.getMaxItems());
       form.setSubscribe(options.isSubscriptionEnabled());
-      form.setTitle(topicName);
+      form.setTitle((options.getDisplayName() == null) ?
+          topicName : options.getDisplayName());
       form.setDescription(options.getDescription());
     }
     try {

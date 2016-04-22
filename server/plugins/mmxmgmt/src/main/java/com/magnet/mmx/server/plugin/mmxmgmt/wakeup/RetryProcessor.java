@@ -14,19 +14,29 @@
  */
 package com.magnet.mmx.server.plugin.mmxmgmt.wakeup;
 
+import com.magnet.mmx.protocol.MMXid;
+import com.magnet.mmx.protocol.MessageNotification;
+import com.magnet.mmx.protocol.MmxHeaders;
+import com.magnet.mmx.protocol.PushMessage;
 import com.magnet.mmx.protocol.PushType;
 import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.db.*;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushAPNSPayloadBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.MMXPushGCMPayloadBuilder;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXClusterableTask;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
+import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -110,7 +120,7 @@ public class RetryProcessor extends MMXClusterableTask implements Runnable {
       if (appEntity == null) {
         continue;
       }
-      queueWakeup(appEntity, device, messageId);
+      WakeupUtil.queueWakeup(getWakeupEntityDAO(), appEntity, device, messageId);
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Queued a new wakeup for device:" + device + " for messageId:" + messageId);
       }
@@ -131,29 +141,5 @@ public class RetryProcessor extends MMXClusterableTask implements Runnable {
 
   protected WakeupEntityDAO getWakeupEntityDAO() {
     return new WakeupEntityDAOImpl(new OpenFireDBConnectionProvider());
-  }
-
-  protected void queueWakeup(AppEntity appEntity, DeviceEntity deviceEntity, String messageId) {
-    WakeupEntity wakeupEntity = new WakeupEntity();
-    wakeupEntity.setToken(deviceEntity.getClientToken());
-    wakeupEntity.setDeviceId(deviceEntity.getDeviceId());
-    wakeupEntity.setType(deviceEntity.getTokenType());
-    wakeupEntity.setGoogleApiKey(appEntity.getGoogleAPIKey());
-    /**
-     * Set the payload based on the Device type.
-     * The wakeup payloads are different for iOS and Android devices
-     */
-    if (deviceEntity.getTokenType() == PushType.APNS) {
-      String payload = MMXPushAPNSPayloadBuilder.wakeupPayload();
-      wakeupEntity.setPayload(payload);
-    } else if (deviceEntity.getTokenType() == PushType.GCM) {
-      String payload = MMXPushGCMPayloadBuilder.wakeupPayload();
-      wakeupEntity.setPayload(payload);
-    }
-    wakeupEntity.setMessageId(messageId);
-    wakeupEntity.setAppId(appEntity.getAppId());
-
-    WakeupEntityDAO wakeupEntityDAO = getWakeupEntityDAO();
-    wakeupEntityDAO.offer(wakeupEntity);
   }
 }

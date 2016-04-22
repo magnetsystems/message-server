@@ -15,8 +15,21 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push;
 
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.MMXid;
+import com.magnet.mmx.protocol.MessageNotification;
+import com.magnet.mmx.protocol.MmxHeaders;
+import com.magnet.mmx.protocol.PubSubNotification;
 import com.magnet.mmx.protocol.PushMessage;
+import com.magnet.mmx.protocol.TemplateDataModel;
+import com.magnet.mmx.server.common.data.AppEntity;
+import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAO;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.AppDAOImpl;
+import com.magnet.mmx.server.plugin.mmxmgmt.db.OpenFireDBConnectionProvider;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
+import com.magnet.mmx.server.plugin.mmxmgmt.message.MMXPacketExtension;
+import com.magnet.mmx.server.plugin.mmxmgmt.pubsub.PubSubWakeupProvider;
+import com.magnet.mmx.util.GsonData;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.PayloadBuilder;
 
@@ -177,8 +190,21 @@ public class MMXPushAPNSPayloadBuilder {
   public static String wakeupPayload() {
     MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(
         PushMessage.Action.WAKEUP, Constants.PingPongCommand.retrieve.name());
-    builder.silent();
     return builder.build();
   }
 
+  /**
+   * Build a custom payload for message notification.
+   * @param type
+   * @param custom
+   * @return
+   */
+  public static String customPayload(PushMessage.Action type,
+                                     MessageNotification custom) {
+    MMXPushAPNSPayloadBuilder builder = new MMXPushAPNSPayloadBuilder(type,
+        MessageNotification.getType());
+    String json = GsonData.getGson().toJson(custom);
+    builder.setCustomDictionary(GsonData.getGson().fromJson(json, HashMap.class));
+    return builder.build();
+  }
 }

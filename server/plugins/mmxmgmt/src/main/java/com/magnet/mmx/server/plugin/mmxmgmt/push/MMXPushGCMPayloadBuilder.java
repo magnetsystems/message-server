@@ -17,6 +17,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push;
 import com.google.gson.Gson;
 import com.magnet.mmx.protocol.Constants;
 import com.magnet.mmx.protocol.GCMPayload;
+import com.magnet.mmx.protocol.MessageNotification;
 import com.magnet.mmx.protocol.PushMessage;
 import com.magnet.mmx.server.plugin.mmxmgmt.handler.MMXPushManager;
 import com.magnet.mmx.util.GsonData;
@@ -28,9 +29,9 @@ import java.util.HashMap;
  * can be used by the console and IQHandler.
  */
 public class MMXPushGCMPayloadBuilder {
-  private HashMap<String, ? super Object> mmxDictionary;
-  private GCMPayload payload;
-  private MMXPushHeader header;
+  private final HashMap<String, ? super Object> mmxDictionary;
+  private final GCMPayload payload;
+  private final MMXPushHeader header;
 
   public MMXPushGCMPayloadBuilder(PushMessage.Action action) {
     payload = new GCMPayload();
@@ -43,7 +44,7 @@ public class MMXPushGCMPayloadBuilder {
     mmxDictionary = new HashMap<String, Object>(10);
     header = new MMXPushHeader(Constants.MMX, action.getCode(), type);
   }
-  
+
   public MMXPushGCMPayloadBuilder(MMXPushHeader header) {
     payload = new GCMPayload();
     mmxDictionary = new HashMap<String, Object>(10);
@@ -58,7 +59,7 @@ public class MMXPushGCMPayloadBuilder {
     setBadge(gcm.mBadge);
     return this;
   }
-  
+
   public MMXPushGCMPayloadBuilder setTitle(String title) {
     if (title != null) {
       payload.setTitle(title);
@@ -156,6 +157,20 @@ public class MMXPushGCMPayloadBuilder {
     MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(
         PushMessage.Action.WAKEUP, Constants.PingPongCommand.retrieve.name());
     builder.setCustomType(null);
+    return builder.build();
+  }
+
+  /**
+   * Build a custom payload for message notification.
+   * @param type
+   * @param custom
+   * @return
+   */
+  public static String customPayload(PushMessage.Action type,
+                                     MessageNotification custom) {
+    MMXPushGCMPayloadBuilder builder = new MMXPushGCMPayloadBuilder(type,
+        MessageNotification.getType());
+    builder.setCustom(custom);
     return builder.build();
   }
 }

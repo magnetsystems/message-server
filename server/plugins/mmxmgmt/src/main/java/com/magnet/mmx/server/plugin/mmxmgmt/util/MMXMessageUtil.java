@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Message.Type;
 import org.xmpp.packet.Packet;
 
 import com.google.common.base.Strings;
@@ -68,6 +69,15 @@ public class MMXMessageUtil {
       if (ENABLE_TRACE) {
         LOGGER.trace("isValidDistributableMessage(): false; bad messageId={}",
           mmxMessage.getID());
+      }
+      return false;
+    }
+
+    // For the fire-and-forget
+    if(mmxMessage.getType() == Message.Type.headline) {
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+          "isValidDistributableMessage(): false; packet is a headline message");
       }
       return false;
     }
