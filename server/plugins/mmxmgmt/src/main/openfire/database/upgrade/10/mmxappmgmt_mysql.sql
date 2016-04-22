@@ -93,13 +93,13 @@ ALTER TABLE mmxWakeupQueue MODIFY payload VARCHAR(2000);
  and c.configName = 'default-config';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 2, c.appId, 'poll-1', c.configId
+ select 2, c.appId, '.system-poll-1', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c.configName = 'DefaultPollConfig';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 3, c.appId, 'poll-2', c.configId
+ select 3, c.appId, '.system-poll-2', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c.configName = 'DefaultPollAnswerConfig';
