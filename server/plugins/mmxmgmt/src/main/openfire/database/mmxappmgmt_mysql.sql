@@ -251,52 +251,52 @@ CREATE TABLE mmxTemplate (
 
 
  INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
- VALUES (0, 'system', 'PUSH', 'default-template',
+ VALUES (1, 'system', 'PUSH', 'default-template',
  'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=New message from ${msg.from}\nmmx.pubsub.notification.sound=default\n'
  );
 
  INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
- VALUES (1, 'system', 'PUSH', 'DefaultPollTemplate',
+ VALUES (2, 'system', 'PUSH', 'DefaultPollTemplate',
  'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=Poll: ${msg.content.question[0..*30]}\nmmx.pubsub.notification.sound=default\n'
  );
 
  INSERT INTO mmxTemplate(templateId, appId,templateType,templateName,template)
- VALUES (2, 'system', 'PUSH', 'DefaultPollAnswerTemplate',
+ VALUES (3, 'system', 'PUSH', 'DefaultPollAnswerTemplate',
  'mmx.pubsub.notification.type=push\nmmx.pubsub.notification.title=\nmmx.pubsub.notification.body=${msg.from} voted on ${msg.content.question[0..*30]}\nmmx.pubsub.notification.sound=default\n'
  );
 
  INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
- select 0, t.appId, 'default-config', true, false, t.templateId
+ select 1, t.appId, 'default-config', true, false, t.templateId
  from mmxTemplate t
  where t.appId = 'system'
  and t.templateName = 'default-template';
 
  INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
- select 1, t.appId, 'DefaultPollConfig', true, false, t.templateId
+ select 2, t.appId, 'DefaultPollConfig', true, false, t.templateId
  from mmxTemplate t
  where t.appId = 'system'
  and t.templateName = 'DefaultPollTemplate';
 
  INSERT INTO mmxPushConfig(configId, appId,configName,isEnabled,isSilentPush,templateId)
- select 2, t.appId, 'DefaultPollAnswerConfig', true, false, t.templateId
+ select 3, t.appId, 'DefaultPollAnswerConfig', true, false, t.templateId
  from mmxTemplate t
  where t.appId = 'system'
  and t.templateName = 'DefaultPollAnswerTemplate';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 0, c.appId, '', c.configId
+ select 1, c.appId, '', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c.configName = 'default-config';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 1, c.appId, '', c.configId
+ select 2, c.appId, 'poll-1', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c.configName = 'DefaultPollConfig';
 
  INSERT INTO mmxPushConfigMapping(mappingId, appId,channelId,configId)
- select 2, c.appId, '', c.configId
+ select 3, c.appId, 'poll-2', c.configId
  from mmxPushConfig c
  where c.appId = 'system'
  and c.configName = 'DefaultPollAnswerConfig';
