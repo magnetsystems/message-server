@@ -27,7 +27,7 @@
 
 
 
-        <property name="show_sql">false</property>
+        <property name="show_sql">true</property>
         <property name="hibernate.current_session_context_class">thread</property>
         <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo" />
         <mapping class="com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo" />

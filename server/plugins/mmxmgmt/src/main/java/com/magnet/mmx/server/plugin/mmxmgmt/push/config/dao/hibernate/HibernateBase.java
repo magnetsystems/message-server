@@ -4,6 +4,8 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Criterion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.List;
@@ -17,6 +19,7 @@ public class HibernateBase<D> {
     private Session currentSession;
     private Transaction currentTransaction;
     private Class<D> clazz;
+    private static final Logger LOGGER = LoggerFactory.getLogger(HibernateBase.class);
 
     public HibernateBase(Class<D> clazz) {
         this.clazz = clazz;
@@ -74,6 +77,7 @@ public class HibernateBase<D> {
             return id;
         } catch (Throwable t){
             getCurrentTransaction().rollback();
+            LOGGER.error("Hibernate error during save ", t);
             throw t;
         } finally {
             closeCurrentSession();
@@ -123,6 +127,7 @@ public class HibernateBase<D> {
             getCurrentTransaction().commit();
         } catch (Throwable t){
             getCurrentTransaction().rollback();
+            LOGGER.error("Hibernate error during update ", t);
             throw t;
         } finally {
             closeCurrentSession();
@@ -135,6 +140,7 @@ public class HibernateBase<D> {
             getCurrentTransaction().commit();
         } catch (Throwable t){
             getCurrentTransaction().rollback();
+            LOGGER.error("Hibernate error during delete ", t);
             throw t;
         } finally {
             closeCurrentSession();
