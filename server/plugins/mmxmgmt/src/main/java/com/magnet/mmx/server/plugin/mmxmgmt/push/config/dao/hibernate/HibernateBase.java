@@ -37,7 +37,7 @@ public class HibernateBase<D> {
 
     private Session openCurrentSession() {
         currentSession = Hibernate.getSessionFactory().openSession();
-        currentSession.setFlushMode(FlushMode.ALWAYS);
+        currentSession.setFlushMode(FlushMode.AUTO);
         return currentSession;
     }
 //    private Session openCurrentSession() {
