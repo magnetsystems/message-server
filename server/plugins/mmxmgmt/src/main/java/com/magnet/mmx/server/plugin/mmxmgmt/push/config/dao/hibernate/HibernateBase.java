@@ -1,6 +1,7 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
 import org.hibernate.Criteria;
+import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Criterion;
@@ -36,6 +37,7 @@ public class HibernateBase<D> {
 
     private Session openCurrentSession() {
         currentSession = Hibernate.getSessionFactory().openSession();
+        currentSession.setFlushMode(FlushMode.ALWAYS);
         return currentSession;
     }
 //    private Session openCurrentSession() {
