@@ -5,12 +5,12 @@
     <parent>
         <groupId>com.magnet.mmx</groupId>
         <artifactId>mmx-root</artifactId>
-        <version>2.6.0-B-BUILD_NUMBER</version>
+        <version>2.7.0-B-6</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <groupId>com.magnet.mmx</groupId>
     <artifactId>mmx-upgrade-bin</artifactId>
-    <version>2.6.0-B-BUILD_NUMBER</version>
+    <version>2.7.0-B-6</version>
     <packaging>pom</packaging>
 
     <name>mmx-upgrade-bin</name>
