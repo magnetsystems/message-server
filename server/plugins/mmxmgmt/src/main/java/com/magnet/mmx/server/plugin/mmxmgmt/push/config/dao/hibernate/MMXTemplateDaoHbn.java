@@ -38,7 +38,11 @@ public class MMXTemplateDaoHbn extends HibernateBase<MMXTemplateDo> implements M
 
     @Override
     public void updateTemplate(MMXTemplateDo template) {
-        update(template);
+        if (template.getTemplateId() != null) {
+            update(template);
+        } else {
+            save(template);
+        }
     }
 
     @Override

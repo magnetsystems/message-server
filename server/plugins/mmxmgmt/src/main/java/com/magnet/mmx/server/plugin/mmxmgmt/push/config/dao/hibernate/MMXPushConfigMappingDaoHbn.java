@@ -38,7 +38,11 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappi
 
     @Override
     public void updateConfigMapping(MMXPushConfigMappingDo mapping) {
-        update(mapping);
+        if (mapping.getMappingId() != null) {
+            update(mapping);
+        } else {
+            save(mapping);
+        }
     }
 
     @Override
