@@ -118,7 +118,9 @@ public class PushConfigSuppressResource {
         s.setUserId(StringUtils.isBlank(request.getUserId()) ? null : request.getUserId());
         s.setAppId(StringUtils.isBlank(request.getAppId()) ? null : request.getAppId());
         s.setChannelId(StringUtils.isBlank(request.getChannelId()) ? null : request.getChannelId());
-        s.setUntilDate(request.getUntilDate());
+        if(request.getUntilDate() != 0) {
+            s.setUntilDate(request.getUntilDate());
+        }
         return s;
     }
     private static Collection<PushConfigSuppressResponse> convertResponse(Collection<MMXPushSuppress> list) {

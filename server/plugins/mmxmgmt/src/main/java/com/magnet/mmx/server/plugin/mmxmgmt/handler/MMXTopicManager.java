@@ -860,7 +860,7 @@ public class MMXTopicManager {
             TopicHelper.convertToId(node.getNodeID()));
 
     info.setPushMutedByUser(suppressStatus.isSuppressed());
-    if(suppressStatus.isSuppressed()){
+    if(suppressStatus.isSuppressed() && suppressStatus.getUntilDate() != null){
       info.setPushMutedUntil(new Date(suppressStatus.getUntilDate()));
     }
     return info;
@@ -1574,7 +1574,7 @@ public class MMXTopicManager {
               .setSubscriptionEnabled(ti.isSubscriptionEnabled())
               .setPushMutedByUser(suppressStatus.isSuppressed());
 
-      if (suppressStatus.isSuppressed()){
+      if (suppressStatus.isSuppressed() && suppressStatus.getUntilDate()!= null){
         info.setPushMutedUntil(new Date(suppressStatus.getUntilDate()));
       }
 
