@@ -38,7 +38,11 @@ public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implemen
 
     @Override
     public void updateConfig(MMXPushConfigDo config) {
-        update(config);
+        if (config.getConfigId() != null) {
+            update(config);
+        } else {
+            save(config);
+        }
     }
 
     @Override

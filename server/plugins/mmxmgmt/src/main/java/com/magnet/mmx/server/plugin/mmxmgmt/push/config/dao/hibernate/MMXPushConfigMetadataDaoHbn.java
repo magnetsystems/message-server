@@ -33,7 +33,11 @@ public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMeta
 
     @Override
     public void updateMetadata(MMXPushConfigMetadataDo meta) {
-        update(meta);
+        if (meta.getMetadataId() != null) {
+            update(meta);
+        } else {
+            save(meta);
+        }
     }
 
     @Override

@@ -18,7 +18,11 @@ public class MMXPushSuppressDaoHbn extends HibernateBase<MMXPushSuppressDo> impl
 
     @Override
     public void suppress(MMXPushSuppressDo suppress) {
-        update(suppress);
+        if (suppress.getSuppressId() != null) {
+            update(suppress);
+        } else {
+            save(suppress);
+        }
     }
 
     @Override
