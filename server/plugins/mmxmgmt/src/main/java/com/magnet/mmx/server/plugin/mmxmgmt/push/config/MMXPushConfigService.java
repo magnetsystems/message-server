@@ -189,6 +189,11 @@ public class MMXPushConfigService {
         //try to find config for passed config name
         if (configName != null) {
             config = getEnabledConfigIgnoreException(appId, configName);
+
+            //System with config name(This is to support poll use case)
+            if (config == null) {
+                config = getEnabledConfigIgnoreException(SYSTEM_APP, configName);
+            }
         }
         //fall down on channel level
         if (config == null && channelId != null) {
@@ -199,10 +204,7 @@ public class MMXPushConfigService {
             config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, null));
         }
 
-        //System with config name(This is to support poll usecase)
-        if (config == null) {
-            config = getEnabledConfigIgnoreException(SYSTEM_APP, configName);
-        }
+
 
         //if nothing works fall down on system level
         if (config == null) {
