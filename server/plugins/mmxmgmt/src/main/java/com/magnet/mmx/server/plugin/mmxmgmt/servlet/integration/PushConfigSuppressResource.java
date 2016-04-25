@@ -118,7 +118,7 @@ public class PushConfigSuppressResource {
         s.setUserId(StringUtils.isBlank(request.getUserId()) ? null : request.getUserId());
         s.setAppId(StringUtils.isBlank(request.getAppId()) ? null : request.getAppId());
         s.setChannelId(StringUtils.isBlank(request.getChannelId()) ? null : request.getChannelId());
-        if(request.getUntilDate() != 0) {
+        if(request.getUntilDate() != null && request.getUntilDate() != 0) {
             s.setUntilDate(request.getUntilDate());
         }
         return s;
