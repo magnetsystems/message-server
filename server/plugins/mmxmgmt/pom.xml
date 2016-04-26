@@ -338,6 +338,16 @@
       <artifactId>hibernate-c3p0</artifactId>
       <version>4.3.11.Final</version>
     </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+      <version>4.3.11.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-validator-annotation-processor</artifactId>
+      <version>5.1.3.Final</version>
+    </dependency>
 
   </dependencies>
 </project>
