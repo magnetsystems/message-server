@@ -20,8 +20,10 @@
 
 			<property name="hibernate.show_sql" value="true" />
 			<property name="hibernate.format_sql" value="true" />
+			<property name="hhibernate.dialect" value="org.hibernate.dialect.MySQL5Dialect" />
+			<property name="hibernate.connection.isolation" value="2" />
 
-			<property name="hibernate.hbm2ddl.auto" value="update"/>
+			<!--<property name="hibernate.hbm2ddl.auto" value="update"/>-->
 
 			<!-- Connection Pooling settings  DBCP -->
 			<!--<property name="hibernate.dbcp.initialSize" value="8"/>-->
@@ -35,12 +37,12 @@
 			<property name="hibernate.connection.provider_class"
 					  value="org.hibernate.service.jdbc.connections.internal.C3P0ConnectionProvider" />
 
-			<property name="hibernate.c3p0.max_size" value="100" />
-			<property name="hibernate.c3p0.min_size" value="0" />
+			<property name="hibernate.c3p0.max_size" value="10" />
+			<property name="hibernate.c3p0.min_size" value="1" />
 			<property name="hibernate.c3p0.acquire_increment" value="1" />
-			<property name="hibernate.c3p0.idle_test_period" value="300" />
-			<property name="hibernate.c3p0.max_statements" value="0" />
-			<property name="hibernate.c3p0.timeout" value="100" />
+			<property name="hibernate.c3p0.idle_test_period" value="2000" />
+			<property name="hibernate.c3p0.max_statements" value="20" />
+			<property name="hibernate.c3p0.timeout" value="500" />
 		</properties>
 
 		<!--<shared-cache-mode>ENABLE_SELECTIVE</shared-cache-mode>-->
