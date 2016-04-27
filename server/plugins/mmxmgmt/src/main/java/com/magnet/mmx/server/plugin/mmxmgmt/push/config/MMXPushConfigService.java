@@ -17,8 +17,7 @@ package com.magnet.mmx.server.plugin.mmxmgmt.push.config;
 import com.magnet.mmx.server.plugin.mmxmgmt.MMXException;
 import com.magnet.mmx.server.plugin.mmxmgmt.api.ErrorCode;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDaoFactory;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate.MMXPushConfigDaoFactoryHbn;
-import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.mock.MMXPushDaoFactoryMock;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa.MMXPushConfigDaoFactoryJPA;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.model.*;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
@@ -54,7 +53,8 @@ public class MMXPushConfigService {
     }
 
 //    private final MMXPushConfigDaoFactory daoFactory = new MMXPushDaoFactoryMock();
-    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryHbn();
+//    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryHbn();
+    private final MMXPushConfigDaoFactory daoFactory = new MMXPushConfigDaoFactoryJPA();
 
     private MMXPushConfigService() {
 
@@ -194,7 +194,10 @@ public class MMXPushConfigService {
             if (config == null) {
                 config = getEnabledConfigIgnoreException(SYSTEM_APP, configName);
             }
+
         }
+
+
         //fall down on channel level
         if (config == null && channelId != null) {
                 config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, channelId));
@@ -203,7 +206,6 @@ public class MMXPushConfigService {
         if (config == null && appId != null) {
             config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, null));
         }
-
 
 
         //if nothing works fall down on system level
