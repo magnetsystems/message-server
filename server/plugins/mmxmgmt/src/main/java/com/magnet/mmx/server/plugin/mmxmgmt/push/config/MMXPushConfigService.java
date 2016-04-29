@@ -192,7 +192,7 @@ public class MMXPushConfigService {
         }
         //fall down on channel level
         if (config == null && channelId != null) {
-                config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, channelId));
+            config = getEnabledConfigIgnoreException(getConfigMappingIgnoreException(appId, channelId));
         }
         //if cannot find mapping for channel - try to find mapping for app
         if (config == null && appId != null) {

@@ -121,10 +121,12 @@ public class MMXMessageUtil {
         Constants.MMX_NS_CONTEXT) != null;
   }
 
+  /**
+   * Out-going message from pubsub service.
+   * @param message
+   * @return
+   */
   public static boolean isPubSubMessage(Message message) {
-    if (message == null) {
-      return false;
-    }
     return message.getFrom().toString()
         .equals(XMPPServer.getInstance().getPubSubModule().getServiceDomain());
   }
@@ -145,5 +147,14 @@ public class MMXMessageUtil {
    */
   public static boolean isSignalMessage(Message message) {
     return message.getChildElement(Constants.MMX, Constants.MMX_NS_MSG_SIGNAL) != null;
+  }
+
+  /**
+   * Incoming ad-hoc message to a pubsub node.
+   * @param message
+   * @return
+   */
+  public static boolean isNodeMessage(Message message) {
+    return Constants.MMX_NODE_PREFIX.startsWith(message.getTo().getNode());
   }
 }

@@ -89,4 +89,11 @@ public class MMXPushConfig {
     public void setChannelIds(Set<String> channelIds) {
         this.channelIds = channelIds;
     }
+
+    @Override
+    public String toString() {
+        return "{configId="+configId+", configName="+configName+", appId="+appId+
+              ", channelIds="+channelIds+", templateId="+templateId+
+              ", enabled="+enabled+", silentPush="+silentPush+", meta="+meta+"}";
+    }
 }
