@@ -1,18 +1,19 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigDo;
-import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implements MMXPushConfigDao {
+public class MMXPushConfigDaoJPA extends JPABase<MMXPushConfigDo> implements MMXPushConfigDao {
 
-    public MMXPushConfigDaoHbn() {
+    public MMXPushConfigDaoJPA() {
         super(MMXPushConfigDo.class);
     }
 
@@ -28,12 +29,17 @@ public class MMXPushConfigDaoHbn extends HibernateBase<MMXPushConfigDo> implemen
 
     @Override
     public MMXPushConfigDo getConfig(String appId, String configName) {
-        return findSingleByCriteria(Restrictions.eq("appId", appId), Restrictions.eq("configName", configName));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        params.put("configName", configName);
+        return findSingleByCriteria(params);
     }
 
     @Override
     public Collection<MMXPushConfigDo> getAllConfigs(String appId) {
-        return findManyByCriteria(Restrictions.eq("appId", appId));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        return findManyByCriteria(params);
     }
 
     @Override

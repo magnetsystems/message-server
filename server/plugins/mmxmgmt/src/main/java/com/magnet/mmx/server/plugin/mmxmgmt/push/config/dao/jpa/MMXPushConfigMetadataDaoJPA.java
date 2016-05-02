@@ -1,18 +1,19 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigMetadataDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMetadataDo;
-import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMetadataDo> implements MMXPushConfigMetadataDao {
+public class MMXPushConfigMetadataDaoJPA extends JPABase<MMXPushConfigMetadataDo> implements MMXPushConfigMetadataDao {
 
-    public MMXPushConfigMetadataDaoHbn() {
+    public MMXPushConfigMetadataDaoJPA() {
         super(MMXPushConfigMetadataDo.class);
     }
 
@@ -28,7 +29,10 @@ public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMeta
 
     @Override
     public MMXPushConfigMetadataDo getMetadata(Integer configId, String name) {
-        return findSingleByCriteria(Restrictions.eq("configId", configId), Restrictions.eq("name", name));
+        Map<String, Object> params = new HashMap<>();
+        params.put("configId", configId);
+        params.put("name", name);
+        return findSingleByCriteria(params);
     }
 
     @Override
@@ -47,7 +51,9 @@ public class MMXPushConfigMetadataDaoHbn extends HibernateBase<MMXPushConfigMeta
 
     @Override
     public Collection<MMXPushConfigMetadataDo> getConfigAllMetadata(Integer configId) {
-        return findManyByCriteria(Restrictions.eq("configId", configId));
+        Map<String, Object> params = new HashMap<>();
+        params.put("configId", configId);
+        return findManyByCriteria(params);
     }
 
     @Override

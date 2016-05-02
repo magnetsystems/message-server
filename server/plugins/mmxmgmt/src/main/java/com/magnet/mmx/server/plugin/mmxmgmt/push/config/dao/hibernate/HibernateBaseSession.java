@@ -1,6 +1,9 @@
 package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
 
-import org.hibernate.*;
+import org.hibernate.Criteria;
+import org.hibernate.FlushMode;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Criterion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,14 +15,14 @@ import java.util.List;
  * Created by mmicevic on 4/15/16.
  *
  */
-public class HibernateBase<D> {
+public class HibernateBaseSession<D> {
 
-    private StatelessSession currentSession;
+    private Session currentSession;
     private Transaction currentTransaction;
     private Class<D> clazz;
-    private static final Logger LOGGER = LoggerFactory.getLogger(HibernateBase.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HibernateBaseSession.class);
 
-    public HibernateBase(Class<D> clazz) {
+    public HibernateBaseSession(Class<D> clazz) {
         this.clazz = clazz;
     }
 
@@ -32,9 +35,9 @@ public class HibernateBase<D> {
 //    }
 
 
-    private StatelessSession openCurrentSession() {
-        currentSession = Hibernate.getSessionFactory().openStatelessSession();
-//        currentSession.setFlushMode(FlushMode.AUTO);
+    private Session openCurrentSession() {
+        currentSession = Hibernate.getSessionFactory().openSession();
+        currentSession.setFlushMode(FlushMode.AUTO);
         return currentSession;
     }
 //    private Session openCurrentSession() {
@@ -47,7 +50,7 @@ public class HibernateBase<D> {
 //        return currentSession;
 //    }
 
-    private StatelessSession openCurrentSessionWithTransaction() {
+    private Session openCurrentSessionWithTransaction() {
         openCurrentSession();
         currentTransaction = currentSession.beginTransaction();
         return currentSession;
@@ -57,7 +60,7 @@ public class HibernateBase<D> {
         currentSession.close();
     }
 
-    private StatelessSession getCurrentSession() {
+    private Session getCurrentSession() {
         return currentSession;
     }
 
@@ -71,7 +74,7 @@ public class HibernateBase<D> {
     public Serializable save(D doObject) {
         try {
             openCurrentSessionWithTransaction();
-            Serializable id = getCurrentSession().insert(doObject);
+            Serializable id = getCurrentSession().save(doObject);
             getCurrentTransaction().commit();
             return id;
         } catch (Throwable t){
@@ -122,7 +125,7 @@ public class HibernateBase<D> {
     public void update(D doObject) {
         try {
             openCurrentSessionWithTransaction();
-            getCurrentSession().update(doObject);
+            getCurrentSession().saveOrUpdate(doObject);
             getCurrentTransaction().commit();
         } catch (Throwable t){
             getCurrentTransaction().rollback();

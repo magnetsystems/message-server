@@ -1377,7 +1377,9 @@ public class IntegrationChannelResource {
             return false;
         }
         JID from = JIDUtil.makeJID(request.getUserId(), request.getAppId(), null);
-        if (from.equals(node.getCreator())) {
+        // Fix MAX-377: the item publisher can delete its own item too.
+        JID publisher = new JID(entity.getJid()).asBareJID();
+        if (from.equals(node.getCreator()) || from.equals(publisher)) {
           return true;
         }
         return (node.getOwners().contains(from));

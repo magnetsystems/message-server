@@ -1,18 +1,19 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXTemplateDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXTemplateDo;
-import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXTemplateDaoHbn extends HibernateBase<MMXTemplateDo> implements MMXTemplateDao {
+public class MMXTemplateDaoJPA extends JPABase<MMXTemplateDo> implements MMXTemplateDao {
 
-    public MMXTemplateDaoHbn() {
+    public MMXTemplateDaoJPA() {
         super(MMXTemplateDo.class);
     }
 
@@ -23,12 +24,17 @@ public class MMXTemplateDaoHbn extends HibernateBase<MMXTemplateDo> implements M
 
     @Override
     public Collection<MMXTemplateDo> getAllTemplates(String appId) {
-        return findManyByCriteria(Restrictions.eq("appId", appId));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        return findManyByCriteria(params);
     }
 
     @Override
     public MMXTemplateDo getTemplate(String appId, String templateName) {
-        return findSingleByCriteria(Restrictions.eq("appId", appId), Restrictions.eq("templateName", templateName));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        params.put("templateName", templateName);
+        return findSingleByCriteria(params);
     }
 
     @Override

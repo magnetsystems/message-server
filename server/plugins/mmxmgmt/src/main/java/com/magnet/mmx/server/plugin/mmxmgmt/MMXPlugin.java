@@ -32,6 +32,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.handler.MsgAckIQHandler;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXMessageHandlingRule;
 import com.magnet.mmx.server.plugin.mmxmgmt.interceptor.MMXPacketInterceptor;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate.Hibernate;
+import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa.JPA;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfigKeys;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXConfiguration;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXManagedConfiguration;
@@ -210,9 +211,23 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     } else {
       Log.info("clustering is enabled. Bot will be initialized after node joins the cluster.");
     }
-    //initialize hibernate
-    initializeHibernate();
+//    //initialize hibernate
+//    initializeHibernate();
+    //initialize JPA
+    initializeJPA();
 
+  }
+  private void initializeJPA() {
+
+    String driver = JiveGlobals.getXMLProperty("database.defaultProvider.driver");
+    String url = JiveGlobals.getXMLProperty("database.defaultProvider.serverURL");
+    String username = JiveGlobals.getXMLProperty("database.defaultProvider.username");
+    String password = JiveGlobals.getXMLProperty("database.defaultProvider.password");
+    System.out.println(">>>>>>>>>>>>> driver = " + driver);
+    System.out.println(">>>>>>>>>>>>> url = " + url);
+    System.out.println(">>>>>>>>>>>>> username = " + username);
+    System.out.println(">>>>>>>>>>>>> password = " + password);
+    JPA.initialize(driver, url, username, password);
   }
   private void initializeHibernate() {
 
@@ -226,10 +241,6 @@ public class MMXPlugin implements Plugin, ClusterEventListener {
     System.out.println(">>>>>>>>>>>>> password = " + password);
     Hibernate.initialize(driver, url, username, password);
   }
-//  private void initializeHibernate() {
-//
-//    Hibernate.initialize();
-//  }
 
   @Override
   public void destroyPlugin() {

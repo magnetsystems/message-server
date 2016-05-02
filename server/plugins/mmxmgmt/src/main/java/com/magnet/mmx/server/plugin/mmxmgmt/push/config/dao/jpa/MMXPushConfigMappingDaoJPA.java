@@ -1,18 +1,19 @@
-package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.hibernate;
+package com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.jpa;
 
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.MMXPushConfigMappingDao;
 import com.magnet.mmx.server.plugin.mmxmgmt.push.config.dao.model.MMXPushConfigMappingDo;
-import org.hibernate.criterion.Restrictions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by mmicevic on 4/15/16.
  *
  */
-public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappingDo> implements MMXPushConfigMappingDao {
+public class MMXPushConfigMappingDaoJPA extends JPABase<MMXPushConfigMappingDo> implements MMXPushConfigMappingDao {
 
-    public MMXPushConfigMappingDaoHbn() {
+    public MMXPushConfigMappingDaoJPA() {
         super(MMXPushConfigMappingDo.class);
     }
 
@@ -28,12 +29,17 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappi
 
     @Override
     public MMXPushConfigMappingDo getConfigMapping(String appId, String channelId) {
-        return findSingleByCriteria(Restrictions.eq("appId", appId), Restrictions.eq("channelId", (channelId == null ? "" : channelId)));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        params.put("channelId", (channelId == null ? "" : channelId));
+        return findSingleByCriteria(params);
     }
 
     @Override
     public Collection<MMXPushConfigMappingDo> getAllConfigMappings(String appId) {
-        return findManyByCriteria(Restrictions.eq("appId", appId));
+        Map<String, Object> params = new HashMap<>();
+        params.put("appId", appId);
+        return findManyByCriteria(params);
     }
 
     @Override
@@ -62,6 +68,8 @@ public class MMXPushConfigMappingDaoHbn extends HibernateBase<MMXPushConfigMappi
 
     @Override
     public Collection<MMXPushConfigMappingDo> getAllMappingsForConfig(Integer configId) {
-        return findManyByCriteria(Restrictions.eq("configId", configId));
+        Map<String, Object> params = new HashMap<>();
+        params.put("configId", configId);
+        return findManyByCriteria(params);
     }
 }
