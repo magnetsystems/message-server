@@ -79,6 +79,9 @@ public class MMXPacketInterceptor implements PacketInterceptor {
     if (MMXMessageUtil.isMMXMulticastMessage(mmxMessage)) {
       messageHandlingRule.handleMMXMulticast(new MMXMsgRuleInput(mmxMessage,
           session, incoming, processed, false, false));
+    } else if (MMXMessageUtil.isNodeMessage(mmxMessage)) {
+      messageHandlingRule.handleNodeMessage(new MMXMsgRuleInput(mmxMessage,
+          session, incoming, processed, false, false));
     } else if (MMXMessageUtil.isPubSubMessage(mmxMessage)) {
       messageHandlingRule.handlePubSub(new MMXMsgRuleInput(mmxMessage, session,
           incoming, processed, false, false));

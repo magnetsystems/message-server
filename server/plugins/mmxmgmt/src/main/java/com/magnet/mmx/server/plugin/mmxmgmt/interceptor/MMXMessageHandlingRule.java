@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import org.xmpp.packet.PacketExtension;
 
 import com.google.common.base.Strings;
 import com.magnet.mmx.protocol.Constants;
+import com.magnet.mmx.protocol.MMXTopicId;
 import com.magnet.mmx.protocol.MMXid;
 import com.magnet.mmx.protocol.MmxHeaders;
 import com.magnet.mmx.server.common.data.AppEntity;
@@ -68,6 +70,7 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXOfflineStorageUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.WakeupUtil;
 import com.magnet.mmx.util.GsonData;
+import com.magnet.mmx.util.TopicHelper;
 
 public class MMXMessageHandlingRule {
   private static final Logger LOGGER = LoggerFactory
@@ -361,6 +364,44 @@ public class MMXMessageHandlingRule {
     messageEntity.setTo(message.getTo().toString());
     messageEntity.setDeviceId(message.getTo().getResource());
     return messageEntity;
+  }
+
+  // node$userID#name%appId@domain
+  public void handleNodeMessage(MMXMsgRuleInput input)
+      throws PacketRejectedException {
+    Message message = input.getMessage();
+    JID from = message.getFrom();
+    JID sender = message.getFrom().asBareJID();
+    JID nodeJid = message.getTo();
+    String appId = JIDUtil.getAppId(nodeJid);
+    String userId = JIDUtil.getUserId(nodeJid);
+    MMXTopicId topicId = MMXTopicId.parse(userId.substring(Constants.MMX_NODE_PREFIX.length()));
+    String nodeID = TopicHelper.toNodeId(appId, topicId);
+    // Get the subscribers
+    PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
+    Node node = pubsub.getNode(nodeID);
+    if (node == null) {
+      throw new PacketRejectedException("Invalid node: "+nodeID);
+    }
+    if (!node.getPublisherModel().canPublish(node, sender)) {
+      throw new PacketRejectedException("No permission to send message to this node");
+    }
+    // TODO: should be done in different thread for performance.
+    PacketRouter pktRouter = XMPPServer.getInstance().getPacketRouter();
+    for (NodeSubscription sub : node.getAllSubscriptions()) {
+      JID subscriber = sub.getJID();
+      if (((subscriber.getResource() == null) && sender.equals(subscriber)) ||
+          ((subscriber.getResource() != null) && from.equals(subscriber))) {
+        // Skip the sender or sending device.
+        continue;
+      }
+      // TODO: need a deep copy because payload cannot be shared with
+      // multiple messages; it has a DOM parent.
+      Message unicastMsg = message.createCopy();
+      unicastMsg.setTo(sub.getJID());
+      pktRouter.route(unicastMsg);
+    }
+    throw new PacketRejectedException("MMX node message is processed");
   }
 
   public void handleMMXMulticast(MMXMsgRuleInput input)
