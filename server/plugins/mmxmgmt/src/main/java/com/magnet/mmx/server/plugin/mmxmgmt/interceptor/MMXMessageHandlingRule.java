@@ -381,26 +381,36 @@ public class MMXMessageHandlingRule {
     PubSubModule pubsub = XMPPServer.getInstance().getPubSubModule();
     Node node = pubsub.getNode(nodeID);
     if (node == null) {
+      // TODO: if it is not headline type, send an error message to sender.
+      LOGGER.trace("handleNodeMessage(): no such node; nodeID={}", nodeID);
       throw new PacketRejectedException("Invalid node: "+nodeID);
     }
     if (!node.getPublisherModel().canPublish(node, sender)) {
+      // TODO: if it is not headline type, send an error message to sender.
+      LOGGER.trace("handleNodeMessage(): sender={} has no publish permission; nodeID={}",
+          sender, nodeID);
       throw new PacketRejectedException("No permission to send message to this node");
     }
     // TODO: should be done in different thread for performance.
+    int numOfSubs = 0;
     PacketRouter pktRouter = XMPPServer.getInstance().getPacketRouter();
     for (NodeSubscription sub : node.getAllSubscriptions()) {
       JID subscriber = sub.getJID();
       if (((subscriber.getResource() == null) && sender.equals(subscriber)) ||
           ((subscriber.getResource() != null) && from.equals(subscriber))) {
         // Skip the sender or sending device.
+        LOGGER.trace("handleNodeMessage(): skip sender/subscriber={}", subscriber);
         continue;
       }
       // TODO: need a deep copy because payload cannot be shared with
       // multiple messages; it has a DOM parent.
       Message unicastMsg = message.createCopy();
-      unicastMsg.setTo(sub.getJID());
+      unicastMsg.setTo(subscriber);
       pktRouter.route(unicastMsg);
+      ++numOfSubs;
     }
+    LOGGER.trace("handleNodeMessage(): send {} msg to {} subscribers; nodeID={}",
+        message.getType(), numOfSubs, nodeID);
     throw new PacketRejectedException("MMX node message is processed");
   }
 

@@ -6,7 +6,7 @@
 # version and schema.  The upgrade scripts are for existing installation.
 #
 
-INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 10);
+INSERT INTO ofVersion (name, version) VALUES ('mmxappmgmt', 11);
 
 CREATE TABLE mmxApp (
   id                INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -172,7 +172,6 @@ INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.cluster.max.devices.per.ap
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.domain.name', '') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.instance.max.xmpp.rate.per.sec', '-1') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.instance.max.http.rate.per.sec', '-1') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
-INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.pubsub.notification.type', 'wakeup') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.push.callback.host', '') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.push.callback.port', '5220') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
 INSERT INTO ofProperty (name, propValue) VALUES( 'mmx.push.callback.protocol', 'http') ON DUPLICATE KEY UPDATE name=VALUES(name), propValue=VALUES(propValue);
@@ -203,6 +202,9 @@ ALTER TABLE ofPubsubNode MODIFY description VARCHAR(191) CHARACTER SET utf8mb4 C
 CREATE TABLE mmxTemplate (
    templateId int(11) NOT NULL AUTO_INCREMENT,
    appId varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+   ownerId VARCHAR(64) NULL,
+   creationDate DATETIME NULL,
+   modificationDate DATEITME NULL,
    templateType varchar(45) COLLATE utf8_unicode_ci NOT NULL,
    templateName varchar(45) COLLATE utf8_unicode_ci NOT NULL,
    template text COLLATE utf8_unicode_ci NOT NULL,

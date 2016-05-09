@@ -42,6 +42,15 @@ public class MMXMessageUtil {
 
     Message mmxMessage = (Message) packet;
 
+    if (isNodeMessage(mmxMessage)) {
+      // We want to handle a message addressing to a pubsub node.
+      if (ENABLE_TRACE) {
+        LOGGER.trace(
+            "isValidDistributableMessage(): true: packet is node message");
+      }
+      return true;
+    }
+
     if (isMulticastMessage(mmxMessage)) {
       if (ENABLE_TRACE) {
         LOGGER.trace(
@@ -73,7 +82,7 @@ public class MMXMessageUtil {
       return false;
     }
 
-    // For the fire-and-forget
+    // For the fire-and-forget and non-node message
     if(mmxMessage.getType() == Message.Type.headline) {
       if (ENABLE_TRACE) {
         LOGGER.trace(
@@ -155,6 +164,6 @@ public class MMXMessageUtil {
    * @return
    */
   public static boolean isNodeMessage(Message message) {
-    return Constants.MMX_NODE_PREFIX.startsWith(message.getTo().getNode());
+    return message.getTo().getNode().startsWith(Constants.MMX_NODE_PREFIX);
   }
 }
