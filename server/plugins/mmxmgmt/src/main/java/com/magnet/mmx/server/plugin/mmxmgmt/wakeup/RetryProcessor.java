@@ -120,7 +120,7 @@ public class RetryProcessor extends MMXClusterableTask implements Runnable {
       if (appEntity == null) {
         continue;
       }
-      WakeupUtil.queueWakeup(getWakeupEntityDAO(), appEntity, device, messageId);
+      WakeupUtil.queueWakeup(appEntity, device, messageId);
       if (LOGGER.isDebugEnabled()) {
         LOGGER.debug("Queued a new wakeup for device:" + device + " for messageId:" + messageId);
       }
@@ -137,9 +137,5 @@ public class RetryProcessor extends MMXClusterableTask implements Runnable {
 
   protected AppDAO getAppDAO() {
     return new AppDAOImpl(new OpenFireDBConnectionProvider());
-  }
-
-  protected WakeupEntityDAO getWakeupEntityDAO() {
-    return new WakeupEntityDAOImpl(new OpenFireDBConnectionProvider());
   }
 }

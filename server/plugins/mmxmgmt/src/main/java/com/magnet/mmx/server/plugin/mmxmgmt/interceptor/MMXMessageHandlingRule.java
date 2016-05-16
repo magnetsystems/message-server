@@ -260,10 +260,9 @@ public class MMXMessageHandlingRule {
       boolean wakeupPossible = canBeWokenUp(deviceEntity);
       if (wakeupPossible) {
         AppDAO appDAO = DBUtil.getAppDAO();
-        WakeupEntityDAO wakeupEntityDAO = DBUtil.getWakeupEntityDAO();
         AppEntity appEntity = appDAO.getAppForAppKey(appId);
         messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
-        WakeupUtil.queueWakeup(wakeupEntityDAO, appEntity, deviceEntity,
+        WakeupUtil.queueWakeup(appEntity, deviceEntity,
             messageEntity.getMessageId());
       } else {
         if (LOGGER.isDebugEnabled()) {
@@ -544,7 +543,7 @@ public class MMXMessageHandlingRule {
       if (wokenUpPossible) {
         messageEntity.setState(MessageEntity.MessageState.WAKEUP_REQUIRED);
         WakeupUtil.queueWakeup(appEntity, pair.getDevice(),
-            messageEntity.getMessageId(), pushConfigName);
+            messageEntity.getMessageId());
       } else {
         messageEntity.setState(MessageEntity.MessageState.PENDING);
       }
