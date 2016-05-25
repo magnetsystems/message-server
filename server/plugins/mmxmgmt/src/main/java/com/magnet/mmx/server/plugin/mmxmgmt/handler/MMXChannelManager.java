@@ -32,7 +32,6 @@ import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXChannelUtil;
 import com.magnet.mmx.server.plugin.mmxmgmt.util.MMXServerConstants;
 import com.magnet.mmx.util.AppChannel;
 import com.magnet.mmx.util.ChannelHelper;
-import com.magnet.mmx.util.TopicHelper;
 import com.magnet.mmx.util.Utils;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
@@ -160,7 +159,7 @@ public class MMXChannelManager {
                   String appId, Node node) {
     com.magnet.mmx.server.api.v1.protocol.ChannelInfo info = new
         com.magnet.mmx.server.api.v1.protocol.ChannelInfo();
-    info.setChannelId(ChannelHelper.converToId(node.getNodeID()));
+    info.setChannelId(ChannelHelper.toChannelId(node.getNodeID()));
     info.setDescription(node.getDescription());
     info.setChannelName(node.getName());
     if(node instanceof  LeafNode) {
@@ -169,7 +168,7 @@ public class MMXChannelManager {
       info.setMaxItems(lnode.isPersistPublishedItems() ?
           lnode.getMaxPublishedItems() : 0);
     }
-    info.setChannelId(ChannelHelper.converToId(node.getNodeID()));
+    info.setChannelId(ChannelHelper.toChannelId(node.getNodeID()));
     info.setPublisherType(node.getPublisherModel().getName());
     return info;
   }
@@ -1059,7 +1058,7 @@ public class MMXChannelManager {
   private ChannelInfo nodeToInfo(String userId, String channel, Node node) {
     ChannelInfo info = new ChannelInfo(
         userId, node.getName() != null ? node.getName() : channel, node.isCollectionNode())
-      .setId(TopicHelper.convertToId(node.getNodeID()))
+      .setId(ChannelHelper.toChannelId(node.getNodeID()))
       .setDisplayName(node.getName())
       .setCreationDate(node.getCreationDate())
       .setDescription(node.getDescription())
@@ -1303,7 +1302,7 @@ public class MMXChannelManager {
       MMXChannelId channel = ChannelHelper.parseNode(entity.getNodeId());
       ChannelInfo info =  new ChannelInfo(channel.getUserId(),
             channel.getName(), !entity.isLeaf())
-        .setId(ChannelHelper.converToId(entity.getNodeId()))
+        .setId(ChannelHelper.toChannelId(entity.getNodeId()))
         .setDisplayName(entity.getName())
         .setDescription(entity.getDescription())
         .setCreationDate(entity.getCreationDate())
